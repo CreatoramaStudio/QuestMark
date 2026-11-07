@@ -46,5 +46,9 @@ for my $k (@keys) {
 if ($all) { my %seen = map { $_ => 1 } @keys;
   for my $k (sort keys %$A) { next if $seen{$k} || exists $B->{$k}; printf "only A   %s: %s\n", $k, substr($A->{$k}, 0, 80) if $k =~ /^parity\./; }
   for my $k (sort keys %$B) { next if $seen{$k} || exists $A->{$k}; printf "only B   %s: %s\n", $k, substr($B->{$k}, 0, 80); } }
-printf "\nparity_check: %d equal, %d mismatch, %d n/a (physics mode), see KNOWN lines for recorded engine differences\n", $ok, $mis, $na;
+# Jolt-only keys have a space in env.txt ("jolt <name>: ..."), so load() skips them. The temporary allocator size is shown as information
+# only, never a mismatch (Stride/Bepu has no such buffer; raised profile = 1024 MiB).
+sub raw_jolt { my ($p, $name) = @_; open(my $fh, '<', $p) or return 'n/a'; while (<$fh>) { s/\r?\n$//; return $1 if /^jolt \Q$name\E[:]\s*(.*)$/; } return 'n/a'; }
+printf "INFO     %-26s A=[%s] B=[%s]  (Jolt-only, MiB; Stride/Bepu has no such buffer)\n", 'jolt temp_buffer_size', raw_jolt($files[0], 'temporary_memory_buffer_size'), raw_jolt($files[1], 'temporary_memory_buffer_size');
+printf "\nparity_check:%d equal, %d mismatch, %d n/a (physics mode), see KNOWN lines for recorded engine differences\n", $ok, $mis, $na;
 exit($mis ? 1 : 0);

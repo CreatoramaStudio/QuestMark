@@ -74,8 +74,10 @@ sub read_run {
   my $ef; if (open($ef, '<', $envf)) { my %l; my $profile_line = ""; while (<$ef>) {
       $m{sleeping} = $1 if /^sleeping:\s*(\w+)/; $m{hz} = $1 if /^physics_hz:\s*(\d+)/;
       $profile_line = $1 if /^jolt_limit_profile_applied_by_extension:\s*(.+?)\s*$/;
-      $l{pairs} = $1 if /^jolt max_body_pairs:\s*(\d+)/; $l{bodies} = $1 if /^jolt max_bodies:\s*(\d+)/; $l{cc} = $1 if /^jolt max_contact_constraints:\s*(\d+)/; }
+      $l{pairs} = $1 if /^jolt max_body_pairs:\s*(\d+)/; $l{bodies} = $1 if /^jolt max_bodies:\s*(\d+)/; $l{cc} = $1 if /^jolt max_contact_constraints:\s*(\d+)/;
+      $l{tmp} = $1 if /^jolt temporary_memory_buffer_size:\s*(\d+)/; }
     close $ef;
+    $m{tmp} = $l{tmp};
     $m{lim} = $1 if $profile_line =~ /^(\w+)/;
     if (!defined $m{lim} && defined $l{pairs}) { $m{lim} = $l{pairs} == 65536 ? 'old' : $l{pairs} == 1048576 ? 'raised' : "pairs $l{pairs}"; } }
   $m{rtf} = rtf(\%m); return \%m;
@@ -117,7 +119,7 @@ for my $file (@files) {
 sub cm { my ($c, $k) = @_; return med(grep { defined } map { $_->{$k} } @{$c->{runs}}); }
 sub cr { my ($c, $k) = @_; my @v = srt(grep { defined } map { $_->{$k} } @{$c->{runs}}); return @v ? ($v[0], $v[-1]) : (undef, undef); }
 sub slpcell { my ($c) = @_; my %s = map { ($_->{sleeping} // 'n/a') => 1 } @{$c->{runs}}; return join('+', sort keys %s); }
-sub limcell { my ($c) = @_; my %s = map { ($_->{lim} // 'n/a') => 1 } @{$c->{runs}}; return join('+', sort keys %s); }
+sub limcell { my ($c) = @_; my %s = map { (($_->{lim} // "n/a") . (defined $_->{tmp} ? " tmp$_->{tmp}MiB" : "")) => 1 } @{$c->{runs}}; return join('+', sort keys %s); }
 sub cellpass { my ($c, $l2, $evl) = @_;   # median p99 within limit and frames ok in every run
   my $p99 = cm($c,'p99'); my $fo = 1; $fo &&= frames_ok($_) for @{$c->{runs}};
   my $evok = 1; if ($c->{runs}[0]{has_ev}) { my $e = cm($c,'ev_p99'); $evok = defined $e && $e <= $evl; }
@@ -146,7 +148,7 @@ for my $k (@abcd) {
     $e, $p, slpcell($c), $s, $m, scalar @{$c->{runs}}, $r0, $r1, f(cm($c,'rtf'),4), f(cm($c,'wmed'),2), f(cm($c,'p95'),2), f(cm($c,'p99'),2), f(cm($c,'max'),2),
     f(cm($c,'pmed'),3), f(cm($c,'pt_med'),3), f(cm($c,'qmed'),3), $a0, $a1, (defined $gc ? f($gc,2) : 'n/a'), f(cm($c,'first'),2), f($p0,2), f($p1,2), limcell($c);
 }
-print "\nUnits: ms. Cells are the median across runs of the per-run statistic (rows, awake and p99 spread: min and max across runs). physics tick-only = frames with physics_ms > 0. GC pause total = summary value (Stride; Godot native n/a), median across runs. Jolt limits: old = max_body_pairs 65536, raised = 1048576 as recorded in env.txt (n/a: env.txt has no limit lines, older runs).\n\n";
+print "\nUnits: ms. Cells are the median across runs of the per-run statistic (rows, awake and p99 spread: min and max across runs). physics tick-only = frames with physics_ms > 0. GC pause total = summary value (Stride; Godot native n/a), median across runs. Jolt limits: old = max_body_pairs 65536, raised = 1048576 as recorded in env.txt raised also sets the Jolt temporary memory buffer to 1024 MiB (env.txt `jolt temporary_memory_buffer_size`, MiB; the 32 MiB default overflowed in F and G, so results of F and G from before this change are affected). n/a: env.txt has no limit lines, older runs.\n\n";
 }
 
 # ---- E ----

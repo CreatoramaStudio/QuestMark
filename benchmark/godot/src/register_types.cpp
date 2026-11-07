@@ -20,11 +20,12 @@ namespace {
 //   old     10240 /   65536 /   20480   scenarios A to E (default)
 //   raised  70000 / 1048576 / 1048576   scenarios F (scale) and G (debris, default; with the old pair and constraint caps R = 8 printed "contact constraint buffer exceeded capacity and contacts were ignored", and R = 32 keeps about 16400 pieces alive, above the old 10240 body cap)
 //   bodies  70000 /   65536 /   20480   only the body cap raised (explicit, for A/B)
-// --jolt-limits=<profile> chooses explicitly; --jolt-max-bodies / --jolt-max-pairs / --jolt-max-constraints=<n> override single values.
+// The raised profile also sets limits/temporary_memory_buffer_size = 1024 MiB (the 32 MiB default overflowed: "temporary memory allocator exceeded"); old keeps the engine default read from the project setting.
+// --jolt-limits=<profile> chooses explicitly; --jolt-max-bodies / --jolt-max-pairs / --jolt-max-constraints=<n> / --jolt-temp-mb=<n> override single values.
 void apply_jolt_limits() {
 	PackedStringArray args = OS::get_singleton()->get_cmdline_user_args();
 	String scenario, profile;
-	int64_t mb = -1, mp = -1, mc = -1;
+	int64_t mb = -1, mp = -1, mc = -1, mt = -1;
 	for (int i = 0; i < args.size(); i++) {
 		String a = args[i];
 		if (!a.begins_with("--") || !a.contains("=")) {
@@ -41,6 +42,8 @@ void apply_jolt_limits() {
 			mp = kv[1].to_int();
 		} else if (kv[0] == "jolt-max-constraints") {
 			mc = kv[1].to_int();
+		} else if (kv[0] == "jolt-temp-mb") {
+			mt = kv[1].to_int();
 		}
 	}
 	if (profile.is_empty()) {
@@ -53,10 +56,13 @@ void apply_jolt_limits() {
 		}
 	}
 	int64_t b = 10240, p = 65536, c = 20480;
+	const char *tmp_key = "physics/jolt_physics_3d/limits/temporary_memory_buffer_size";
+	int64_t t = (int64_t)ProjectSettings::get_singleton()->get_setting(tmp_key, 32); // engine default (MiB) as the project setting reads it
 	if (profile == "raised") {
 		b = 70000;
 		p = 1048576;
 		c = 1048576;
+		t = 1024;
 	} else if (profile == "bodies") {
 		b = 70000;
 	}
@@ -69,12 +75,16 @@ void apply_jolt_limits() {
 	if (mc >= 0) {
 		c = mc;
 	}
+	if (mt >= 0) {
+		t = mt;
+	}
 	ProjectSettings *ps = ProjectSettings::get_singleton();
 	ps->set_setting("physics/jolt_physics_3d/limits/max_bodies", b);
 	ps->set_setting("physics/jolt_physics_3d/limits/max_body_pairs", p);
 	ps->set_setting("physics/jolt_physics_3d/limits/max_contact_constraints", c);
-	static char buf[160];
-	snprintf(buf, sizeof(buf), "%s (max_bodies %lld, max_body_pairs %lld, max_contact_constraints %lld)", profile.utf8().get_data(), (long long)b, (long long)p, (long long)c);
+	ps->set_setting(tmp_key, t);
+	static char buf[200];
+	snprintf(buf, sizeof(buf), "%s (max_bodies %lld, max_body_pairs %lld, max_contact_constraints %lld, temporary_memory_buffer_size %lld MiB)", profile.utf8().get_data(), (long long)b, (long long)p, (long long)c, (long long)t);
 	g_jolt_profile = buf;
 }
 } // namespace

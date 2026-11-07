@@ -1299,6 +1299,7 @@ void QuestBench::_finish() {
 		ef->store_line("jolt max_bodies: " + setting("physics/jolt_physics_3d/limits/max_bodies"));
 		ef->store_line("jolt max_body_pairs: " + setting("physics/jolt_physics_3d/limits/max_body_pairs"));
 		ef->store_line("jolt max_contact_constraints: " + setting("physics/jolt_physics_3d/limits/max_contact_constraints"));
+		ef->store_line("jolt temporary_memory_buffer_size: " + setting("physics/jolt_physics_3d/limits/temporary_memory_buffer_size"));
 		ef->store_line(String("jolt_limit_profile_applied_by_extension: ") + g_jolt_profile);
 		ef->store_line("max_fps: " + String::num_int64(Engine::get_singleton()->get_max_fps()));
 		ef->store_line("max_physics_steps_per_frame: " + String::num_int64(Engine::get_singleton()->get_max_physics_steps_per_frame()));

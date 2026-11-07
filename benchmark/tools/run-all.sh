@@ -8,7 +8,8 @@
 #   GODOT_BENCH_EXE    exported Godot release exe (QuestBench.exe, .pck and DLL next to it). One exe runs both Jolt profiles: this script passes
 #                      --jolt-limits=old explicitly for A-E (10240 / 65536 / 20480) and --jolt-limits=raised for F and G (70000 / 1048576 /
 #                      1048576; raised caps cost about +20 percent tick time in A-D, and G needs them: old caps ignored contacts at R=8 and cap
-#                      bodies at 10240). Stride has no such limits and gets no flag.
+#                      bodies at 10240); raised also sets the Jolt temporary_memory_buffer_size to
+#                      1024 MiB (the 32 MiB default overflowed in F and G). Stride has no such limits and gets no flag.
 #   BENCH_ENGINE       Godot physics engine under test: jolt (default) | physx (GodotPhysics3D is not benchmarked). The script writes override.cfg next to the exe
 #                      for every run (physics/3d/physics_engine = "Jolt Physics" | PhysX) and ABORTS when the engine_tag the
 #                      run recorded in env.txt (proved from the class of get_direct_space_state()) differs from the requested engine:
