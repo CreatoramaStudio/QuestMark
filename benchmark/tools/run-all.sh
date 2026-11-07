@@ -25,6 +25,14 @@
 #   SCALE_WARMUP (5) SCALE_MEASURE (10)  F base values; warm-up grows with N from LAG_N (see warmup_for)
 #   LAG_N              first N that needs the long warm-up (default 4000 godot, 16000 stride, from the NOTES findings)
 #   G_WARMUP (10) G_MEASURE (20)  DEBRIS_POOLED (1; 0 skips debris-pooled)
+#   CPU_AFFINITY       hex mask of the logical CPUs every benchmark process may use (for example FF = the first 8). The exe is started with
+#                      cmd "start /affinity", so the mask holds from process start. Godot sizes its worker pool from the full core count
+#                      (std::thread::hardware_concurrency), so for Godot the script also writes threading/worker_pool/max_threads (and for
+#                      physx physics/physx_3d/simulation/cpu_worker_threads) = number of CPUs in the mask into override.cfg; env.txt records
+#                      the values in effect. Stride gets --bepu-threads and --render-threads = that number (env.txt: bepu_thread_count_setting).
+#                      The exit code passes through a launch.cmd in the stage folder. Use a separate OUT_DIR for such runs.
+#   DECK_LIKE=1        shortcut for CPU_AFFINITY=FF: 8 logical CPUs like the Steam Deck's 4 cores / 8 threads. A rough desktop stand-in for
+#                      the thread count only; clocks, cache, memory, GPU and Proton differ, so the numbers are NOT Deck numbers.
 #   BENCH_PROGRESS     1 pins a progress bar on the last terminal line (real TTY only); OUT_DIR/progress-<prefix>.txt always holds the same line,
 #                      watch it with: bash tools/bench-progress.sh <OUT_DIR> watch
 #   DRY_RUN=1, SIM_PASS20 / SIM_PASS33 (F) and SIM_G_PASS20 / SIM_G_PASS33 (G): assumed capacities for the dry-run plan only (defaults for F:
@@ -55,6 +63,15 @@ G_WARMUP="${G_WARMUP:-10}"; G_MEASURE="${G_MEASURE:-20}"; DEBRIS_POOLED="${DEBRI
 SCALE_LADDER="1000 2000 4000 8000 16000 32000 64000"; G_LADDER="1 2 4 8 16 32"
 OVERHEAD_S=2   # process start and exit per run (A-D logs: 25 to 27 s for 5 + 20 s runs); scale adds N/2000 s for building (assumption)
 if [ "$DRY" != 1 ]; then mkdir -p "$OUT_DIR"; OUT_DIR="$(cd "$OUT_DIR" && pwd)"; fi
+# CPU affinity (DECK_LIKE=1 = 8 logical CPUs); AFF_N = number of CPUs in the mask, used as the engine thread count
+[ "${DECK_LIKE:-0}" = 1 ] && CPU_AFFINITY="${CPU_AFFINITY:-FF}"
+CPU_AFFINITY="${CPU_AFFINITY:-}"; AFF_N=0
+if [ -n "$CPU_AFFINITY" ]; then
+  case "$CPU_AFFINITY" in *[!0-9A-Fa-f]*) echo "CPU_AFFINITY must be a hex mask, e.g. FF: $CPU_AFFINITY" >&2; exit 2 ;; esac
+  AFF_N=$(awk -v h="$CPU_AFFINITY" 'BEGIN { h = toupper(h); n = 0; for (i = 1; i <= length(h); i++) { d = index("0123456789ABCDEF", substr(h, i, 1)) - 1; while (d) { n += d % 2; d = int(d / 2) } } print n }')
+  [ "$AFF_N" -gt 0 ] || { echo "CPU_AFFINITY selects no CPU: $CPU_AFFINITY" >&2; exit 2; }
+fi
+export CPU_AFFINITY AFF_N
 if command -v cygpath >/dev/null 2>&1; then to_win() { cygpath -w "$1"; }; else to_win() { echo "$1"; }; fi
 case "$engine" in
   godot)
@@ -128,16 +145,32 @@ launch() { # exe scenario mode run warm measure extra headless(0|1) outdir
   [ "$engine" = stride ] && pre=""
   if [ "$engine" = godot ]; then
     local pe; case "${BENCH_ENGINE:-jolt}" in physx) pe=PhysX ;; *) pe="Jolt Physics" ;; esac
-    printf '[physics]\n\n3d/physics_engine="%s"\n' "$pe" > "$(dirname "$x")/override.cfg"
+    { printf '[physics]\n\n3d/physics_engine="%s"\n' "$pe"
+      if [ "${AFF_N:-0}" -gt 0 ]; then
+        [ "$pe" = PhysX ] && printf 'physx_3d/simulation/cpu_worker_threads=%d\n' "$AFF_N"
+        printf '\n[threading]\n\nworker_pool/max_threads=%d\n' "$AFF_N"
+      fi; } > "$(dirname "$x")/override.cfg"
     [ -n "${BENCH_FLAVOUR:-}" ] && extra="$extra --flavour=$BENCH_FLAVOUR"
   fi
-  "$x" $pre --scenario="$sc" --mode="$mode" --run="$run" --warmup="$w" --measure="$m" $extra --out="$od" >>"$log" 2>&1
+  if [ -n "${CPU_AFFINITY:-}" ]; then
+    # Stride: cap the Bepu and render dispatcher threads like the Godot worker pool above (the .NET pool sizing under a mask is unverified)
+    [ "$engine" = stride ] && extra="$extra --bepu-threads=$AFF_N --render-threads=$AFF_N"
+    # start /affinity sets the mask at process creation; /b keeps the console handles (log redirect). "cmd /c start /wait" alone
+    # returns 0 whatever the exe returns, so the call goes through a batch file that ends with "exit /b %errorlevel%" (tested: 7 and 0 pass).
+    local bat="$(cygpath -u "$od")/launch.cmd"
+    printf '@start "" /b /wait /affinity %s "%s" %s--scenario=%s --mode=%s --run=%s --warmup=%s --measure=%s %s --out="%s"\r\n@exit /b %%errorlevel%%\r\n' \
+      "$CPU_AFFINITY" "$(cygpath -w "$x")" "$pre" "$sc" "$mode" "$run" "$w" "$m" "$extra" "$od" > "$bat"
+    cmd //c "$(cygpath -w "$bat")" >>"$log" 2>&1
+  else
+    "$x" $pre --scenario="$sc" --mode="$mode" --run="$run" --warmup="$w" --measure="$m" $extra --out="$od" >>"$log" 2>&1
+  fi
 }
 cmdline() { # for dry-run display
   local x="$1" sc="$2" mode="$3" run="$4" w="$5" m="$6" extra="$7" hl="$8" pre=""
   [ "$engine" = godot ] && { [ "$hl" = 1 ] && pre="--headless -- " || pre="-- "; }
   [ "$engine" = godot ] && extra="$extra${BENCH_FLAVOUR:+ --flavour=$BENCH_FLAVOUR}"
-  echo "\"${x:-<exe>}\" ${pre}--scenario=$sc --mode=$mode --run=$run --warmup=$w --measure=$m${extra:+ $extra} --out=<stage>  [override.cfg engine: ${BENCH_ENGINE:-n/a}]"
+  local st=""; [ "$engine" = stride ] && [ -n "${CPU_AFFINITY:-}" ] && st=": --bepu-threads=$AFF_N --render-threads=$AFF_N"
+  echo "\"${x:-<exe>}\" ${pre}--scenario=$sc --mode=$mode --run=$run --warmup=$w --measure=$m${extra:+ $extra} --out=<stage>  [override.cfg engine: ${BENCH_ENGINE:-n/a}]${CPU_AFFINITY:+  [start /affinity $CPU_AFFINITY, $AFF_N threads$st]}"
 }
 
 check() { # kind mode csv measure -> prints problem or nothing. kind: abcd | unlock-render | unlock-phys | paced
@@ -223,6 +256,8 @@ run_cell() {
     export BENCH_ENGINE BENCH_FLAVOUR
     timeout "$to" bash -c "$(declare -f launch); exe='$x'; engine='$engine'; log='$log'; launch '$x' '$sc' '$mode' '$run' '$w' '$m' '$extra' '$hl' '$(to_win "$stage")'"
     rc=$?
+    # with start /affinity the exe is a grandchild of the timed shell and survives a timeout kill: end it here
+    [ "$rc" = 124 ] && [ -n "$CPU_AFFINITY" ] && taskkill //F //IM "$(basename "$x")" >/dev/null 2>&1
     verify_engine
     publish_stage; rm -rf "$stage"
     prob="$(check "$kind" "$mode" "$base.csv" "$m" "$chk")"
@@ -371,9 +406,9 @@ run_g() {
 }
 
 run_protocol() {
-  say "== $prefix exe=$(basename "${exe:-<exe>}") stages=$STAGES warmup=$WARMUP measure=$MEASURE runs=$RUNS out=$OUT_DIR"
+  say "== $prefix exe=$(basename "${exe:-<exe>}") stages=$STAGES warmup=$WARMUP measure=$MEASURE runs=$RUNS out=$OUT_DIR${CPU_AFFINITY:+ cpu_affinity=$CPU_AFFINITY ($AFF_N CPUs, NOT Deck numbers)}"
   if [ "$DRY" != 1 ]; then
-    { echo "$(date +%Y-%m-%dT%H:%M:%S) prefix=$prefix engine=$engine flavor=$flavor bench_engine=${BENCH_ENGINE:-n/a} bench_flavour=${BENCH_FLAVOUR:-} exe=$(basename "$exe") stages=$STAGES profiles=A,D,E,F:game+stress B,C,G:game"; } >> "$OUT_DIR/variant-$prefix.txt"
+    { echo "$(date +%Y-%m-%dT%H:%M:%S) prefix=$prefix engine=$engine flavor=$flavor bench_engine=${BENCH_ENGINE:-n/a} bench_flavour=${BENCH_FLAVOUR:-} exe=$(basename "$exe") stages=$STAGES profiles=A,D,E,F:game+stress B,C,G:game cpu_affinity=${CPU_AFFINITY:-all} threads=${AFF_N/#0/engine default}"; } >> "$OUT_DIR/variant-$prefix.txt"
   fi
   has_stage A || has_stage B || has_stage C || has_stage D && run_abcd
   has_stage E && run_e
