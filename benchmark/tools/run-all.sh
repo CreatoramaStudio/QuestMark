@@ -9,8 +9,8 @@
 #                      --jolt-limits=old explicitly for A-E (10240 / 65536 / 20480) and --jolt-limits=raised for F and G (70000 / 1048576 /
 #                      1048576; raised caps cost about +20 percent tick time in A-D, and G needs them: old caps ignored contacts at R=8 and cap
 #                      bodies at 10240). Stride has no such limits and gets no flag.
-#   BENCH_ENGINE       Godot physics engine under test: jolt (default) | physx | godotphysics. The script writes override.cfg next to the exe
-#                      for every run (physics/3d/physics_engine = "Jolt Physics" | PhysX | GodotPhysics3D) and ABORTS when the engine_tag the
+#   BENCH_ENGINE       Godot physics engine under test: jolt (default) | physx (GodotPhysics3D is not benchmarked). The script writes override.cfg next to the exe
+#                      for every run (physics/3d/physics_engine = "Jolt Physics" | PhysX) and ABORTS when the engine_tag the
 #                      run recorded in env.txt (proved from the class of get_direct_space_state()) differs from the requested engine:
 #                      a PhysX request on a build without the module silently runs GodotPhysics. The Jolt limit flags are passed for jolt only.
 #   BENCH_FLAVOUR      optional label of the build (for example a fork name; letters, digits, underscore). File prefix: godot-<engine>[-<flavour>]-
@@ -53,7 +53,7 @@ if command -v cygpath >/dev/null 2>&1; then to_win() { cygpath -w "$1"; }; else 
 case "$engine" in
   godot)
     BENCH_ENGINE="${BENCH_ENGINE:-jolt}"; export BENCH_ENGINE; export BENCH_FLAVOUR="${BENCH_FLAVOUR:-}"
-    case "$BENCH_ENGINE" in jolt|physx|godotphysics) ;; *) echo "BENCH_ENGINE must be jolt|physx|godotphysics: $BENCH_ENGINE" >&2; exit 2 ;; esac
+    case "$BENCH_ENGINE" in jolt|physx) ;; *) echo "BENCH_ENGINE must be jolt|physx: $BENCH_ENGINE" >&2; exit 2 ;; esac
     flavor="$BENCH_ENGINE${BENCH_FLAVOUR:+-$BENCH_FLAVOUR}"; prefix="godot-$flavor"; exe="${GODOT_BENCH_EXE:-}"
     LAG_N="${LAG_N:-4000}"; SIM_PASS20="${SIM_PASS20:-2000}"; SIM_PASS33="${SIM_PASS33:-4000}" ;;
   stride)
@@ -91,7 +91,7 @@ launch() { # exe scenario mode run warm measure extra headless(0|1) outdir
   [ "$engine" = godot ] && [ "$hl" != 1 ] && pre="-- "
   [ "$engine" = stride ] && pre=""
   if [ "$engine" = godot ]; then
-    local pe; case "${BENCH_ENGINE:-jolt}" in physx) pe=PhysX ;; godotphysics) pe=GodotPhysics3D ;; *) pe="Jolt Physics" ;; esac
+    local pe; case "${BENCH_ENGINE:-jolt}" in physx) pe=PhysX ;; *) pe="Jolt Physics" ;; esac
     printf '[physics]\n\n3d/physics_engine="%s"\n' "$pe" > "$(dirname "$x")/override.cfg"
     [ -n "${BENCH_FLAVOUR:-}" ] && extra="$extra --flavour=$BENCH_FLAVOUR"
   fi

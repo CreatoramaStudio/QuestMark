@@ -706,7 +706,7 @@ Combines the talks (section 9) and source reading. **None was measured on a Deck
 
 ### 12.1 Benchmark status (2026-11-06)
 
-What exists (PROVED by the files in `benchmark/`; see `benchmark/README.md`): a shared spec (`benchmark/SPEC.md`), a Godot implementation (C++ GDExtension, Jolt by default; PhysX fork and GodotPhysics selectable, see `benchmark/godot/PHYSX.md`) and a Stride implementation (Bepu, JIT and Native AOT), scenarios A to G, run and merge scripts, and a render check. Only Godot and Stride are implemented; ezEngine and Bevy + Avian are not in the benchmark.
+What exists (PROVED by the files in `benchmark/`; see `benchmark/README.md`): a shared spec (`benchmark/SPEC.md`), a Godot implementation (C++ GDExtension, Jolt by default; PhysX fork selectable, see `benchmark/godot/PHYSX.md`) and a Stride implementation (Bepu, JIT and Native AOT), scenarios A to G, run and merge scripts, and a render check. Only Godot and Stride are implemented; ezEngine and Bevy + Avian are not in the benchmark.
 
 Proved:
 - Both engines run all scenarios in short smoke runs at the current settings (200 Hz physics, unlocked render loop, shared camera rule, game and stress profiles). Smoke runs show the code works. They are not results (godot and stride NOTES).

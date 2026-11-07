@@ -76,3 +76,6 @@ build/
 # raw run output holds machine info and local paths; keep local
 benchmark/results/*
 !benchmark/results/SUMMARY.md
+
+# local machine settings
+.claude/settings.local.json

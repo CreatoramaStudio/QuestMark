@@ -1,6 +1,6 @@
 # QuestMark engine benchmark
 
-Purpose: measure Godot (Jolt, optionally a PhysX fork or GodotPhysics) and Stride (Bepu) on the same physics-heavy scenes (A to G), so the engine choice in `docs/engine-choice.md` can rest on numbers. The rules are in [SPEC.md](SPEC.md); this file only says where things are and how to run them. Status: both engines run all scenarios in smoke runs at 200 Hz. The full protocol has NOT been run at 200 Hz and nothing has run on a Steam Deck (godot and stride NOTES, "not done" lists).
+Purpose: measure Godot (Jolt, optionally a PhysX fork) and Stride (Bepu) on the same physics-heavy scenes (A to G), so the engine choice in `docs/engine-choice.md` can rest on numbers. The rules are in [SPEC.md](SPEC.md); this file only says where things are and how to run them. Status: both engines run all scenarios in smoke runs at 200 Hz. The full protocol has NOT been run at 200 Hz and nothing has run on a Steam Deck (godot and stride NOTES, "not done" lists).
 
 ## Layout
 - `godot/`: Godot project; the measured logic is a C++ GDExtension in `src/` (godot-cpp), `legacy/` holds the old GDScript. Notes: [godot/NOTES.md](godot/NOTES.md). PhysX fork port: [godot/PHYSX.md](godot/PHYSX.md), patch in `godot/patches/`.
@@ -17,8 +17,11 @@ Only release builds give valid results; editor and debug runs do not.
 - Godot PhysX fork: build the fork and the PhysX SDK as in [godot/PHYSX.md](godot/PHYSX.md), then `FORK_TEMPLATE=<fork template_release exe> FORK_EDITOR=<fork editor console exe> bash tools/export-godot-fork.sh [label]`. Optional `GODOT_EXT_DLL`, `EXPORT_ROOT` (default `.tmp/export-fork`). Output: `<EXPORT_ROOT>/<label>/QuestBench.exe`.
 
 ## Run
+- Variants (one `run-all.sh` invocation each, strictly sequential): Godot Jolt (`BENCH_ENGINE=jolt`), Godot PhysX fork (`BENCH_ENGINE=physx` with `BENCH_FLAVOUR`), Stride Bepu JIT (`STRIDE_FLAVOR=bepu`), Stride Bepu Native AOT (`STRIDE_FLAVOR=bepu_aot`). GodotPhysics3D is not benchmarked.
+- Planned runtime from `--dry-run` (stages ABCDEFG): about 57 to 58 min per variant, 138 runs (range 40 to 80 min); about 3 h 50 min for all four. The ladder capacities in the estimate are assumptions; setup and retries are not included.
+- Set the exe paths and `OUT_DIR` in a gitignored local file (for example the `env` block of `.claude/settings.local.json`), never in tracked files. Re-export the Godot exe after any change to `benchmark/godot/src` or `project.godot`, and rebuild the Stride exes after source changes: stale exes were found once and would have produced 60 Hz data.
 - Full protocol, one engine variant at a time, strictly sequential: `bash tools/run-all.sh godot|stride [--dry-run] [--stages=ABCDEFG]`. `--dry-run` (or `DRY_RUN=1`) prints every command and the planned runtime and runs nothing; do this first.
-- Godot: `GODOT_BENCH_EXE=<QuestBench.exe>`, `BENCH_ENGINE=jolt|physx|godotphysics` (default jolt), optional `BENCH_FLAVOUR=<label>` (letters, digits, underscore). Files are named `godot-<engine>[-<flavour>][-stress]-<scenario>-<mode>-<run>`.
+- Godot: `GODOT_BENCH_EXE=<QuestBench.exe>`, `BENCH_ENGINE=jolt|physx` (default jolt), optional `BENCH_FLAVOUR=<label>` (letters, digits, underscore). Files are named `godot-<engine>[-<flavour>][-stress]-<scenario>-<mode>-<run>`.
 - Stride: `STRIDE_BENCH_EXE=<StrideBench.exe>`, `STRIDE_FLAVOR=bepu` (default, JIT) or `bepu_aot`.
 - Other variables: `OUT_DIR`, `WARMUP`, `MEASURE`, `RUNS`; full list in the header of `tools/run-all.sh`.
 - Merge: `perl tools/merge-results.pl <results-dir> > SUMMARY.md`.
