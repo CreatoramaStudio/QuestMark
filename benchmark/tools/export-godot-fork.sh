@@ -8,6 +8,7 @@
 #   GODOT_EXT_DLL  optional: the release DLL of the QuestBench extension (default: benchmark/godot/bin/clang/libquestbench.windows.template_release.x86_64.dll,
 #                  built by tools/build-godot-ext.sh template_release).
 #   EXPORT_ROOT    optional output root (default <project root>/.tmp/export-fork). Output: $EXPORT_ROOT/<label>/QuestBench.exe (+ .pck, DLL).
+#   Relative paths in FORK_TEMPLATE, FORK_EDITOR, GODOT_EXT_DLL and EXPORT_ROOT are taken from the project root.
 #   label          default "fork" (folder name only; the file-name label for results is BENCH_FLAVOUR in run-all.sh).
 # The scratch copy of the project points the extension's debug entry at the RELEASE DLL (the fork editor loads the extension while
 # exporting and no debug DLL is built). The committed bench.gdextension is not changed.
@@ -18,6 +19,11 @@ proj="$(cd "$here/../godot" && pwd)"
 root="$(cd "$here/../.." && pwd)"
 : "${FORK_TEMPLATE:?set FORK_TEMPLATE to the fork template_release exe}"
 : "${FORK_EDITOR:?set FORK_EDITOR to a fork editor console exe}"
+# relative paths in the env vars are taken from the project root (not from the caller's cwd)
+abs() { case "$1" in ""|/*|[A-Za-z]:*) echo "$1" ;; *) echo "$root/$1" ;; esac; }
+FORK_TEMPLATE="$(abs "$FORK_TEMPLATE")"; FORK_EDITOR="$(abs "$FORK_EDITOR")"
+[ -n "${GODOT_EXT_DLL:-}" ] && GODOT_EXT_DLL="$(abs "$GODOT_EXT_DLL")"
+[ -n "${EXPORT_ROOT:-}" ] && EXPORT_ROOT="$(abs "$EXPORT_ROOT")"
 [ -f "$FORK_TEMPLATE" ] || { echo "FORK_TEMPLATE not found: $FORK_TEMPLATE" >&2; exit 2; }
 [ -f "$FORK_EDITOR" ] || { echo "FORK_EDITOR not found: $FORK_EDITOR" >&2; exit 2; }
 label="${1:-fork}"

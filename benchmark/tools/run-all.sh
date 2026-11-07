@@ -19,11 +19,14 @@
 #                      a "-stress" token after the prefix, game keeps the plain names); B, C and G run in game only.
 #   STRIDE_BENCH_EXE   StrideBench.exe (JIT build output or Native AOT publish output)
 #   STRIDE_FLAVOR      backend label: bepu (default, JIT) or bepu_aot (AOT). Letters, digits and underscore only (no hyphen).
-#   OUT_DIR            output directory (default: <benchmark>/results)
+#   OUT_DIR            output directory (default: benchmark/results). Relative paths in OUT_DIR and the *_BENCH_EXE variables are taken
+#                      from the project root, not from the current directory.
 #   WARMUP / MEASURE / RUNS   seconds and repeats for A-E (default 5 / 20 / 3 = SPEC)
 #   SCALE_WARMUP (5) SCALE_MEASURE (10)  F base values; warm-up grows with N from LAG_N (see warmup_for)
 #   LAG_N              first N that needs the long warm-up (default 4000 godot, 16000 stride, from the NOTES findings)
 #   G_WARMUP (10) G_MEASURE (20)  DEBRIS_POOLED (1; 0 skips debris-pooled)
+#   BENCH_PROGRESS     1 pins a progress bar on the last terminal line (real TTY only); OUT_DIR/progress-<prefix>.txt always holds the same line,
+#                      watch it with: bash tools/bench-progress.sh <OUT_DIR> watch
 #   DRY_RUN=1, SIM_PASS20 / SIM_PASS33 (F) and SIM_G_PASS20 / SIM_G_PASS33 (G): assumed capacities for the dry-run plan only (defaults for F:
 #                      2000 / 4000 at 200 Hz, an assumption from one smoke run: 3.3 ms per step at 2000 awake bodies against a 5 ms budget).
 #   Physics runs at a fixed 200 Hz and the render loop is unlocked (no vsync, no frame cap), so a frame carries a varying number of steps. Sanity
@@ -42,7 +45,10 @@ for a in "$@"; do case "$a" in
 esac; done
 [ -n "$engine" ] || { echo "usage: run-all.sh godot|stride [--dry-run] [--stages=ABCDEFG]" >&2; exit 2; }
 
-OUT_DIR="${OUT_DIR:-$here/../results}"
+# Paths in env vars may be relative to the project root (not to the caller's cwd), so the tree can move without breaking them.
+root="$(cd "$here/../.." && pwd)"
+abs() { case "$1" in ""|/*|[A-Za-z]:*) echo "$1" ;; *) echo "$root/$1" ;; esac; }
+OUT_DIR="$(abs "${OUT_DIR:-benchmark/results}")"
 WARMUP="${WARMUP:-5}"; MEASURE="${MEASURE:-20}"; RUNS="${RUNS:-3}"
 SCALE_WARMUP="${SCALE_WARMUP:-5}"; SCALE_MEASURE="${SCALE_MEASURE:-10}"
 G_WARMUP="${G_WARMUP:-10}"; G_MEASURE="${G_MEASURE:-20}"; DEBRIS_POOLED="${DEBRIS_POOLED:-1}"
@@ -54,10 +60,10 @@ case "$engine" in
   godot)
     BENCH_ENGINE="${BENCH_ENGINE:-jolt}"; export BENCH_ENGINE; export BENCH_FLAVOUR="${BENCH_FLAVOUR:-}"
     case "$BENCH_ENGINE" in jolt|physx) ;; *) echo "BENCH_ENGINE must be jolt|physx: $BENCH_ENGINE" >&2; exit 2 ;; esac
-    flavor="$BENCH_ENGINE${BENCH_FLAVOUR:+-$BENCH_FLAVOUR}"; prefix="godot-$flavor"; exe="${GODOT_BENCH_EXE:-}"
+    flavor="$BENCH_ENGINE${BENCH_FLAVOUR:+-$BENCH_FLAVOUR}"; prefix="godot-$flavor"; exe="$(abs "${GODOT_BENCH_EXE:-}")"
     LAG_N="${LAG_N:-4000}"; SIM_PASS20="${SIM_PASS20:-2000}"; SIM_PASS33="${SIM_PASS33:-4000}" ;;
   stride)
-    flavor="${STRIDE_FLAVOR:-bepu}"; prefix="stride-$flavor"; exe="${STRIDE_BENCH_EXE:-}"
+    flavor="${STRIDE_FLAVOR:-bepu}"; prefix="stride-$flavor"; exe="$(abs "${STRIDE_BENCH_EXE:-}")"
     LAG_N="${LAG_N:-16000}"; SIM_PASS20="${SIM_PASS20:-2000}"; SIM_PASS33="${SIM_PASS33:-4000}" ;;
 esac
 SIM_G_PASS20="${SIM_G_PASS20:-8}"; SIM_G_PASS33="${SIM_G_PASS33:-16}"
@@ -71,6 +77,36 @@ log="$OUT_DIR/run-all-$prefix.log"; stage="$OUT_DIR/.stage-$prefix"
 QUIET=0; TOTAL_S=0; NRUNS=0; fails=0
 say() { [ "$QUIET" = 1 ] && return; if [ "$DRY" = 1 ]; then echo "$*"; else echo "$(date +%H:%M:%S) $*" | tee -a "$log"; fi; }
 has_stage() { case "$STAGES" in *"$1"*) return 0 ;; *) return 1 ;; esac; }
+
+# ---- fixed progress bar: last terminal line stays put (scroll region); plain progress file for other shells ----
+# The pinned bar is opt-in (BENCH_PROGRESS=1, real terminal only); the progress file is always written (watch it with tools/bench-progress.sh). Cells done / expected cells (the expectation comes from the dry-run plan, so it moves with the ladders:
+# the bar stays below 100 percent until the run ends). ETA = average time per finished cell x remaining cells (rough).
+CELLS_DONE=0; EXP_CELLS=0; START_T=$(date +%s); PROG_TTY=0; PROG_ROWS=0
+prog_init() {
+  [ "$DRY" = 1 ] && return
+  EXP_CELLS="$(echo "$1" | sed -n 's/.*) in \([0-9]*\) runs (assumed.*/\1/p' | head -1)"; EXP_CELLS="${EXP_CELLS:-0}"
+  if [ "${BENCH_PROGRESS:-0}" = 1 ] && [ -t 1 ]; then
+    PROG_ROWS="$(stty size 2>/dev/null | awk '{print $1}')"
+    if [ "${PROG_ROWS:-0}" -ge 5 ]; then
+      PROG_TTY=1
+      printf '\033[1;%dr\033[%d;1H' $((PROG_ROWS - 1)) $((PROG_ROWS - 1))
+      trap 'printf "\033[r\033[%d;1H\n" "$PROG_ROWS"' EXIT
+    fi
+  fi
+  prog_draw "starting"
+}
+prog_draw() {
+  [ "$DRY" = 1 ] && return
+  local now el pct n bar eta line
+  now=$(date +%s); el=$((now - START_T))
+  if [ "$EXP_CELLS" -gt 0 ]; then pct=$((CELLS_DONE * 100 / EXP_CELLS)); [ "$pct" -gt 99 ] && pct=99; else pct=0; fi
+  [ "$1" = done ] && pct=100
+  n=$((pct * 30 / 100)); bar="$(printf '%*s' "$n" '' | tr ' ' '#')$(printf '%*s' "$((30 - n))" '' | tr ' ' '-')"
+  if [ "$CELLS_DONE" -gt 0 ] && [ "$EXP_CELLS" -gt "$CELLS_DONE" ]; then eta="$(( el * (EXP_CELLS - CELLS_DONE) / CELLS_DONE / 60 )) min left"; else eta="eta n/a"; fi
+  line="$prefix [$bar] $pct%  $CELLS_DONE / ~$EXP_CELLS cells  elapsed $((el / 60)) min  $eta  fails $fails  | $*"
+  echo "$line" > "$OUT_DIR/progress-$prefix.txt"
+  [ "$PROG_TTY" = 1 ] && printf '\0337\033[%d;1H\033[2K%s\0338' "$PROG_ROWS" "$(echo "$line" | cut -c1-$(( $(stty size | awk '{print $2}') - 1 )))"
+}
 
 # ---- warm-up that covers the fall (godot NOTES: N=4000 paced needs 8 s; fall time sqrt(2h/g), h = layers x 0.6 m + 1) ----
 warmup_for() { # N -> seconds
@@ -107,11 +143,11 @@ cmdline() { # for dry-run display
 check() { # kind mode csv measure -> prints problem or nothing. kind: abcd | unlock-render | unlock-phys | paced
   local kind="$1" mode="$2" csv="$3" measure="$4" want=$(( ${4%.*}*200 ))
   [ -s "$csv" ] || { echo "no csv"; return; }
-  # steps_per_frame is the second-to-last CSV column (physics_step_ms is last). The render loop is unlocked, so rows vary; steps do not.
+  # steps_per_frame is found by header name (Godot: second-to-last column, Stride: last). The render loop is unlocked, so rows vary; steps do not.
   awk -F, -v want="$want" -v kind="$kind" -v mode="$mode" -v eng="$engine" -v sc="$5" '
-    NR==1 { if ($(NF-1) != "steps_per_frame") nostep=1; next }
+    NR==1 { sidx=0; for (i=1;i<=NF;i++) if ($i == "steps_per_frame") sidx=i; if (!sidx) nostep=1; next }
     { n++; for (i=1;i<=9;i++) if ($i ~ /[Nn][Aa][Nn]|[Ii]nf/ || $i == "") bad=1
-      st += $(NF-1); if ($9+0 > am) am=$9+0 }
+      st += $sidx; if ($9+0 > am) am=$9+0 }
     END {
       if (bad) { print "NaN/inf/empty field"; exit }
       if (nostep) { print "CSV has no steps_per_frame column (60 Hz build?)"; exit }
@@ -176,6 +212,7 @@ run_cell() {
   for attempt in $(seq 1 "$maxtry"); do
     rm -f "$base".csv "$base".csv.summary.txt "$base".env.txt; rm -rf "$stage"; mkdir -p "$stage"
     say "run $prefix$PROF_TOK $token $mode $run attempt $attempt"
+    prog_draw "running $token $mode run $run (attempt $attempt)"
     t0=$(date +%s)
     export BENCH_ENGINE BENCH_FLAVOUR
     timeout "$to" bash -c "$(declare -f launch); exe='$x'; engine='$engine'; log='$log'; launch '$x' '$sc' '$mode' '$run' '$w' '$m' '$extra' '$hl' '$(to_win "$stage")'"
@@ -186,11 +223,12 @@ run_cell() {
     [ "$rc" -ne 0 ] && prob="exit code $rc ${prob:+; $prob}"
     say "  rc=$rc secs=$(( $(date +%s) - t0 )) ${prob:+PROBLEM: $prob}"
     CELL_PROB="$prob"; CELL_RC=$rc
-    [ -z "$prob" ] && return
+    [ -z "$prob" ] && { CELLS_DONE=$((CELLS_DONE+1)); prog_draw "finished $token $mode run $run"; return; }
     if [ "$attempt" -lt "$maxtry" ]; then
       for f in "$base".*; do [ -e "$f" ] && mv "$f" "${f/$prefix$PROF_TOK-$token-$mode-$run/$prefix$PROF_TOK-$token-$mode-$run.failed-1}"; done
     else
       say "  FAILED $maxtry TIMES (last attempt kept in place, flagged here): $token $mode $run"; fails=$((fails+1))
+      CELLS_DONE=$((CELLS_DONE+1)); prog_draw "FAILED $token $mode run $run"
     fi
   done
 }
@@ -360,6 +398,8 @@ if [ "$DRY" = 1 ]; then
 fi
 
 # real run: print the plan estimate first (same code path as --dry-run)
-"$0" "$engine" --dry-run --stages="$STAGES" 2>/dev/null | grep '^ESTIMATE' | tee -a "$log"
+est="$("$0" "$engine" --dry-run --stages="$STAGES" 2>/dev/null | grep "^ESTIMATE" | tee -a "$log")"
+prog_init "$est"
 run_protocol
 say "== $prefix done, failed cells: $fails"
+prog_draw done

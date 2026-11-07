@@ -117,6 +117,7 @@ void QuestBench::_parse_args() {
 			warmup_s = v.to_float();
 			warmup_given = true;
 		} else if (k == "measure") {
+			measure_s = v.to_float();
 		} else if (k == "flavour") {
 			flavour = v;
 		} else if (k == "camera") {
@@ -133,7 +134,6 @@ void QuestBench::_parse_args() {
 			msaa = v.to_int();
 		} else if (k == "vsync") {
 			vsync_opt = v;
-			measure_s = v.to_float();
 		} else if (k == "diag-busy-ms") {
 			diag_busy_ms = v.to_float();
 		} else if (k == "bodies") {

@@ -5,13 +5,14 @@ Purpose: measure Godot (Jolt, optionally a PhysX fork) and Stride (Bepu) on the 
 ## Layout
 - `godot/`: Godot project; the measured logic is a C++ GDExtension in `src/` (godot-cpp), `legacy/` holds the old GDScript. Notes: [godot/NOTES.md](godot/NOTES.md). PhysX fork port: [godot/PHYSX.md](godot/PHYSX.md), patch in `godot/patches/`.
 - `stride/`: Stride 4.4.1 + Bepu solution (C#, .NET 10, scenes in code). Notes: [stride/NOTES.md](stride/NOTES.md). `render-smoke.ps1` is the render check.
-- `tools/`: `build-godot-ext.sh`, `export-godot-fork.sh`, `run-all.sh`, `merge-results.pl`, `parity_check.pl`, `build-progress.sh`.
+- `tools/`: `build-godot-ext.sh`, `export-godot-fork.sh`, `run-all.sh`, `merge-results.pl`, `parity_check.pl`, `build-progress.sh` (scons fork builds), `ext-build-progress.sh` (extension build), `bench-progress.sh` (benchmark run). Paths given to the tools may be relative to the project root.
 - `results/`: output (CSV, `.summary.txt`, `.env.txt`, `SUMMARY.md`); `results/gdscript-old/` is the old GDScript run. Not ignored by git yet (see SPEC "Layout").
 - Scratch files go in `.tmp/` at the project root only.
 
 ## Build
 Only release builds give valid results; editor and debug runs do not.
 - Godot extension: `GODOTCPP_DIR=<godot-cpp> GODOT_API_JSON=<extension_api.json> [PYTHON3=<python3>] COMPILER=clang|msvc bash tools/build-godot-ext.sh [template_debug|template_release|all]`. `GODOT_API_JSON` comes from `<godot exe> --headless --dump-extension-api`. Output: `godot/bin/<compiler>/`. Script default is msvc; the committed `bench.gdextension` selects `bin/clang/` (`SELECT_DEFAULT=1` rewrites it). Then export the "Windows Desktop" preset with the editor and matching export templates (godot NOTES, "C++ port", step 5).
+  Progress: `bash tools/ext-build-progress.sh clang template_release watch` (compiled units / units in the vcxproj files, then "linked"). After the project folder moved, the script removes the stale CMake tree and rebuilds (clang about 14 min on the dev machine, 1092 units).
 - Stride JIT: `dotnet build -c Release` in `stride/` (SPEC label `bepu`).
 - Stride Native AOT: `dotnet publish -c Release -r win-x64 -p:BenchAot=true -o <dir>` (label `bepu_aot`). `IlcInstructionSet` is `avx2` in `stride/StrideBench.csproj` for this variant, so the exe needs a CPU with AVX2. The ILC link step needs `vswhere.exe` on `PATH` (the Visual Studio Installer folder; stride NOTES, "Native AOT variant").
 - Godot PhysX fork: build the fork and the PhysX SDK as in [godot/PHYSX.md](godot/PHYSX.md), then `FORK_TEMPLATE=<fork template_release exe> FORK_EDITOR=<fork editor console exe> bash tools/export-godot-fork.sh [label]`. Optional `GODOT_EXT_DLL`, `EXPORT_ROOT` (default `.tmp/export-fork`). Output: `<EXPORT_ROOT>/<label>/QuestBench.exe`.
@@ -24,6 +25,7 @@ Only release builds give valid results; editor and debug runs do not.
 - Godot: `GODOT_BENCH_EXE=<QuestBench.exe>`, `BENCH_ENGINE=jolt|physx` (default jolt), optional `BENCH_FLAVOUR=<label>` (letters, digits, underscore). Files are named `godot-<engine>[-<flavour>][-stress]-<scenario>-<mode>-<run>`.
 - Stride: `STRIDE_BENCH_EXE=<StrideBench.exe>`, `STRIDE_FLAVOR=bepu` (default, JIT) or `bepu_aot`.
 - Other variables: `OUT_DIR`, `WARMUP`, `MEASURE`, `RUNS`; full list in the header of `tools/run-all.sh`.
+- Progress: `run-all.sh` writes `OUT_DIR/progress-<prefix>.txt` after every cell (cells done / expected cells from the dry-run plan, elapsed, rough ETA, failures). Show it like the build bar with `bash tools/bench-progress.sh <OUT_DIR> watch` in a second shell or as a background task (refresh every 5 s, ends at "done"). `BENCH_PROGRESS=1` additionally pins the bar on the last line of a real terminal (not tested in a real terminal). The expected cell count moves with the ladders, so the bar stays below 100% until the run ends.
 - Merge: `perl tools/merge-results.pl <results-dir> > SUMMARY.md`.
 - Compare two env files key by key: `perl tools/parity_check.pl <a.env.txt> <b.env.txt>`.
 - Render sanity check (Stride): `powershell -File stride/render-smoke.ps1 -Exe <StrideBench.exe> [-OutDir .tmp/render-smoke] [-Quick] [-Keep]`. The window must be visible and unobscured.

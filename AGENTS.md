@@ -15,6 +15,7 @@ QuestMark is the engine benchmark and engine study for Quest, a planned physics-
 - Read PhysX results next to `awake_bodies` (PhysX sleeps far more than Jolt). Engine in use is proved only by the class of the direct space state, not by the project setting.
 - Always read the latest repo heads when checking an engine, not only stable releases.
 - No local paths, hardware names or personal data in tracked files; keep them in gitignored local files or env vars.
+- Use project-root-relative paths everywhere (scripts, env vars in `.claude/settings.local.json`, commands); the tools resolve them against the project root, not the caller's cwd. The project was moved once: CMake caches under `.tmp/godotext-build/` keep absolute paths and must be rebuilt after a move.
 
 ## Build and run (details in benchmark/README.md)
 - Godot extension: `benchmark/tools/build-godot-ext.sh` (`COMPILER=clang|msvc`).
