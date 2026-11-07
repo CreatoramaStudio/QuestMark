@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>StrideBench</RootNamespace>
+    <AssemblyName>StrideBench</AssemblyName>
+    <StrideGraphicsApi>Direct3D11</StrideGraphicsApi>
+    <StridePlatforms>Windows</StridePlatforms>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ServerGarbageCollector>false</ServerGarbageCollector>
+    <NoWarn>$(NoWarn);NU1902;NU1903</NoWarn>
+  </PropertyGroup>
+  <!-- Native AOT variant (not the default build): dotnet publish -c Release -r win-x64 -p:BenchAot=true -o <dir>, see NOTES.md "Native AOT" -->
+  <PropertyGroup Condition="'$(BenchAot)' == 'true'">
+    <PublishAot>true</PublishAot>
+    <IlcInstructionSet>avx2</IlcInstructionSet>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Stride.Engine" Version="4.4.1" />
+    <PackageReference Include="Stride.BepuPhysics" Version="4.4.1" />
+    <PackageReference Include="Stride.Physics" Version="4.4.1" />
+    <PackageReference Include="Stride.AssetCompiler" Version="4.4.1" IncludeAssets="build;buildTransitive" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

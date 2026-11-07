@@ -1,0 +1,26 @@
+; Engine configuration file (hand-written, never opened in the editor).
+config_version=5
+
+[application]
+
+config/name="QuestBench"
+run/main_scene="res://main.tscn"
+run/max_fps=0
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/vsync/vsync_mode=0
+
+[physics]
+
+common/physics_ticks_per_second=200
+common/max_physics_steps_per_frame=64
+common/physics_jitter_fix=0.0
+3d/physics_engine="Jolt Physics"
+3d/default_gravity=9.81
+3d/default_gravity_vector=Vector3(0, -1, 0)
+jolt_physics_3d/limits/max_bodies=10240
+jolt_physics_3d/limits/max_body_pairs=65536
+jolt_physics_3d/limits/max_contact_constraints=20480
