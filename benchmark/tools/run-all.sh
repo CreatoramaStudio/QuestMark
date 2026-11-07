@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Run the full SPEC protocol (benchmark/SPEC.md) for one engine variant at a time, strictly sequential.
-# Usage: run-all.sh godot|stride [--dry-run] [--stages=ABCDEFG]
+# Usage: run-all.sh godot|stride|ezengine [--dry-run] [--stages=ABCDEFG]
 #   Stages: A pit-2000, B raycast-1000/10000, C chains, D mixed (each physics+render, RUNS runs), E unlock (3 variants),
 #           F scale ladder, G debris rate ladder (+ debris-pooled).
 #   --dry-run (or DRY_RUN=1): print every command and the planned runtime, run nothing.
@@ -20,6 +20,10 @@
 #                      a "-stress" token after the prefix, game keeps the plain names); B, C and G run in game only.
 #   STRIDE_BENCH_EXE   StrideBench.exe (JIT build output or Native AOT publish output)
 #   STRIDE_FLAVOR      backend label: bepu (default, JIT) or bepu_aot (AOT). Letters, digits and underscore only (no hyphen).
+#   EZENGINE_BENCH_EXE QuestBench.exe built by tools/build-ezengine.sh (ezEngine + Jolt, no limit flags: the engine derives the Jolt limits from
+#                      --max-bodies, see ezengine/NOTES.md). The script passes --project=<abs path of benchmark/ezengine/Project> (computed at run time),
+#                      and aborts when env.txt physics_space_state_class is not ezJoltWorldModule. BENCH_FLAVOUR is accepted (file prefix
+#                      ezengine-jolt[-flavour]-). No headless mode: physics runs also open the window.
 #   OUT_DIR            output directory (default: benchmark/results). Relative paths in OUT_DIR and the *_BENCH_EXE variables are taken
 #                      from the project root, not from the current directory.
 #   WARMUP / MEASURE / RUNS   seconds and repeats for A-E (default 5 / 20 / 3 = SPEC)
@@ -31,6 +35,8 @@
 #                      (std::thread::hardware_concurrency), so for Godot the script also writes threading/worker_pool/max_threads (and for
 #                      physx physics/physx_3d/simulation/cpu_worker_threads) = number of CPUs in the mask into override.cfg; env.txt records
 #                      the values in effect. Stride gets --bepu-threads and --render-threads = that number (env.txt: bepu_thread_count_setting).
+#                      ezengine: the mask holds from process start; ezEngine has no thread-count flag (env.txt parity.physics_threads records the worker
+#                      counts the engine chose, not verified to follow the mask).
 #                      The exit code passes through a launch.cmd in the stage folder. Use a separate OUT_DIR for such runs.
 #   DECK_LIKE=1        shortcut for CPU_AFFINITY=FF: 8 logical CPUs like the Steam Deck's 4 cores / 8 threads. A rough desktop stand-in for
 #                      the thread count only; clocks, cache, memory, GPU and Proton differ, so the numbers are NOT Deck numbers.
@@ -49,10 +55,10 @@ engine=""; DRY="${DRY_RUN:-0}"; STAGES="${STAGES:-ABCDEFG}"
 for a in "$@"; do case "$a" in
   --dry-run) DRY=1 ;;
   --stages=*) STAGES="${a#--stages=}" ;;
-  godot|stride) engine="$a" ;;
-  *) echo "usage: run-all.sh godot|stride [--dry-run] [--stages=ABCDEFG]" >&2; exit 2 ;;
+  godot|stride|ezengine) engine="$a" ;;
+  *) echo "usage: run-all.sh godot|stride|ezengine [--dry-run] [--stages=ABCDEFG]" >&2; exit 2 ;;
 esac; done
-[ -n "$engine" ] || { echo "usage: run-all.sh godot|stride [--dry-run] [--stages=ABCDEFG]" >&2; exit 2; }
+[ -n "$engine" ] || { echo "usage: run-all.sh godot|stride|ezengine [--dry-run] [--stages=ABCDEFG]" >&2; exit 2; }
 
 # Paths in env vars may be relative to the project root (not to the caller's cwd), so the tree can move without breaking them.
 root="$(cd "$here/../.." && pwd)"
@@ -83,12 +89,15 @@ case "$engine" in
   stride)
     flavor="${STRIDE_FLAVOR:-bepu}"; prefix="stride-$flavor"; exe="$(abs "${STRIDE_BENCH_EXE:-}")"
     LAG_N="${LAG_N:-16000}"; SIM_PASS20="${SIM_PASS20:-2000}"; SIM_PASS33="${SIM_PASS33:-4000}" ;;
+  ezengine)
+    export BENCH_FLAVOUR="${BENCH_FLAVOUR:-}"; flavor="jolt${BENCH_FLAVOUR:+-$BENCH_FLAVOUR}"; prefix="ezengine-$flavor"; exe="$(abs "${EZENGINE_BENCH_EXE:-}")"
+    LAG_N="${LAG_N:-4000}"; SIM_PASS20="${SIM_PASS20:-2000}"; SIM_PASS33="${SIM_PASS33:-4000}" ;;
 esac
 SIM_G_PASS20="${SIM_G_PASS20:-8}"; SIM_G_PASS33="${SIM_G_PASS33:-16}"
 case "${BENCH_FLAVOUR:-}${STRIDE_FLAVOR:-}" in *[!A-Za-z0-9_]*) echo "flavour label must be [A-Za-z0-9_]+ (no hyphen)" >&2; exit 2 ;; esac
 PROF=game; PROF_TOK=""    # current profile (game|stress); set by the stage loops
 if [ "$DRY" != 1 ]; then
-  [ -n "$exe" ] || { echo "set GODOT_BENCH_EXE / STRIDE_BENCH_EXE" >&2; exit 2; }
+  [ -n "$exe" ] || { echo "set GODOT_BENCH_EXE / STRIDE_BENCH_EXE / EZENGINE_BENCH_EXE" >&2; exit 2; }
   [ -f "$exe" ] || { echo "exe not found: $exe" >&2; exit 2; }
 fi
 log="$OUT_DIR/run-all-$prefix.log"; stage="$OUT_DIR/.stage-$prefix"
@@ -143,7 +152,7 @@ launch() { # exe scenario mode run warm measure extra headless(0|1) outdir
   local x="$1" sc="$2" mode="$3" run="$4" w="$5" m="$6" extra="$7" hl="$8" od="$9" pre=""
   [ "$hl" = 1 ] && pre="--headless -- "
   [ "$engine" = godot ] && [ "$hl" != 1 ] && pre="-- "
-  [ "$engine" = stride ] && pre=""
+  case "$engine" in stride|ezengine) pre="" ;; esac
   if [ "$engine" = godot ]; then
     local pe; case "${BENCH_ENGINE:-jolt}" in physx) pe=PhysX ;; *) pe="Jolt Physics" ;; esac
     { printf '[physics]\n\n3d/physics_engine="%s"\n' "$pe"
@@ -153,6 +162,7 @@ launch() { # exe scenario mode run warm measure extra headless(0|1) outdir
       fi; } > "$(dirname "$x")/override.cfg"
     [ -n "${BENCH_FLAVOUR:-}" ] && extra="$extra --flavour=$BENCH_FLAVOUR"
   fi
+  [ "$engine" = ezengine ] && [ -n "${BENCH_FLAVOUR:-}" ] && extra="$extra --flavour=$BENCH_FLAVOUR"
   if [ -n "${CPU_AFFINITY:-}" ]; then
     # Stride: cap the Bepu and render dispatcher threads like the Godot worker pool above (the .NET pool sizing under a mask is unverified)
     [ "$engine" = stride ] && extra="$extra --bepu-threads=$AFF_N --render-threads=$AFF_N"
@@ -213,7 +223,7 @@ check() { # kind mode csv measure -> prints problem or nothing. kind: abcd | unl
 publish_stage() {
   local f bn nn rx
   # stage files are named by the exe: godot-<recorded engine tag>[-flavour][-stress]-<token>... ; stride-<backend>[-stress]-<token>...
-  if [ -n "${BENCH_FLAVOUR:-}" ] && [ "$engine" = godot ]; then rx="^godot-[^-]+-$BENCH_FLAVOUR(-stress)?-"; else rx="^(godot|stride)-[^-]+(-stress)?-"; fi
+  if [ -n "${BENCH_FLAVOUR:-}" ] && { [ "$engine" = godot ] || [ "$engine" = ezengine ]; }; then rx="^(godot|ezengine)-[^-]+-$BENCH_FLAVOUR(-stress)?-"; else rx="^(godot|stride|ezengine)-[^-]+(-stress)?-"; fi
   for f in "$stage"/*; do [ -e "$f" ] || continue
     bn="$(basename "$f")"
     nn="$(echo "$bn" | sed -E "s/$rx//; s/^scale-([0-9]+)-unlock-physics-/scale-unlock-\1-physics-/")"
@@ -223,6 +233,17 @@ publish_stage() {
 
 # Godot only: the engine proved at run time (env.txt engine_tag) must equal the requested BENCH_ENGINE, else ABORT the whole run.
 verify_engine() {
+  if [ "$engine" = ezengine ]; then
+    # ezEngine: the physics module in the world must be the Jolt one (env.txt physics_space_state_class, read from the running world)
+    local ez cls; ez="$(ls "$stage"/*.env.txt 2>/dev/null | head -1)"
+    [ -n "$ez" ] || return 0
+    cls="$(sed -n 's/^physics_space_state_class[^:]*:[[:space:]]*//p' "$ez" | head -1 | tr -d '\r')"
+    if [ "$cls" != ezJoltWorldModule ]; then
+      say "ABORT: the run recorded physics_space_state_class=${cls:-<none>}, expected ezJoltWorldModule. Files kept in $stage."
+      exit 3
+    fi
+    return 0
+  fi
   [ "$engine" = godot ] || return 0
   local ef tag; ef="$(ls "$stage"/*.env.txt 2>/dev/null | head -1)"
   [ -n "$ef" ] || return 0
@@ -240,6 +261,7 @@ run_cell() {
   local kind="$1" token="$2" sc="$3" mode="$4" run="$5" w="$6" m="$7" extra="$8" hl="$9" x="${10}" to="${11}" chk="${12}"
   local base="$OUT_DIR/$prefix$PROF_TOK-$token-$mode-$run" attempt t0 rc prob f
   extra="$extra --profile=$PROF"
+  [ "$engine" = ezengine ] && extra="$extra --project=$(if command -v cygpath >/dev/null 2>&1; then cygpath -m "$root/benchmark/ezengine/Project"; else echo "$root/benchmark/ezengine/Project"; fi)"
   [ "$engine" = godot ] && [ "$BENCH_ENGINE" = jolt ] && extra="$extra --jolt-limits=$(limits_for "$sc")"
   extra="${extra# }"
   CELL_PROB=""; CELL_RC=0

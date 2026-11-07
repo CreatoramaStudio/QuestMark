@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 # Compare two env.txt files key by key and print the mismatches (SPEC "Settings parity").
 # Usage: perl parity_check.pl <a.env.txt> <b.env.txt> [--all]
-#   Both engines write the same plain `key: value` names for the compared keys. Godot additionally writes `parity.*` details
+#   All engines (Godot, Stride, ezEngine) write the same plain `key: value` names for the compared keys. Godot additionally writes `parity.*` details
 #   (gravity, friction, damping, shapes, ...); keys that exist in only one file are listed as "only in A/B" and never count as
 #   a mismatch. Values are compared on the first token (the text after the number is a free-form annotation); numbers with a
 #   relative tolerance of 1e-3 (absolute 0.002), vectors "(x, y, z)" component-wise; values starting with "n/a" on either side
@@ -49,6 +49,6 @@ if ($all) { my %seen = map { $_ => 1 } @keys;
 # Jolt-only keys have a space in env.txt ("jolt <name>: ..."), so load() skips them. The temporary allocator size is shown as information
 # only, never a mismatch (Stride/Bepu has no such buffer; raised profile = 1024 MiB).
 sub raw_jolt { my ($p, $name) = @_; open(my $fh, '<', $p) or return 'n/a'; while (<$fh>) { s/\r?\n$//; return $1 if /^jolt \Q$name\E[:]\s*(.*)$/; } return 'n/a'; }
-printf "INFO     %-26s A=[%s] B=[%s]  (Jolt-only, MiB; Stride/Bepu has no such buffer)\n", 'jolt temp_buffer_size', raw_jolt($files[0], 'temporary_memory_buffer_size'), raw_jolt($files[1], 'temporary_memory_buffer_size');
+printf "INFO     %-26s A=[%s] B=[%s]  (Jolt-only, MiB; Stride/Bepu has no such buffer, ezEngine uses a growing allocator)\n", 'jolt temp_buffer_size', raw_jolt($files[0], 'temporary_memory_buffer_size'), raw_jolt($files[1], 'temporary_memory_buffer_size');
 printf "\nparity_check:%d equal, %d mismatch, %d n/a (physics mode), see KNOWN lines for recorded engine differences\n", $ok, $mis, $na;
 exit($mis ? 1 : 0);

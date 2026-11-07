@@ -104,7 +104,7 @@ if (@ARGV && $ARGV[0] eq '--eval') {
 # ---- collect ----
 my $dir = shift or die "usage: merge-results.pl <results-dir>\n";
 opendir(my $dh, $dir) or die "cannot open $dir: $!\n";
-my $FN = qr/^(godot|stride)-([A-Za-z0-9_]+?)(?:-(?!stress-)([A-Za-z0-9_]+?))?(-stress)?-((?:pit|raycast|chains|mixed|unlock|scale|debris)[A-Za-z0-9_.-]*)-(physics|render)-(\d+)\.csv$/;
+my $FN = qr/^(godot|stride|ezengine)-([A-Za-z0-9_]+?)(?:-(?!stress-)([A-Za-z0-9_]+?))?(-stress)?-((?:pit|raycast|chains|mixed|unlock|scale|debris)[A-Za-z0-9_.-]*)-(physics|render)-(\d+)\.csv$/;
 my @files = sort grep { $_ =~ $FN && !/\.failed/ } readdir $dh;
 closedir $dh;
 my %cell;
@@ -130,7 +130,7 @@ sub keys_where { my ($re) = @_; return grep { (key_parts($_))[1] =~ $re } keys %
 # ---- header ----
 print "# Benchmark summary\n\n";
 print "Physics rate: fixed 200 Hz (dt 0.005 s), render loop unlocked (vsync off, no frame cap). Results recorded at 60 Hz physics (older CSVs without the steps_per_frame column) are NOT comparable with 200 Hz results and are not given a pass verdict here. Profile: game = engine default sleeping, stress = sleeping off for A, D (mixed), F; B, C and G are the same in both profiles (see SPEC Profiles).\n\n";
-print "Known deviations between the engines (SPEC \"Settings parity\"; read the SPEC table for values and reasons): no restitution in Bepu; solver iterations and substeps are not comparable between Jolt and Bepu (both recorded); damping formulas differ at equal nominal 0.1; Jolt limit profiles old/raised exist only for Godot; mixed ceiling is static in Godot and kinematic in Stride; RNG sequences differ; physics_ms stopwatches bound different work; shadow filtering and cascade implementations differ by engine. Use tools/parity_check.pl on two env.txt files for the per-run key comparison.\n\n";
+print "Known deviations between the engines (SPEC \"Settings parity\"; read the SPEC table for values and reasons): no restitution in Bepu; solver iterations and substeps are not comparable between Jolt and Bepu (both recorded); damping formulas differ at equal nominal 0.1; Jolt limit profiles old/raised exist only for Godot (ezEngine derives the limits from its body count); mixed ceiling is static in Godot and kinematic in Stride; RNG sequences differ; physics_ms stopwatches bound different work; shadow filtering and cascade implementations differ by engine. Use tools/parity_check.pl on two env.txt files for the per-run key comparison.\n\n";
 
 # ---- A to D ----
 my %so = ('pit-2000'=>1,'raycast-1000'=>2,'raycast-10000'=>3,'chains'=>4,'mixed'=>5);
