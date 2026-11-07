@@ -713,9 +713,9 @@ Proved:
 - Earlier full runs (5 s warm-up, 20 s measured, 3 repeats, scenarios A to D) exist only at 60 Hz physics, for Godot (GDScript and C++) and Stride JIT. They are not comparable with the 200 Hz setup and are not used for any claim here.
 
 Open:
-- The full protocol has not been run at 200 Hz, for any engine or variant. No timing verdict exists yet.
+- The full protocol ran once at 200 Hz on 2026-11-07 for all four variants (one desktop machine, results not committed yet). No timing verdict is drawn yet: the results are not reviewed, and stages near a ladder limit flip between runs (the one-run ladder decision and the 3-run median disagree by one stage in some ladders).
 - No run on a Steam Deck under Proton; desktop numbers do not transfer to it.
-- Scenario G and the PhysX fork have smoke runs only; scale and debris ladders were not completed.
+- Scenario G and the PhysX fork ran in that one full run only; the scale and debris ladders were completed once.
 - Some settings are not equal between the engines (solver, damping formulas, restitution, light units; list in `benchmark/SPEC.md`, "Settings parity"), so cross-engine ratios will carry those caveats.
 
 Effect on this document: the ranking in section 1 and the conclusions in sections 4 to 6 come from the source-read study and stay unchanged until measured numbers exist. Nothing in the benchmark has contradicted or confirmed them yet.

@@ -144,21 +144,27 @@ check() { # kind mode csv measure -> prints problem or nothing. kind: abcd | unl
   local kind="$1" mode="$2" csv="$3" measure="$4" want=$(( ${4%.*}*200 ))
   [ -s "$csv" ] || { echo "no csv"; return; }
   # steps_per_frame is found by header name (Godot: second-to-last column, Stride: last). The render loop is unlocked, so rows vary; steps do not.
+  # The checks catch crashes, early exits and broken pacing only. A slow engine is a result, not a failed run: when a step costs more than
+  # the 5 ms budget, every frame runs the cap of 64 steps (frames of 350 to 650 ms measured: Godot Jolt mixed, Godot PhysX raycast-10000),
+  # so rows and steps drop. Low step counts are therefore flagged only when no frame hit the cap, and the measured wall time must cover the window.
   awk -F, -v want="$want" -v kind="$kind" -v mode="$mode" -v eng="$engine" -v sc="$5" '
     NR==1 { sidx=0; for (i=1;i<=NF;i++) if ($i == "steps_per_frame") sidx=i; if (!sidx) nostep=1; next }
     { n++; for (i=1;i<=9;i++) if ($i ~ /[Nn][Aa][Nn]|[Ii]nf/ || $i == "") bad=1
-      st += $sidx; if ($9+0 > am) am=$9+0 }
+      st += $sidx; if ($sidx+0 > sm) sm=$sidx+0; ws += $2; if ($9+0 > am) am=$9+0 }
     END {
       if (bad) { print "NaN/inf/empty field"; exit }
       if (nostep) { print "CSV has no steps_per_frame column (60 Hz build?)"; exit }
+      capped = (sm >= 64)
+      if ((kind == "abcd" || kind == "unlock-render") && ws < 0.9*want*5) { print "measured wall " ws/1000 " s < 0.9 x measure s (early exit?)"; exit }
       if (kind == "abcd") {
         # crash or hang detection only (RTF below 1 is a result, judged by merge-results.pl): 0.5 x .. 1.05 x the expected 200 Hz step count
         if (n < 10) { print "rows " n " < 10"; exit }
-        if (st < 0.5*want) { print "steps " st " < " 0.5*want " (half of 200 Hz x measure s)"; exit }
+        if (st < 0.5*want && !capped) { print "steps " st " < " 0.5*want " (half of 200 Hz x measure s) and no frame hit the 64-step cap"; exit }
         if (st > 1.05*want + 20) { print "steps " st " > " 1.05*want+20 " (pacing broken)"; exit }
         if (sc !~ /^raycast/ && am == 0) { print "awake_bodies 0 in dynamic scenario"; exit }
       } else if (kind == "unlock-render") {
-        if (n < 100) { print "rows " n " < 100"; exit }
+        if (n < 10) { print "rows " n " < 10"; exit }   # a slow scene gives few frames (about 3 fps for Godot Jolt mixed), see above
+        if (st < 0.5*want && !capped) { print "steps " st " < " 0.5*want " (half of 200 Hz x measure s) and no frame hit the 64-step cap"; exit }
         if (am == 0) { print "awake_bodies 0 in dynamic scenario"; exit }
       } else if (kind == "unlock-phys") {
         if (n < 100) { print "rows " n " < 100"; exit }   # piles may be fully asleep in the window, so no awake check
