@@ -53,4 +53,4 @@ Source: `.tmp/physx-clang/scripts/phase2-godot.sh`, run from the fork root.
 - The extension DLL must be built against the fork's API dump (`GODOT_API_JSON`); a stock 4.7.2 DLL loads in the fork editor, but the report rebuilt against the fork dump for all results (physx and nophysx dumps were byte-identical).
 
 ## Not done
-- No timing run of PhysX, no 200 Hz run, no Scenario G, no Steam Deck run. The full protocol has not been run for the PhysX build.
+- The full 200 Hz protocol, Scenario G included, ran once for the PhysX build on 2026-11-07 (one desktop, results not committed). No Steam Deck run (no Deck available).

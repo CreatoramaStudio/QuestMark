@@ -170,7 +170,7 @@ Scope: this one machine, Godot 4.7.2 stable mono, exported release `QuestBench.e
 ### Hypotheses / not done
 - Cause of the high cost at R >= 8 (dense piles that do not sleep: `awake_bodies` min 4062 of 4096 at R=8): not investigated; the Stride side reports the same awake behaviour.
 - Whether the temporary-allocator fallback explains the cost of the raised limits: not tested. `physics/jolt_physics_3d/limits/temporary_memory_buffer_size` was not changed (no tuning).
-- Not run: the SPEC protocol (20 s windows, 3 repeats, ladder), `debris-pooled` at the highest passing R, render mode at high R, Steam Deck, raycast/chains/mixed/unlock after the limits change.
+- Run once on 2026-11-07 (one desktop, results not committed): the SPEC protocol at 200 Hz (20 s windows, 3 repeats, ladders, debris-pooled, render mode, all scenarios after the limits change). Not run: Steam Deck (no Deck available).
 
 
 ## 200 Hz, unlocked loop, profiles, camera, parity, engine guard (2026-11-06, current state)

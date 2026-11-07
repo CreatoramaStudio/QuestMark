@@ -714,7 +714,7 @@ Proved:
 
 Open:
 - The full protocol ran once at 200 Hz on 2026-11-07 for all four variants (one desktop machine, results not committed yet). No timing verdict is drawn yet: the results are not reviewed, and stages near a ladder limit flip between runs (the one-run ladder decision and the 3-run median disagree by one stage in some ladders).
-- No run on a Steam Deck under Proton; desktop numbers do not transfer to it.
+- No run on a Steam Deck under Proton, and no Deck is available (2026-11-07); desktop numbers do not transfer to it, so the Deck target stays unmeasured.
 - Scenario G and the PhysX fork ran in that one full run only; the scale and debris ladders were completed once.
 - Some settings are not equal between the engines (solver, damping formulas, restitution, light units; list in `benchmark/SPEC.md`, "Settings parity"), so cross-engine ratios will carry those caveats.
 
