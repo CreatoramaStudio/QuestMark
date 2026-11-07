@@ -15,7 +15,9 @@
 #   PYTHON3            python3 interpreter for godot-cpp's binding generator (optional; passed as -DPython3_EXECUTABLE)
 #   CMAKE_GENERATOR    default "Visual Studio 17 2022"
 #   SELECT_DEFAULT     1 = also point bench.gdextension at this compiler's DLLs (the export then ships those)
-# Output: benchmark/godot/bin/<compiler>/libquestbench.windows.<target>.x86_64.dll
+#   EXT_OUT_DIR        output folder for the DLLs (default: benchmark/godot/bin/<compiler>). Use a separate one for fork builds
+#                      (other API dump), e.g. .tmp/godotext-fork-bin, so the stock DLLs stay untouched.
+# Output: EXT_OUT_DIR (default benchmark/godot/bin/<compiler>)/libquestbench.windows.<target>.x86_64.dll
 # template_release is built with the Release configuration (/O2), template_debug with Debug.
 set -eu
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -41,7 +43,7 @@ if [ "$COMPILER" = clang ]; then
   echo "clang-cl $("$cc" --version | head -n 1), LLVMToolsVersion=$LLVMToolsVersion"
 fi
 w() { if command -v cygpath >/dev/null 2>&1; then cygpath -m "$1"; else echo "$1"; fi; }
-outdir="$src/bin/$COMPILER"
+outdir="$(abs "${EXT_OUT_DIR:-$src/bin/$COMPILER}")"
 mkdir -p "$outdir"
 for t in $targets; do
   cfg=Release; [ "$t" = template_debug ] && cfg=Debug
