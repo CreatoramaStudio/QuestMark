@@ -302,3 +302,5 @@ Godot cameras as built, read from `quest_bench.cpp` `_add_camera_and_light()` an
 Intended scale camera (not what runs): position (0, 0.6 k, 1.2 k), k = max(22, pit interior). Content: pit 22 m (wall 6 m high, so camera y = 10 sees over the near wall top only at a flat angle), raycast boxes spread over about 40 m around the origin (looks fine), chains hang from a slab above the origin.
 
 Proposal (verified by screenshots in `shots-proposed`, pit-2000, debris-8, mixed, scale 1000, 4000, 16000, all show floor, bodies and walls): pit-type scenes (pit-2000, debris, scale) at (0, 1.5 k, 0.9 k) looking at (0, 0, 0) with k = max(22, interior) computed after the pit size is known (move the `_add_camera_and_light()` call after the scenario branch), far 4k + 200; mixed at (0, 36, 34) looking at (0, 2, 0); raycast and chains unchanged. The pit then fills about a third of the window; tighter framing is a matter of the shared definition.
+
+- 2026-11-07: env.txt gets `physx gpu_build (...)` (yes when the fork was built with `physx_gpu=yes`); PhysX results so far are proved CPU-only, see PHYSX.md. Needs an extension rebuild to appear.

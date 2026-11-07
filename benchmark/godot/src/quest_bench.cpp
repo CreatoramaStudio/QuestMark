@@ -1291,6 +1291,8 @@ void QuestBench::_finish() {
 		ef->store_line("physx stabilization: " + setting("physics/physx_3d/simulation/stabilization"));
 		ef->store_line("physx cpu_worker_threads (0=auto): " + setting("physics/physx_3d/simulation/cpu_worker_threads"));
 		ef->store_line("physx gpu_dynamics: " + setting("physics/physx_3d/simulation/gpu_dynamics"));
+		// The fork registers gpu_dynamics only in a GPU (CUDA) build, so the key existing proves a GPU build; absent = CPU-only module.
+		ef->store_line(String("physx gpu_build (key physics/physx_3d/simulation/gpu_dynamics registered): ") + (ProjectSettings::get_singleton()->has_setting("physics/physx_3d/simulation/gpu_dynamics") ? "yes" : "no"));
 		ef->store_line("physx enhanced_determinism: " + setting("physics/physx_3d/simulation/enhanced_determinism"));
 		ef->store_line("godot sleep_threshold_linear / angular / time_before_sleep: " + setting("physics/3d/sleep_threshold_linear") + " / " + setting("physics/3d/sleep_threshold_angular") + " / " + setting("physics/3d/time_before_sleep"));
 		ef->store_line("godot run_on_separate_thread: " + setting("physics/3d/run_on_separate_thread"));
