@@ -284,11 +284,6 @@ void QuestBench::_ready() {
 		ub->set_size(Vector3(1, 1, 1));
 		unit_box_mesh = ub;
 	}
-	if (body_rid && is_debris) {
-		UtilityFunctions::push_error("--body-api=rid is not implemented for the debris scenarios (G)");
-		get_tree()->quit(2);
-		return;
-	}
 	if (base_scenario == "pit-2000") {
 		pit_interior = 22.0;
 		_build_pit(22.0);
@@ -517,6 +512,24 @@ RigidBody3D *QuestBench::_make_dynamic(int p_kind, const Vector3 &p_pos) {
 	return b;
 }
 
+RID QuestBench::_make_piece_rid(const Vector3 &p_pos) {
+	// scenario G piece on the server: 0.5 box, mass 0.125, same material as the node piece; not in body_rids or the MultiMesh groups (deb_rids holds it)
+	PhysicsServer3D *ps = PhysicsServer3D::get_singleton();
+	RID b = ps->body_create();
+	ps->body_set_mode(b, PhysicsServer3D::BODY_MODE_RIGID);
+	ps->body_set_space(b, get_world_3d()->get_space());
+	ps->body_add_shape(b, box_shape->get_rid(), Transform3D());
+	ps->body_set_param(b, PhysicsServer3D::BODY_PARAM_MASS, 0.125);
+	ps->body_set_param(b, PhysicsServer3D::BODY_PARAM_FRICTION, phys_mat->get_friction());
+	ps->body_set_param(b, PhysicsServer3D::BODY_PARAM_BOUNCE, phys_mat->get_bounce());
+	if (sleeping_off) {
+		ps->body_set_state(b, PhysicsServer3D::BODY_STATE_CAN_SLEEP, false);
+	}
+	ps->body_set_state(b, PhysicsServer3D::BODY_STATE_TRANSFORM, Transform3D(Basis(), p_pos));
+	deb_rids.push_back(b);
+	return b;
+}
+
 RID QuestBench::_make_dynamic_rid(int p_kind, const Vector3 &p_pos) {
 	PhysicsServer3D *ps = PhysicsServer3D::get_singleton();
 	RID b = ps->body_create();
@@ -559,6 +572,26 @@ void QuestBench::_setup_multimeshes() {
 void QuestBench::_sync_multimeshes() {
 	PhysicsServer3D *ps = PhysicsServer3D::get_singleton();
 	RenderingServer *rs = RenderingServer::get_singleton();
+	if (is_debris) {
+		MMGroup &g = mm_groups[0];
+		float *w = g.buf.ptrw();
+		int n = 0;
+		for (const RID &r : deb_rids) {
+			if (n >= deb_cap) {
+				break;
+			}
+			Transform3D t = (Transform3D)ps->body_get_state(r, PhysicsServer3D::BODY_STATE_TRANSFORM);
+			const Basis &b = t.basis;
+			w[0] = b.rows[0].x; w[1] = b.rows[0].y; w[2] = b.rows[0].z; w[3] = t.origin.x;
+			w[4] = b.rows[1].x; w[5] = b.rows[1].y; w[6] = b.rows[1].z; w[7] = t.origin.y;
+			w[8] = b.rows[2].x; w[9] = b.rows[2].y; w[10] = b.rows[2].z; w[11] = t.origin.z;
+			w += 12;
+			n++;
+		}
+		rs->multimesh_set_buffer(g.mm, g.buf);
+		rs->multimesh_set_visible_instances(g.mm, n);
+		return;
+	}
 	for (int k = 0; k < 3; k++) {
 		MMGroup &g = mm_groups[k];
 		if (g.bodies.empty()) {
@@ -793,12 +826,30 @@ void QuestBench::_build_debris_world() {
 		pool_size0 = events_alive * 64;
 		// same semantics as the Stride side: parked pieces stay in the simulation, asleep, far below the pit (y = -1000)
 		for (int64_t i = 0; i < pool_size0; i++) {
+			if (body_rid) {
+				RID r = _make_piece_rid(Vector3((double)(i % 64), -1000.0, (double)(i / 64)));
+				PhysicsServer3D::get_singleton()->body_set_state(r, PhysicsServer3D::BODY_STATE_SLEEPING, true);
+				pool_free_rid.push_back(r);
+				continue;
+			}
 			RigidBody3D *p = _make_piece();
 			p->set_position(Vector3((double)(i % 64), -1000.0, (double)(i / 64)));
 			add_child(p);
 			p->set_sleeping(true);
 			pool_free.push_back(p);
 		}
+	}
+	if (body_rid && render) {
+		// one MultiMesh for all pieces; capacity covers the events alive at once (lifetime 8 s) plus slack, visible count = pieces on the server
+		deb_cap = (int)(std::ceil(rate * 8.0) + 4) * 64;
+		RenderingServer *rs = RenderingServer::get_singleton();
+		MMGroup &g = mm_groups[0];
+		g.mesh = box_mesh;
+		g.mm = rs->multimesh_create();
+		rs->multimesh_allocate_data(g.mm, deb_cap, RenderingServer::MULTIMESH_TRANSFORM_3D);
+		rs->multimesh_set_mesh(g.mm, g.mesh->get_rid());
+		g.inst = rs->instance_create2(g.mm, get_world_3d()->get_scenario());
+		g.buf.resize((int64_t)deb_cap * 12);
 	}
 }
 
@@ -858,6 +909,30 @@ void QuestBench::_spawn_event(double p_t) {
 		for (int iy = 0; iy < 4; iy++) {
 			for (int iz = 0; iz < 4; iz++) {
 				Vector3 off((ix - 1.5) * 0.5, (iy - 1.5) * 0.5, (iz - 1.5) * 0.5);
+				if (body_rid) {
+					RID r;
+					if (pooled && !pool_free_rid.empty()) {
+						r = pool_free_rid.back();
+						pool_free_rid.pop_back();
+						ev.parks.push_back(((Transform3D)PhysicsServer3D::get_singleton()->body_get_state(r, PhysicsServer3D::BODY_STATE_TRANSFORM)).origin);
+					} else {
+						if (pooled) {
+							pool_misses++;
+						}
+						r = _make_piece_rid(c + off);
+					}
+					PhysicsServer3D *ps = PhysicsServer3D::get_singleton();
+					ps->body_set_state(r, PhysicsServer3D::BODY_STATE_TRANSFORM, Transform3D(Basis(), c + off));
+					ps->body_set_state(r, PhysicsServer3D::BODY_STATE_SLEEPING, false);
+					double f = rng->randf_range(-0.2, 0.2);
+					double sx = rng->randf_range(-3.0, 3.0);
+					double sy = rng->randf_range(-3.0, 3.0);
+					double sz = rng->randf_range(-3.0, 3.0);
+					ps->body_apply_central_impulse(r, off.normalized() * (1.5 * 0.125 * (1.0 + f)));
+					ps->body_set_state(r, PhysicsServer3D::BODY_STATE_ANGULAR_VELOCITY, Vector3(sx, sy, sz));
+					ev.rids.push_back(r);
+					continue;
+				}
 				RigidBody3D *p;
 				bool pooled_reused = false;
 				if (pooled && !pool_free.empty()) {
@@ -910,6 +985,23 @@ void QuestBench::_despawn_due() {
 	while (!live_events.empty() && (double)(tick_global - 1) / (double)PHYS_HZ >= live_events.front().t_event + 8.0) {
 		uint64_t t0 = now_us();
 		DebrisEvent &ev = live_events.front();
+		if (body_rid) {
+			PhysicsServer3D *ps = PhysicsServer3D::get_singleton();
+			for (size_t pi = 0; pi < ev.rids.size(); pi++) {
+				RID r = ev.rids[pi];
+				if (pooled) {
+					ps->body_set_state(r, PhysicsServer3D::BODY_STATE_LINEAR_VELOCITY, Vector3());
+					ps->body_set_state(r, PhysicsServer3D::BODY_STATE_ANGULAR_VELOCITY, Vector3());
+					ps->body_set_state(r, PhysicsServer3D::BODY_STATE_TRANSFORM, Transform3D(Basis(), ev.parks[pi]));
+					ps->body_set_state(r, PhysicsServer3D::BODY_STATE_SLEEPING, true);
+					pool_free_rid.push_back(r);
+				} else {
+					ps->free_rid(r);
+					deb_rids.pop_front(); // FIFO: the oldest event is the first 64 entries
+				}
+			}
+			live_pieces -= (int64_t)ev.rids.size();
+		} else {
 		for (size_t pi = 0; pi < ev.pieces.size(); pi++) {
 			RigidBody3D *p = ev.pieces[pi];
 			if (pooled) {
@@ -925,6 +1017,7 @@ void QuestBench::_despawn_due() {
 			}
 		}
 		live_pieces -= (int64_t)ev.pieces.size();
+		}
 		int blk = ev.block;
 		live_at[blk]--;
 		if (live_at[blk] == 0 && blocks[blk] == nullptr) {
@@ -961,6 +1054,10 @@ void QuestBench::_exit_tree() {
 		for (const RID &b : body_rids) {
 			ps->free_rid(b);
 		}
+		for (const RID &b : deb_rids) {
+			ps->free_rid(b);
+		}
+		deb_rids.clear();
 		joint_rids.clear();
 		body_rids.clear();
 		for (MMGroup &g : mm_groups) {
@@ -1352,7 +1449,7 @@ void QuestBench::_finish() {
 			sum += buf;
 			snprintf(buf, sizeof(buf), "impulse_probe: |v| right after spawn %.4f, at next tick %.4f (a radial piece should read about 1.5 m/s +-20%%)\n", vel_after_spawn, vel_next_tick);
 			sum += buf;
-			sum += "debris_render_meshes: shared 0.5 BoxMesh resource, one MeshInstance3D per piece (blocks: shared unit BoxMesh scaled); physics mode has no meshes\n";
+			sum += "debris_render_meshes: shared 0.5 BoxMesh resource, one MeshInstance3D per piece, or one MultiMesh for all pieces with --body-api=rid (blocks: shared unit BoxMesh scaled); physics mode has no meshes\n";
 		}
 		double ws, wsp;
 		working_set_mb(ws, wsp);

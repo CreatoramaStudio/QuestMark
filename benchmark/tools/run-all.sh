@@ -18,7 +18,7 @@
 #                      (jolt without flavour keeps godot-jolt-). The label is also passed to the exe as --flavour.
 #   BODY_API           Godot only: nodes (default) | rid. Passed to the exe as --body-api. rid creates dynamic bodies and chain pin joints directly on
 #                      PhysicsServer3D and draws them with MultiMesh in render mode (SPEC "Settings parity", row body API). rid is NOT supported
-#                      for stage G (debris): the exe reports an error and exits with 2, so use --stages=ABCDEF. Use a separate BENCH_FLAVOUR for rid
+#                      stage G (debris) works with rid too (pieces are server bodies, one MultiMesh). Use a separate BENCH_FLAVOUR for rid
 #                      runs (for example BENCH_FLAVOUR=rid BODY_API=rid) so the file names differ from the node runs.
 #   Profiles (SPEC "Profiles"): A (pit-2000), D (mixed), E (unlock) and F (scale) run in both profiles, game and stress (file names get
 #                      a "-stress" token after the prefix, game keeps the plain names); B, C and G run in game only.

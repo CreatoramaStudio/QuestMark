@@ -41,10 +41,26 @@ chart("bodies4000-ms.svg","4000 awake bodies: ms per step"," ms",1,z(5.05,1.69,1
 chart("mixed-fps.svg","Mixed scene, render loop unlocked: frames per second"," fps",0,z(299.1,53.5,50.6,67.6,2.8,262,217));
 chart("capacity-render-on.svg","Most bodies with p99 frame at or below 20 ms, rendering on"," bodies",0,z(3000,2000,2000,2500,1500,3000,2000));
 chart("capacity-render-off.svg","Most bodies with p99 frame at or below 20 ms, rendering off"," bodies",0,z(3500,8000,10000,2500,2000,3000,3000));
+# order: ezEngine, Stride JIT, Stride AOT, Godot PhysX, Godot Jolt, PhysX RID, Jolt RID (same as @n)
+chart("bodies1000-ms.svg","1000 awake bodies: ms per step"," ms",1,z(1.06,0.59,0.62,1.17,1.85,1.145,1.51));
+chart("pile-game-ms.svg","Pile of 2000 bodies, default sleeping (game profile): ms per step"," ms",1,z(2.54,0.09,0.09,0.23,3.97,0.21,3.09));
+chart("mixed-p99-stress.svg","Mixed scene with rendering, stress profile: p99 frame time"," ms",1,z(5.1,25.0,25.0,89.5,408,5.6,5.6));
+chart("mixed-p99-game.svg","Mixed scene with rendering, game profile: p99 frame time"," ms",1,z(5.2,39.0,24.0,19.3,447,5.5,9.2));
+chart("mixed-fps-game.svg","Mixed scene, render loop unlocked, game profile: frames per second"," fps",0,z(297,54,53,291,2.7,412,206));
+chart("capacity-render-on-game.svg","Most bodies with p99 frame at or below 20 ms, rendering on, game profile"," bodies",0,z(2000,2000,2000,2500,1500,4000,2000));
+chart("capacity-render-off-game.svg","Most bodies with p99 frame at or below 20 ms, rendering off, game profile"," bodies",0,z(3000,8000,8000,2500,2000,3000,2000));
+chart("raycast-10000-ms.svg","10000 rays per frame: wall ms per frame"," ms",1,z(345,394,498,653,503,644,500));
+chart("debris-render.svg","Debris (G): highest rate passing 20 ms p99, rendering on"," events/s",0,z(3,3,3,3,2,6,3));
+chart("debris-physics.svg","Debris (G): highest rate passing 20 ms p99, rendering off"," events/s",0,z(3,6,8,4,2,8,3));
 sub img { my ($f,$alt) = @_; "![$alt](docs/charts/$f)\n\n" }
 print "### Physics cost per step (lower is better)\n\nEach value is the wall time per physics step with rendering off and the loop unpaced: 1000 / steps per second. Bars run best to worst (bars at 100% are green); the percentage is the best value divided by this value (best = 100%, 50% means twice as slow).\n\n";
 print img("pile-ms.svg","Pile of 2000 awake bodies: ms per step"), img("mixed-ms.svg","Mixed scene: ms per step"), img("bodies4000-ms.svg","4000 awake bodies: ms per step");
-print "### Whole frame with rendering (higher is better)\n\nBest to worst; the percentage is this value divided by the best value.\n\n";
-print img("mixed-fps.svg","Mixed scene, render loop unlocked: frames per second"), img("capacity-render-on.svg","Most bodies at 20 ms p99, rendering on");
+print img("bodies1000-ms.svg","1000 awake bodies: ms per step"), img("pile-game-ms.svg","Pile of 2000 bodies, default sleeping (game profile): ms per step"), img("raycast-10000-ms.svg","10000 rays per frame: wall ms per frame");
+print "### Frame time with rendering (lower is better)\n\n99th percentile frame time of the mixed scene with rendering on; the frame budget is 20 ms.\n\n";
+print img("mixed-p99-stress.svg","Mixed scene with rendering, stress profile: p99 frame ms"), img("mixed-p99-game.svg","Mixed scene with rendering, game profile: p99 frame ms");
+print "### Whole frame with rendering (higher is better)\n\nBest to worst; the percentage is this value divided by the best value. Charts without game in the title are the stress profile.\n\n";
+print img("mixed-fps.svg","Mixed scene, render loop unlocked, stress: frames per second"), img("mixed-fps-game.svg","Mixed scene, render loop unlocked, game: frames per second"), img("capacity-render-on.svg","Most bodies at 20 ms p99, rendering on, stress"), img("capacity-render-on-game.svg","Most bodies at 20 ms p99, rendering on, game");
 print "### Physics-only capacity (higher is better)\n\n";
-print img("capacity-render-off.svg","Most bodies at 20 ms p99, rendering off");
+print img("capacity-render-off.svg","Most bodies at 20 ms p99, rendering off, stress"), img("capacity-render-off-game.svg","Most bodies at 20 ms p99, rendering off, game");
+print "### Debris (higher is better)\n\nScenario G always runs with default sleeping. The value is the highest debris rate (events per second, 64 pieces per event) that keeps the p99 frame time at or below 20 ms on the tested ladder.\n\n";
+print img("debris-render.svg","Debris: highest rate at 20 ms p99, rendering on"), img("debris-physics.svg","Debris: highest rate at 20 ms p99, rendering off");

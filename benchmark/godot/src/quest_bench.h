@@ -5,7 +5,7 @@
 //   --run=1 --out=<dir> [--warmup=5 --measure=20] [--diag-busy-ms=<ms>]
 // Scenarios E/F: --scenario=unlock-render-mixed|unlock-physics-mixed|unlock-physics-pit-2000|scale (scale: --bodies=N --mode=physics|render [--unpaced=1])
 // Scenario G: --scenario=debris|debris-pooled --rate=<events per second> --mode=physics|render (warm-up defaults to 10 s for G)
-// Body API: --body-api=nodes|rid (default nodes). rid = bodies and chain joints made on PhysicsServer3D, MultiMesh drawing; not for debris (G).
+// Body API: --body-api=nodes|rid (default nodes). rid = bodies and chain joints made on PhysicsServer3D, MultiMesh drawing; also for debris (G): pieces are server bodies, drawn with one MultiMesh.
 // Jolt limits: --jolt-limits=old|raised|bodies (default by scenario: F and G raised, others old; see register_types.cpp), --jolt-max-bodies/--jolt-max-pairs/--jolt-max-constraints=<n> override
 
 #include <godot_cpp/classes/box_shape3d.hpp>
@@ -159,6 +159,9 @@ private:
 	MMGroup mm_groups[3]; // 0 box, 1 sphere, 2 capsule
 	std::vector<godot::RID> impulse_rids, joint_rids;
 	godot::RID _make_dynamic_rid(int p_kind, const godot::Vector3 &p_pos);
+	godot::RID _make_piece_rid(const godot::Vector3 &p_pos);
+	std::deque<godot::RID> deb_rids; // rid mode, scenario G: every piece on the server (live and parked), oldest first
+	int deb_cap = 0; // MultiMesh capacity for the debris pieces
 	void _setup_multimeshes();
 	void _sync_multimeshes();
 	int awake_last = 0;
@@ -188,6 +191,7 @@ private:
 	std::vector<int> block_order, live_at;
 	std::deque<DebrisEvent> live_events;
 	std::vector<godot::RigidBody3D *> pool_free;
+	std::vector<godot::RID> pool_free_rid; // rid mode pool
 	int64_t next_event_k = 0;
 	int64_t tick_global = 0, events_total = 0, events_on_intact = 0, events_on_used = 0, removals_total = 0, pool_misses = 0, pool_size0 = 0, live_pieces = 0;
 	int64_t events_rec = 0, removals_rec = 0;
