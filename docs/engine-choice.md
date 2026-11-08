@@ -22,14 +22,15 @@ Ranking for a physics-heavy 3D game at 60 fps on a Steam Deck LCD, built largely
 |---|---|---|
 | 1 | **ezEngine + Jolt** (Windows build via Proton/DXVK) | Measured: the only variant whose game-like mixed scene stays well inside the frame budget in render mode (p99 5.2 ms against 19 ms or more for every other variant), the best render-mode scale, and the same Jolt as Godot at 1.6 to 2.4 times lower cost per step. Study: richest Jolt components, agent tooling. Risks (not measured): DXVK under Proton, MSAA-only renderer (no TAA or upscaler), serial transform update and write-back, small community. |
 | 2 | **Stride + Bepu** (via Proton) | Measured: by far the cheapest physics (Bepu about 1 ms per step at 2000 awake bodies, 8000 to 10000 bodies at 20 ms in physics mode), but an expensive whole frame in render mode (mixed scene about 54 fps on the desktop, cause not profiled). Study: most parallel engine. Risks: beta, no ragdoll builder, no restitution, D3D through DXVK. |
-| 3 | **Godot + Jolt** | Measured: the slowest variant in every physics and whole-frame category (pit-2000 4.0 ms per step, collapse in the mixed render scene at 200 Hz, 1500 bodies at 20 ms). Study: best renderer features for a Deck-class GPU (TAA, FSR2, ubershaders, auto-instancing, occlusion culling) and the most agent knowledge. The PhysX fork brings Godot's piles to about ezEngine level, but it is a single-maintainer fork and not recommended as the base. |
+| 3a | **Godot + PhysX fork** | Measured (CPU-only fork build, Godot 4.7.3rc, section 12.2 and 12.3): with nodes pit-2000 2.24 ms per step (c6f3b659; 2.23 ms at 97bc4de), mixed scene 3.85 ms, mixed render 68 fps (p99 89.5 ms), 2500 bodies at 20 ms in both modes; with RIDs + MultiMesh pit-2000 2.18 ms, mixed 3.30 ms, mixed render 262 fps (p99 5.6 ms). Physics per step is the closest Godot variant to ezEngine and faster than Jolt on RIDs in every cell. Study: single-maintainer fork, our build is CPU-only (the GPU features need NVIDIA CUDA, section 12.2), not recommended as the base. Ordered by the measured numbers: it is faster than Godot + Jolt in every physics cell (nodes and RIDs). The fork risks below are judgment, not measurements, and are why it is not recommended as the base. It is a Godot variant, not a separate engine.|
+| 3b | **Godot + Jolt** | Measured with one RigidBody3D node per body (section 12.2): the slowest variant in every physics and whole-frame category (pit-2000 4.0 ms per step, collapse in the mixed render scene at 200 Hz, 1500 bodies at 20 ms). With bodies made directly on the physics server and MultiMesh drawing (section 12.3) the same Godot + Jolt costs 3.14 ms per step at pit-2000 and runs the mixed render scene at 217 fps (p99 5.6 ms); the order is the user's decision. Study: best renderer features for a Deck-class GPU (TAA, FSR2, ubershaders, auto-instancing, occlusion culling) and the most agent knowledge. The PhysX fork brings Godot's piles to about ezEngine level, but it is a single-maintainer fork and not recommended as the base. |
 | 4 | **Bevy + Avian** | Best threading design. But physics is third-party, no editor, f32 coordinates by default, API breaks about every 3 months, no ragdoll builder. |
 | 5 | **O3DE** | Strongest renderer, but serial gameplay, serial write-back by default, heavy boilerplate, declining project funding. |
 | Building blocks, not engines | The Forge, BRUTAL, SDL3, raylib | You would build the engine yourself. The Forge has the strongest renderer base of these (section 3.5), but no physics, scene, TAA/upscaler or editor. |
 
 Why in one paragraph: all candidates share the main risk of this goal, which is main-thread CPU work per physics object on four Zen 2 cores. Godot has the weakest threading of the complete engines (serial dirty-instance loop, serial Jolt write-back to nodes, gameplay on the main thread), but each problem has a documented workaround: physics server bodies (RIDs) plus MultiMesh, the experimental separate render thread, and C++ in a GDExtension. In return it has the best renderer features for a Deck-class GPU and the largest body of material that AI agents know. The engines that thread better (Stride, Bevy) give up built-in physics, ragdolls or API stability, or (Stride) need a D3D-to-Vulkan translation layer under Proton. The only way to settle the order is a benchmark on a real Deck (section 12).
 
-Update 2026-11-08: the paragraph above is the study-only reasoning. The desktop benchmark (section 12.2) measured the main risk directly, and Godot + Jolt came out last. The same Jolt costs 1.6 to 2.4 times more per step in Godot than in ezEngine, which outweighs Godot's renderer and agent-knowledge advantages for a physics-heavy game. The Deck run is still the deciding test.
+Update 2026-11-08: the paragraph above is the study-only reasoning. The desktop benchmark (section 12.2) measured the main risk directly, and node-based Godot + Jolt came out last (on server bodies with MultiMesh it is no longer last on the whole frame, section 12.3). The same Jolt costs 1.6 to 2.4 times more per step in Godot than in ezEngine, which outweighs Godot's renderer and agent-knowledge advantages for a physics-heavy game. The Deck run is still the deciding test.
 
 **Source freshness.** Rankings rest on pinned clones taken at the default-branch heads of 2026-10-31 to 2026-11-05. Head check on 2026-11-06 (section 3.6, Jolt in 3.7): every repo with a gap was diffed, nothing changed a claim or the ranking. Godot results are for 4.8-beta master, not stable 4.6.
 
@@ -745,7 +746,7 @@ Superseded on 2026-11-08 by section 12.2: the reduced second full run (Godot Jol
 ### 12.2 Benchmark results and verdict (2026-11-08)
 
 **Setup.** One desktop machine (Windows, idle, discrete GPU), fixed 200 Hz physics, render loop unlocked, profiles `game` (engine-default sleeping) and `stress` (sleeping off). Variants:
-- Godot 4.7.2-stable + Jolt. The benchmark code is a C++ GDExtension and every body is a `RigidBody3D` node with a `MeshInstance3D` (`quest_bench.cpp:476,705`), so the RID/MultiMesh workaround from section 11 is NOT tested. Re-measured on 2026-11-08 with `physics_ms` definition 2.
+- Godot 4.7.2-stable + Jolt. The benchmark code is a C++ GDExtension and every body is a `RigidBody3D` node with a `MeshInstance3D` (`quest_bench.cpp:476,705`), so the RID/MultiMesh workaround from section 11 is NOT tested in the rows of this section (it was tested afterwards, see section 12.3). Re-measured on 2026-11-08 with `physics_ms` definition 2.
 - Godot PhysX fork, CPU-only build, same node path. Stages A and C come from 97bc4de (2026-11-08); stages E, F and G come from c6f3b659 (2026-11-07), where jointed bodies ran with 1/1 iterations (see `benchmark/godot/PHYSX.md`). Its D and E mixed numbers are therefore optimistic.
 - Stride 4.4.1 + Bepu, JIT and Native AOT, measured on 2026-11-07.
 - ezEngine 100564a + Jolt, Shipping D3D11, measured on 2026-11-08.
@@ -754,23 +755,23 @@ Each A to E cell has 3 runs (median shown). Ladder stages are single runs. Resul
 
 **Table A: headline, unpaced wall ms per physics step** (1000 / steps per s, physics mode, lower is better). It includes the per-step code and the engine loop, so it does not depend on how each engine's `physics_ms` stopwatch is defined.
 
-| Scene | Stride Bepu JIT | Stride Bepu AOT | Godot PhysX fork | ezEngine Jolt | Godot Jolt |
-|---|---|---|---|---|---|
-| pit-2000, stress (2000 awake) | 1.02 | 1.04 | 2.24 (c6f3b659) | 2.52 | 3.99 |
-| mixed, stress (3000 bodies, 100 chains, 1000 rays per step) | 1.25 | 1.33 | 3.85 (c6f3b659, joints 1/1) | 2.23 | 5.03 |
-| scale 1000 / 2000 / 4000, stress | 0.59 / 1.02 / 1.69 | 0.62 / 1.04 / 1.71 | 1.17 / 2.36 / 5.30 | 1.06 / 2.50 / 5.05 | 1.85 / 4.07 / 9.37 |
-| pit-2000, game (default sleeping) | 0.09 (pile sleeps) | 0.09 (pile sleeps) | 0.23 (pile sleeps) | 2.54 (about 1900 awake) | 3.97 (about 1900 awake) |
+| Scene | Stride Bepu JIT | Stride Bepu AOT | Godot PhysX fork | ezEngine Jolt | Godot Jolt | Godot Jolt RID | Godot PhysX RID |
+|---|---|---|---|---|---|---|---|
+| pit-2000, stress (2000 awake) | 1.02 | 1.04 | 2.24 (c6f3b659) | 2.52 | 3.99 | 3.14 | 2.18 |
+| mixed, stress (3000 bodies, 100 chains, 1000 rays per step) | 1.25 | 1.33 | 3.85 (c6f3b659, joints 1/1) | 2.23 | 5.03 | 3.50 | 3.30 |
+| scale 1000 / 2000 / 4000, stress | 0.59 / 1.02 / 1.69 | 0.62 / 1.04 / 1.71 | 1.17 / 2.36 / 5.30 | 1.06 / 2.50 / 5.05 | 1.85 / 4.07 / 9.37 | 1.51 / 3.15 / 6.26 | 1.145 / 2.26 / 4.73 |
+| pit-2000, game (default sleeping) | 0.09 (pile sleeps) | 0.09 (pile sleeps) | 0.23 (pile sleeps) | 2.54 (about 1900 awake) | 3.97 (about 1900 awake) | not measured | not measured |
 
 **Table B: whole frame, render mode** (physics at 200 Hz plus rendering in one loop; the frame budget is 20 ms, 33.3 ms is the limit2 rule).
 
-| Measure | Stride Bepu JIT | Stride Bepu AOT | Godot PhysX fork | ezEngine Jolt | Godot Jolt |
-|---|---|---|---|---|---|
-| D mixed render: p99 wall ms, game / stress | 39.0 / 25.0 | 24.0 / 25.0 | 19.3 / 89.5 (c6f3b659) | **5.2 / 5.1** | 447 / 408 |
-| E unlock-render-mixed: fps, game / stress | 54 / 54 | 53 / 51 | 291 / 68 (c6f3b659) | **297 / 299** | 2.7 / 2.8 |
-| F render: most bodies passing 20 ms, game / stress | 2000 / 2000 | 2000 / 2000 | 2500 / 2500 (c6f3b659) | 2000 / **3000** | 1500 / 1500 |
-| F physics: most bodies passing 20 ms, game / stress | **8000 / 8000** | **8000 / 10000** | 2500 / 2500 (c6f3b659) | 3000 / 3500 | 2000 / 2000 |
-| G debris: highest R passing 20 ms, render / physics | 3 / 8 (8 = highest R tested) | 3 / **10** | 3 / 5 (c6f3b659) | 3 / 3 | 2.5 / 2.5 |
-| B raycast-10000: wall ms per frame (all fail real time) | 394 | 498 | 653 (c6f3b659) | **345** | 503 |
+| Measure | Stride Bepu JIT | Stride Bepu AOT | Godot PhysX fork | ezEngine Jolt | Godot Jolt | Godot Jolt RID | Godot PhysX RID |
+|---|---|---|---|---|---|---|---|
+| D mixed render: p99 wall ms, game / stress | 39.0 / 25.0 | 24.0 / 25.0 | 19.3 / 89.5 (c6f3b659) | **5.2 / 5.1** | 447 / 408 | not measured / 5.6 | not measured / 5.6 |
+| E unlock-render-mixed: fps, game / stress | 54 / 54 | 53 / 51 | 291 / 68 (c6f3b659) | **297 / 299** | 2.7 / 2.8 | not measured / 217 | not measured / 262 |
+| F render: most bodies passing 20 ms, game / stress | 2000 / 2000 | 2000 / 2000 | 2500 / 2500 (c6f3b659) | 2000 / **3000** | 1500 / 1500 | not measured | not measured |
+| F physics: most bodies passing 20 ms, game / stress | **8000 / 8000** | **8000 / 10000** | 2500 / 2500 (c6f3b659) | 3000 / 3500 | 2000 / 2000 | not measured | not measured |
+| G debris: highest R passing 20 ms, render / physics | 3 / 8 (8 = highest R tested) | 3 / **10** | 3 / 5 (c6f3b659) | 3 / 3 | 2.5 / 2.5 | not supported (RID mode has no G) | not supported (RID mode has no G) |
+| B raycast-10000: wall ms per frame (all fail real time) | 394 | 498 | 653 (c6f3b659) | **345** | 503 | not measured | not measured |
 
 **Analysis.** Each point is labelled PROVED (measured; the data is named) or HYPOTHESIS (not tested).
 
@@ -781,14 +782,14 @@ Each A to E cell has 3 runs (median shown). Ladder stages are single runs. Resul
    - Its `physics_ms` stopwatch is narrower; the headline metric avoids that stopwatch.
 2. PROVED: **the PhysX fork, running through the same Godot node path, reaches about ezEngine's per-step cost on piles.** It is 2.24 against 2.52 ms at pit-2000 and 5.30 against 5.05 ms at 4000 bodies (the PhysX numbers are from the 2026-11-07 run). Within the 2026-11-08 run (both `physics_ms` definition 2, stress pit-2000), the Godot tick costs 2.85 ms with PhysX and 3.97 ms with Jolt.
    - HYPOTHESIS: Godot's extra Jolt cost is in its Jolt module (per-body state access and sync), not in the `RigidBody3D` node layer that both backends share. Nothing was profiled.
-   - HYPOTHESIS, from the same reasoning: replacing the nodes with RIDs would therefore not close most of the gap.
+   - HYPOTHESIS (written before section 12.3, now tested): replacing the nodes with RIDs would therefore not close most of the gap. CORRECTION 2026-11-08: this was a hypothesis, not a result. Section 12.3 measured it. It is REFUTED for the whole frame in render mode (mixed scene: Godot Jolt 2.8 fps on nodes, 217 fps on RIDs) and PARTLY refuted for physics (Jolt saves 18 to 32 % per step on RIDs, but the per-step gap to ezEngine and Stride remains). The first sub-hypothesis (the extra Jolt cost sits in the Jolt module, not in the node layer) is wrong in part: the node layer was a large part of it.
 3. PROVED: **Bepu is the cheapest physics by far.** It is 2.0 to 2.5 times below ezEngine Jolt and 3.9 times below Godot Jolt (pit-2000, stress), and its F physics capacity is 8000 to 10000 bodies against 2000 to 3500 for the Jolt variants. JIT and AOT are equal within noise. Limits:
    - Bepu has no restitution.
    - Solver iterations and substeps are not the same quantity in Bepu and Jolt, so the two engines do not do identical work.
    - Measured in the first run only.
 4. PROVED: **Stride loses most of that lead in render mode.** Its physics costs about 1 ms per step, yet mixed render runs at about 54 fps unlocked, with an 18 to 20 ms median frame. The cost therefore sits outside the physics step. Render-mode capacity (2000 bodies at 20 ms) is equal to or below ezEngine's.
    - HYPOTHESIS: the cause is per-entity render submission (no automatic instancing, section 4.4) plus the 4-cascade shadow setting (the parity mismatch above). Not profiled.
-5. PROVED: **Godot Jolt's render-mode collapse comes from its per-step cost, not from a separate render problem.** At about 5 ms per step, 200 steps per s need about one full second of main-thread time per second. In mixed render the loop therefore falls behind (real-time factor 0.87, 2.7 fps) and hits the per-frame step cap. Per tick the cost is the same as in physics mode (pit-2000: 13.0 ms of physics per frame at about 3.2 ticks per frame, about 4 ms per tick).
+5. PROVED for the node-based Godot rows (CORRECTED by section 12.3: the collapse is the node + `MeshInstance3D` path, not Jolt itself; on RIDs the same scene runs at 217 fps): **Godot Jolt's render-mode collapse comes from its per-step cost, not from a separate render problem.** At about 5 ms per step, 200 steps per s need about one full second of main-thread time per second. In mixed render the loop therefore falls behind (real-time factor 0.87, 2.7 fps) and hits the per-frame step cap. Per tick the cost is the same as in physics mode (pit-2000: 13.0 ms of physics per frame at about 3.2 ticks per frame, about 4 ms per tick).
    - HYPOTHESIS: at 60 Hz physics every variant would cost about 3.3 times less per second and Godot Jolt would no longer collapse, with the order unchanged. Not measured in the 200 Hz protocol.
 6. PROVED: **sleeping differs by engine design** (user decision 2026-11-08: reported, not forced equal). With default settings the Bepu and PhysX piles fall asleep (0.09 and 0.23 ms per step in the game profile). The Jolt pile stays awake in both hosts.
    - A Jolt sleep threshold of 0.1 m/s puts the pile to sleep at 27 s (diagnostic run, `benchmark/SPEC.md` sleep row).
@@ -804,14 +805,48 @@ Each A to E cell has 3 runs (median shown). Ladder stages are single runs. Resul
    - A small community.
    - No headless mode.
 2. **Stride + Bepu.** It has the strongest physics in every physics-only measure, but its whole frame in render mode is the most expensive after Godot Jolt. It also has no ragdoll builder and no restitution, and it is a beta.
-3. **Godot + Jolt.** It is the slowest variant in every measured physics and whole-frame category. Its renderer features and the largest body of agent knowledge (section 4.2) are unchanged, but they do not offset a 1.6 to 2.4 times physics cost for a physics-heavy game.
-   - The PhysX fork lifts Godot's piles to about ezEngine level. It is not recommended as the base: it is a single-maintainer fork, our build is CPU-only, its jointed solver-iteration default had to be overridden, and its mixed numbers are not yet re-measured at 97bc4de.
+3. **Godot, with the PhysX fork (3a) ahead of Jolt (3b) on the measured numbers.** Godot + Jolt is the slowest variant in every measured physics and whole-frame category (node-based Godot only; see the note after this list). Its renderer features and the largest body of agent knowledge (section 4.2) are unchanged, but they do not offset a 1.6 to 2.4 times physics cost for a physics-heavy game.
+   - Ordered by the numbers, the Godot + PhysX fork (3a) comes before Godot + Jolt (3b): faster per step in every physics cell and, on nodes, 68 against 2.8 fps in the rendered mixed scene. It lifts Godot's piles to about ezEngine level. It is still not recommended as the base: it is a single-maintainer fork, our build is CPU-only, its jointed solver-iteration default had to be overridden, and its mixed numbers are not yet re-measured at 97bc4de.
 
 What could change this verdict:
 - (a) A Steam Deck run under Proton. It is the main open item: DXVK (ezEngine, Stride) against winevulkan (Godot), 4 Zen 2 cores, and an integrated GPU. Desktop ratios may not transfer.
-- (b) A Godot variant with RID bodies and MultiMesh. Not tested; point 2 suggests it would not close the gap.
+- (b) A Godot variant with RID bodies and MultiMesh. Now tested (section 12.3). The earlier statement here, that point 2 suggested it would not close the gap, was a hypothesis; it was refuted for the rendered whole frame and partly refuted for physics. Still unmeasured: a function-level Jolt profile (needs a symbolised Godot build), `chain_check` of the RID chains against the node chains, and any Steam Deck run of the RID variant.
 - (c) A profile of Stride's render-mode cost. If it is fixable, Stride's physics lead would count fully.
 - (d) The real physics rate of Quest. At 60 Hz every variant has 3.3 times more headroom (HYPOTHESIS, above).
+
+**Note on the Godot rows (added 2026-11-08, after section 12.3).** The Godot rows above, and the ranking built on them, are node-based Godot (`RigidBody3D` + `MeshInstance3D`). They depend on the body API. On RIDs + MultiMesh the rendered whole-frame result of Godot beats Stride in the mixed scene (217 fps with Jolt and 262 fps with the PhysX fork against 54 and 51 for Stride; ezEngine stays ahead at 299), while Stride keeps the cheapest physics per step (1.02 ms against 3.14 ms for Godot Jolt on RIDs, pit-2000). The ranking above is NOT changed here: the final order, and whether Quest would accept a design that drives the physics server directly, is the user's decision.
+
+### 12.3 Body API test: nodes vs PhysicsServer RIDs + MultiMesh (2026-11-08)
+
+**Method.** New option `--body-api=nodes|rid` in the Godot benchmark (`benchmark/godot/src/quest_bench.cpp`; `BODY_API=rid` in `run-all.sh`). `rid` creates dynamic bodies and chain pin joints directly on `PhysicsServer3D` (no `RigidBody3D` / `PinJoint3D` nodes, no state-sync callback). Render mode draws them with one MultiMesh per shape kind (box, sphere, capsule), filled once per frame from `body_get_state` + `multimesh_set_buffer`. Statics (pit walls, ceiling) stay nodes. Scenario G (debris) is not supported in rid mode. Pin joint parameters are the `PinJoint3D` defaults (bias 0.3, damping 1.0, impulse clamp 0, solver priority 1, collisions between the bodies off).
+
+**Setup.** Stress profile (sleeping off), 3 runs per cell, nodes and rid alternated per cell, idle desktop, one machine, Windows, discrete GPU. Cells: `unlock-physics-pit-2000` and `unlock-physics-mixed` (5 s warm-up + 20 s), scale 1000 / 2000 / 4000 with `--unpaced=1` (5 + 10 s), `mixed` render and `unlock-render-mixed` render (5 + 20 s). Ms per step = 1000 / steps per s (unpaced, rendering off). In every run all bodies were awake (`awake_bodies` = N) and 0 bodies were outside the pit. Spread of a cell between runs: 3 % or less, except PhysX nodes `unlock-render-mixed` run 1 (14.1 ms median, 100 ms p99; runs 2 and 3: 10.5 and 65). Builds: Jolt rows = stock Godot 4.7.2 release export; PhysX rows = Godot PhysX fork 4.7.3rc at fork head 97bc4de, CPU-only, jointed solver iterations 8/2 set in `override.cfg`. Engine in use proved by the class of the direct space state in env.txt (`JoltPhysicsDirectSpaceState3D`, `GodotPhysXDirectSpaceState3D`). Data: local gitignored folders `.tmp/results-rid` and `.tmp/results-rid-physx`, not committed.
+
+**Table C: Godot body API, stress profile** (PROVED, medians of 3 runs).
+
+| Cell | Jolt nodes | Jolt RID | PhysX nodes | PhysX RID | ezEngine Jolt | Stride JIT | Stride AOT |
+|---|---|---|---|---|---|---|---|
+| Pit 2000: ms per step | 3.87 | 3.14 | 2.23 | 2.18 | 2.52 | 1.02 | 1.04 |
+| Mixed: ms per step | 4.92 | 3.50 | 3.72 | 3.30 | 2.23 | 1.25 | 1.33 |
+| 1000 bodies: ms per step | 1.84 | 1.51 | 1.155 | 1.145 | 1.06 | 0.59 | 0.62 |
+| 2000 bodies: ms per step | 4.0 | 3.15 | 2.33 | 2.26 | 2.50 | 1.02 | 1.04 |
+| 4000 bodies: ms per step | 9.2 | 6.26 | 6.12 | 4.73 | 5.05 | 1.69 | 1.71 |
+| Mixed with rendering, render loop unlocked: fps | 2.8 | 217 | about 73 | about 262 | 299.1 | 53.5 | 50.6 |
+| Mixed with rendering: p99 frame ms | about 405 | 5.6 | 62 to 74 | 5.6 | 5.1 | 25.0 | 25.0 |
+
+Reference rows from the other engines (2026-11-07/08 runs, stress; section 12.2): ezEngine Jolt pit 2.52, mixed 2.23, 4000 bodies 5.05, mixed render 299 fps with p99 5.1 ms; Stride JIT pit 1.02, mixed 1.25, 4000 bodies 1.69, mixed render 53.5 fps with p99 25 ms; Stride AOT 1.04 / 1.33 / 1.71 and 50.6 fps.
+
+**Findings.**
+1. PROVED (Table C): **the Godot node layer was a large part of Godot Jolt's cost.** RIDs save 18 to 32 % per step for Jolt (pit 19 %, mixed 29 %, 1000 bodies 18 %, 2000 bodies 21 %, 4000 bodies 32 %). For PhysX they save 1 to 3 % in the piles (pit, 1000, 2000), 11 % in mixed and 23 % at 4000 bodies.
+2. PROVED: **the 12.2 hypothesis "RIDs would not close most of the gap" is REFUTED for rendering and PARTLY refuted for physics.** The whole-frame collapse of Godot Jolt on the mixed scene (2.8 fps) is the node + `MeshInstance3D` path, not Jolt: Godot Jolt on RIDs runs 217 fps and the PhysX fork 262 fps (ezEngine 299, Stride 54). The p99 frame falls from about 405 ms to 5.6 ms for Jolt.
+3. PROVED: **per step, the physics gap remains.** Jolt on RIDs 3.14 ms (pit) against ezEngine 2.52 ms and Stride 1.02 ms. PhysX on RIDs is faster than Jolt on RIDs in every physics cell, by 1.3 to 1.5 times.
+4. HYPOTHESIS (not profiled): the 2.8 fps on nodes is specific to the Jolt module's node path, because the PhysX fork uses the same node layer and gets about 73 fps. No function-level profile exists (the export has no PDBs; it needs a symbolised Godot build).
+5. NOT CHECKED: `chain_check` of the RID chains against the node chains in this A/B. The first smoke showed different `end_links_max_move` (cause unknown), so the chain behaviour of rid mode is not shown to be equal.
+6. Note: PhysX nodes at 4000 bodies is 6.12 ms here against 5.30 ms in section 12.2. The builds differ (97bc4de here, c6f3b659 there); the cause was not checked. The Godot and ezEngine Jolt versions differ, and the PhysX fork is another Godot version than the stock export.
+
+**Limits.** One desktop, stress profile, 3 runs per cell, desktop only (no Steam Deck, no Proton). RID mode means the game talks to the physics server directly; this is a game design choice, not a settings switch, and scenario G (runtime-created debris) was not run in rid mode. Capacity ladders (most bodies at 20 ms) were not re-run for rid. The sleeping (`game`) profile was not measured for rid.
+
+**Consequence for the verdict (not decided here).** The Godot rows depend on the body API; see the note after the verdict list in section 12.2. The final order is the user's decision.
 
 ---
 
