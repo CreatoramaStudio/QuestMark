@@ -28,6 +28,7 @@
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/classes/world_environment.hpp>
+#include <godot_cpp/classes/xr_server.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -45,6 +46,14 @@
 #include <cstdio>
 
 using namespace godot;
+
+uint64_t QuestTickMark::mark_us = 0;
+uint64_t QuestTickMark::mark_frame = UINT64_MAX;
+
+void QuestTickMark::_process() {
+	mark_us = Time::get_singleton()->get_ticks_usec();
+	mark_frame = Engine::get_singleton()->get_process_frames();
+}
 
 namespace {
 const int SEED = 12345;
@@ -144,6 +153,8 @@ void QuestBench::_parse_args() {
 			diag_tps = v.to_int();
 		} else if (k == "rate") {
 			rate = v.to_float();
+		} else if (k == "tick-mark") {
+			tick_mark_opt = (v != "0" && v != "false");
 		} else if (k == "unpaced") {
 			unpaced = (v == "1" || v == "true");
 		}
@@ -152,6 +163,11 @@ void QuestBench::_parse_args() {
 
 void QuestBench::_ready() {
 	_parse_args();
+	if (tick_mark_opt && XRServer::get_singleton() != nullptr) {
+		tick_mark.instantiate();
+		XRServer::get_singleton()->add_interface(tick_mark);
+		tick_mark_added = true;
+	}
 	base_scenario = scenario;
 	file_label = scenario;
 	if (scenario == "unlock-render-mixed") {
@@ -823,6 +839,16 @@ void QuestBench::_collect_rids(std::vector<RID> &r_out) {
 	}
 }
 
+void QuestBench::_exit_tree() {
+	if (tick_mark.is_valid()) {
+		if (XRServer::get_singleton() != nullptr) {
+			XRServer::get_singleton()->remove_interface(tick_mark);
+		}
+		tick_mark.unref();
+		tick_mark_added = false;
+	}
+}
+
 // ---------- loop ----------
 void QuestBench::_physics_process(double p_delta) {
 	if (space_class.is_empty()) {
@@ -834,8 +860,21 @@ void QuestBench::_physics_process(double p_delta) {
 		// second tick in the same frame: the gap since the previous tick's end is that tick's step
 		step_acc_us += t_start - phys_end_us;
 		if (recording) {
-			step_list.push_back((double)(t_start - phys_end_us) / 1000.0);
+			step_list.push_back((double)(t_start - phys_end_us + lead_pending_us) / 1000.0);
 		}
+		lead_pending_us = 0;
+	} else if (tick_mark_added) {
+		// first tick of the frame: tick-start window = QuestTickMark stamp (XRServer::_process, before the physics loop) to here
+		// (iteration_prepare, sync, flush_queries and any node ahead of us in physics_process)
+		uint64_t lead = 0;
+		if (QuestTickMark::mark_frame == Engine::get_singleton()->get_process_frames() && t_start >= QuestTickMark::mark_us) {
+			lead = t_start - QuestTickMark::mark_us;
+		} else if (recording) {
+			lead_missing += 1;
+		}
+		step_acc_us += lead;
+		lead_pending_us = lead;
+		lead_frame_us = lead;
 	}
 	tick_in_frame += 1;
 	if (recording) {
@@ -933,8 +972,10 @@ void QuestBench::_process(double) {
 		step_ms = (double)(step_acc_us + (now - phys_end_us)) / 1000.0;
 	}
 	if (ticked && recording) {
-		step_list.push_back((double)(now - phys_end_us) / 1000.0); // the last step of the frame
+		step_list.push_back((double)(now - phys_end_us + lead_pending_us) / 1000.0); // the last step of the frame
 	}
+	double tick_start_now = ticked ? (double)lead_frame_us / 1000.0 : 0.0;
+	lead_pending_us = lead_frame_us = 0;
 	tick_in_frame = 0;
 	step_acc_us = 0;
 	bool ev_frame = frame_event, dsp_frame = frame_despawn;
@@ -966,7 +1007,10 @@ void QuestBench::_process(double) {
 	cum_ms += wall_ms;
 	row_cum_ms.push_back(cum_ms);
 	row_ticked.push_back(ticked ? 1 : 0);
-	rows.push_back({ frame_idx, wall_ms, step_ms, query_now, awake_last, ev_ms, dsp_ms, (int)live_pieces, steps_now, steps_now > 0 ? step_ms / (double)steps_now : 0.0 });
+	rows.push_back({ frame_idx, wall_ms, step_ms, query_now, awake_last, ev_ms, dsp_ms, (int)live_pieces, steps_now, steps_now > 0 ? step_ms / (double)steps_now : 0.0, tick_start_now });
+	if (ticked) {
+		tick_start_list.push_back(tick_start_now);
+	}
 	if (is_debris) {
 		row_event.push_back(ev_frame ? 1 : 0);
 		row_despawn.push_back(dsp_frame ? 1 : 0);
@@ -1015,7 +1059,7 @@ void QuestBench::_finish() {
 		get_tree()->quit(3);
 		return;
 	}
-	f->store_line(String("frame,wall_ms,physics_ms,query_ms,gc0,gc1,gc2,gc_pause_ms,awake_bodies") + (is_debris ? ",event_ms,despawn_ms,debris_live" : "") + ",steps_per_frame,physics_step_ms");
+	f->store_line(String("frame,wall_ms,physics_ms,query_ms,gc0,gc1,gc2,gc_pause_ms,awake_bodies") + (is_debris ? ",event_ms,despawn_ms,debris_live" : "") + ",steps_per_frame,physics_step_ms,tick_start_ms");
 	char buf[256];
 	for (const Row &r : rows) {
 		snprintf(buf, sizeof(buf), "%d,%.4f,%.4f,%.4f,0,0,0,0,%d", r.frame, r.wall_ms, r.step_ms, r.query_ms, r.awake);
@@ -1023,7 +1067,7 @@ void QuestBench::_finish() {
 			snprintf(buf, sizeof(buf), "%d,%.4f,%.4f,%.4f,0,0,0,0,%d,%.4f,%.4f,%d", r.frame, r.wall_ms, r.step_ms, r.query_ms, r.awake, r.event_ms, r.despawn_ms, r.live);
 		}
 		char buf2[96];
-		snprintf(buf2, sizeof(buf2), ",%d,%.4f", r.steps, r.step_mean_ms);
+		snprintf(buf2, sizeof(buf2), ",%d,%.4f,%.4f", r.steps, r.step_mean_ms, r.tick_start_ms);
 		f->store_line(String(buf) + String(buf2));
 	}
 	f.unref();
@@ -1035,11 +1079,12 @@ void QuestBench::_finish() {
 	String sum = String("engine=Godot %s backend=%s scenario=%s mode=%s run=%s frames=%d\n") % Array::make(v.get("string", "?"), eng_tag, file_label, file_mode, run_id, frame_idx);
 	sum += "profile=" + profile + " sleeping=" + String(sleeping_off ? "off" : "default") + " vsync=" + String(vsync_on ? "on" : "off") + "\n";
 	sum += stats("wall_ms", wall);
-	sum += stats("physics_ms (own stopwatch: end of _physics_process to start of _process; 0 on frames without a tick)", phys);
+	sum += stats("physics_ms (own stopwatch: def 2 = first tick's tick-start window (sync + flush_queries, from the QuestTickMark stamp) + end of _physics_process to start of _process; def 1 without the mark; 0 on frames without a tick)", phys);
 	sum += stats("engine_monitor_TIME_PHYSICS_PROCESS_ms (engine updates it ~1 Hz; not used in the CSV)", mon_phys);
 	sum += stats("physics_ms, tick frames only", phys_ticks);
 	sum += stats("physics_frame_ms (= physics_ms column: sum of the steps in one frame, tick frames only)", phys_ticks);
-	sum += stats("physics_step_ms (stopwatch of every single step, same boundaries as physics_ms)", step_list);
+	sum += stats("physics_step_ms (stopwatch of every single step, same boundaries as physics_ms; the first step of a frame includes the tick-start window)", step_list);
+	sum += stats("tick_start_ms (first tick's tick-start window inside physics_ms, tick frames only; all 0 with --tick-mark=0 or when the mark is missing)", tick_start_list);
 	sum += stats("steps_per_frame (tick frames only)", steps_pf_list);
 	sum += "physics_hz: " + String::num_int64(unpaced ? PHYS_HZ : Engine::get_singleton()->get_physics_ticks_per_second()) + (unpaced ? " (simulated step; engine ticks_per_second x time_scale, see pacing line)" : "") + "\n";
 	sum += stats("awake_count_cost_ms (native cost of counting awake bodies, tick frames only)", awake_cost);
@@ -1309,6 +1354,8 @@ void QuestBench::_finish() {
 		ef->store_line("max_physics_steps_per_frame: " + String::num_int64(Engine::get_singleton()->get_max_physics_steps_per_frame()));
 		ef->store_line("time_scale: " + String::num(Engine::get_singleton()->get_time_scale(), 1));
 		ef->store_line(String("unpaced: ") + (unpaced ? "1" : "0") + " scale_bodies: " + String::num_int64(bodies));
+		ef->store_line(String("physics_ms_def: ") + (tick_mark_added ? "2 (includes the first tick's tick-start window: QuestTickMark XR interface stamp to _physics_process start)" : "1 (end of _physics_process to start of _process; tick-start window not included)"));
+		ef->store_line(String("tick_mark: added=") + (tick_mark_added ? "yes" : "no") + ", missing=" + String::num_int64(lead_missing));
 		ef->store_line("diag_busy_ms: " + String::num(diag_busy_ms, 1));
 		PackedStringArray ca = os->get_cmdline_args();
 		PackedStringArray ua = os->get_cmdline_user_args();

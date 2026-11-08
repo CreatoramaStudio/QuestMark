@@ -73,7 +73,7 @@ sub read_run {
     } close $sf; }
   (my $envf = $path) =~ s/\.csv$/.env.txt/;
   my $ef; if (open($ef, '<', $envf)) { my %l; my $profile_line = ""; while (<$ef>) {
-      $m{sleeping} = $1 if /^sleeping:\s*(\w+)/; $m{hz} = $1 if /^physics_hz:\s*(\d+)/;
+      $m{sleeping} = $1 if /^sleeping:\s*(\w+)/; $m{pdef} = $1 if /^physics_ms_def:\s*(\d+)/;$m{hz} = $1 if /^physics_hz:\s*(\d+)/;
       $profile_line = $1 if /^jolt_limit_profile_applied_by_extension:\s*(.+?)\s*$/;
       $l{pairs} = $1 if /^jolt max_body_pairs:\s*(\d+)/; $l{bodies} = $1 if /^jolt max_bodies:\s*(\d+)/; $l{cc} = $1 if /^jolt max_contact_constraints:\s*(\d+)/;
       $l{tmp} = $1 if /^jolt temporary_memory_buffer_size:\s*(\d+)/; }
@@ -81,6 +81,7 @@ sub read_run {
     $m{tmp} = $l{tmp};
     $m{lim} = $1 if $profile_line =~ /^(\w+)/;
     if (!defined $m{lim} && defined $l{pairs}) { $m{lim} = $l{pairs} == 65536 ? 'old' : $l{pairs} == 1048576 ? 'raised' : "pairs $l{pairs}"; } }
+  $m{pdef} //= 1;   # env.txt without physics_ms_def = definition 1 (stopwatch without the first tick's tick-start window)
   $m{rtf} = rtf(\%m); return \%m;
 }
 
@@ -105,6 +106,7 @@ if (@ARGV && $ARGV[0] eq '--eval') {
 # ---- collect ----
 my $dir = shift or die "usage: merge-results.pl <results-dir>\n";
 opendir(my $dh, $dir) or die "cannot open $dir: $!\n";
+
 my $FN = qr/^(godot|stride|ezengine)-([A-Za-z0-9_]+?)(?:-(?!stress-)([A-Za-z0-9_]+?))?(-stress)?-((?:pit|raycast|chains|mixed|unlock|scale|debris)[A-Za-z0-9_.-]*)-(physics|render)-(\d+)\.csv$/;
 my @files = sort grep { $_ =~ $FN && !/\.failed/ } readdir $dh;
 closedir $dh;
@@ -130,6 +132,10 @@ sub keys_where { my ($re) = @_; return grep { (key_parts($_))[1] =~ $re } keys %
 
 # ---- header ----
 print "# Benchmark summary\n\n";
+# physics_ms definition (env.txt physics_ms_def; missing = def 1). def 2 adds the first tick's tick-start window (sync + flush_queries) to physics_ms.
+{ my @warn; for my $k (sort keys %cell) { my %d; $d{$_->{pdef}}++ for @{$cell{$k}{runs}}; next unless grep { $_ != 1 } keys %d;
+    push @warn, "- $k: " . join(", ", map { "def $_ x$d{$_}" } sort keys %d) . (keys %d > 1 ? " (MIXED definitions in one cell: do not read the physics columns)" : ""); }
+  print "WARNING physics_ms definitions differ between result files (def 1 = old stopwatch, def 2 = includes the first tick's tick-start window). Do not compare physics columns across def 1 and def 2 cells; wall and steps columns are unaffected. Cells with def 2 or mixed:\n" . join("\n", @warn) . "\n\n" if @warn; }
 print "Physics rate: fixed 200 Hz (dt 0.005 s), render loop unlocked (vsync off, no frame cap). Results recorded at 60 Hz physics (older CSVs without the steps_per_frame column) are NOT comparable with 200 Hz results and are not given a pass verdict here. Profile: game = engine default sleeping, stress = sleeping off for A, D (mixed), F; B, C and G are the same in both profiles (see SPEC Profiles).\n\n";
 print "Known deviations between the engines (SPEC \"Settings parity\"; read the SPEC table for values and reasons): no restitution in Bepu; solver iterations and substeps are not comparable between Jolt and Bepu (both recorded); damping formulas differ at equal nominal 0.1; Jolt limit profiles old/raised exist only for Godot (ezEngine derives the limits from its body count); mixed ceiling is static in Godot and kinematic in Stride; RNG sequences differ; physics_ms stopwatches bound different work; shadow filtering and cascade implementations differ by engine. Use tools/parity_check.pl on two env.txt files for the per-run key comparison.\n\n";
 

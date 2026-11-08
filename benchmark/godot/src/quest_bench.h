@@ -17,6 +17,7 @@
 #include <godot_cpp/classes/rigid_body3d.hpp>
 #include <godot_cpp/classes/sphere_shape3d.hpp>
 #include <godot_cpp/classes/static_body3d.hpp>
+#include <godot_cpp/classes/xr_interface_extension.hpp>
 #include <godot_cpp/variant/rid.hpp>
 #include <godot_cpp/variant/vector2.hpp>
 #include <godot_cpp/variant/vector3.hpp>
@@ -28,6 +29,26 @@
 // Jolt limit profile applied by register_types.cpp before the physics space exists (for the env file)
 extern const char *g_jolt_profile;
 
+// Tick-start mark: an XR interface that is never rendered with. XRServer::_process() runs every frame right before the physics loop
+// (main.cpp) and calls process() on every initialized interface, so this stores a timestamp at the start of the frame's physics
+// section. QuestBench uses it to also cover sync() + flush_queries() of the first tick (physics_ms_def 2). Main thread only.
+class QuestTickMark : public godot::XRInterfaceExtension {
+	GDCLASS(QuestTickMark, godot::XRInterfaceExtension)
+
+public:
+	static uint64_t mark_us;
+	static uint64_t mark_frame; // Engine::get_process_frames() at the mark
+	godot::StringName _get_name() const override { return "QuestTickMark"; }
+	uint32_t _get_capabilities() const override { return 0; }
+	bool _is_initialized() const override { return true; }
+	bool _initialize() override { return true; }
+	void _uninitialize() override {}
+	void _process() override;
+
+protected:
+	static void _bind_methods() {}
+};
+
 class QuestBench : public godot::Node3D {
 	GDCLASS(QuestBench, godot::Node3D)
 
@@ -35,6 +56,7 @@ public:
 	void _ready() override;
 	void _physics_process(double p_delta) override;
 	void _process(double p_delta) override;
+	void _exit_tree() override;
 
 protected:
 	static void _bind_methods() {}
@@ -51,6 +73,7 @@ private:
 		int live = 0;
 		int steps = 0; // physics steps in this frame
 		double step_mean_ms = 0.0; // step_ms / steps
+		double tick_start_ms = 0.0; // tick-start window of the first tick (inside step_ms when the mark is added), 0 without a tick
 	};
 
 	// options
@@ -114,6 +137,13 @@ private:
 	uint64_t phys_end_us = 0;
 	int tick_in_frame = 0;
 	uint64_t step_acc_us = 0;
+	// tick-start mark (physics_ms_def 2): QuestTickMark stamp to the start of the first tick's _physics_process
+	bool tick_mark_opt = true; // --tick-mark=0|1
+	bool tick_mark_added = false;
+	godot::Ref<QuestTickMark> tick_mark;
+	uint64_t lead_pending_us = 0, lead_frame_us = 0;
+	int64_t lead_missing = 0;
+	std::vector<double> tick_start_list;
 	std::vector<godot::RID> body_rids;
 	int awake_last = 0;
 	double script_ms_last = 0.0;

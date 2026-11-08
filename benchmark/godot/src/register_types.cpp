@@ -98,6 +98,7 @@ void initialize_questbench(ModuleInitializationLevel level) {
 	if (level != MODULE_INITIALIZATION_LEVEL_SCENE) {
 		return;
 	}
+	GDREGISTER_CLASS(QuestTickMark);
 	GDREGISTER_CLASS(QuestBench);
 }
 

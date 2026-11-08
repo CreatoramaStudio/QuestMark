@@ -53,7 +53,8 @@ Source: `.tmp/physx-clang/scripts/phase2-godot.sh`, run from the fork root.
 - The extension DLL must be built against the fork's API dump (`GODOT_API_JSON`); a stock 4.7.2 DLL loads in the fork editor, but the report rebuilt against the fork dump for all results (physx and nophysx dumps were byte-identical).
 
 ## Sleep parity (see SPEC "Settings parity", row sleep)
-- The Godot `physics/3d/sleep_threshold_*` settings are ignored under Jolt (env.txt line `godot sleep_threshold_linear / angular / time_before_sleep`, `quest_bench.cpp` line 1299). PhysX: mass-normalised energy threshold 0.01475 (about 0.17 m/s equivalent), wake counter 0.5 s, stabilization on (as given by the session that checked the fork; values not re-read here).
+- The Godot `physics/3d/sleep_threshold_*` settings are ignored under Jolt (env.txt line `godot sleep_threshold_linear / angular / time_before_sleep`, `quest_bench.cpp` line 1299) and, per source reading of the fork, under PhysX as well. PhysX: mass-normalised energy threshold 0.01475 (about 0.17 m/s equivalent), stabilization on; the 0.5 s wake counter is only the initial value, the reset is hard-coded (about 0.4 s). These values come from source reading, not from a run.
+- Decision (user, 2026-11-08): sleep is not forced equal; it is reported as engine behaviour next to `awake_bodies`. The Jolt threshold diagnostic is in SPEC, row sleep.
 
 ## Not done
 - The full 200 Hz protocol, Scenario G included, ran once for the PhysX build on 2026-11-07 (one desktop, results not committed). No Steam Deck run (no Deck available).
