@@ -39,8 +39,8 @@ chart("pile-ms.svg","Pile of 2000 awake bodies: ms per step"," ms",1,z(2.52,1.02
 chart("mixed-ms.svg","Mixed scene (3000 bodies, 100 chains, 1000 rays per step): ms per step"," ms",1,z(2.23,1.25,1.33,3.85,5.03,3.30,3.50));
 chart("bodies4000-ms.svg","4000 awake bodies: ms per step"," ms",1,z(5.05,1.69,1.71,5.30,9.37,4.73,6.26));
 chart("mixed-fps.svg","Mixed scene, render loop unlocked: frames per second"," fps",0,z(299.1,53.5,50.6,67.6,2.8,262,217));
-chart("capacity-render-on.svg","Most bodies with p99 frame at or below 20 ms, rendering on"," bodies",0,zc(3000,2000,2000,2500,1500));
-chart("capacity-render-off.svg","Most bodies with p99 frame at or below 20 ms, rendering off"," bodies",0,zc(3500,8000,10000,2500,2000));
+chart("capacity-render-on.svg","Most bodies with p99 frame at or below 20 ms, rendering on"," bodies",0,z(3000,2000,2000,2500,1500,3000,2000));
+chart("capacity-render-off.svg","Most bodies with p99 frame at or below 20 ms, rendering off"," bodies",0,z(3500,8000,10000,2500,2000,3000,3000));
 sub img { my ($f,$alt) = @_; "![$alt](docs/charts/$f)\n\n" }
 print "### Physics cost per step (lower is better)\n\nEach value is the wall time per physics step with rendering off and the loop unpaced: 1000 / steps per second. Bars run best to worst (the best bar is green); the percentage is the best value divided by this value (best = 100%, 50% means twice as slow).\n\n";
 print img("pile-ms.svg","Pile of 2000 awake bodies: ms per step"), img("mixed-ms.svg","Mixed scene: ms per step"), img("bodies4000-ms.svg","4000 awake bodies: ms per step");

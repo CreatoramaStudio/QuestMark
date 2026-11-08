@@ -74,11 +74,11 @@ Best to worst; the percentage is this value divided by the best value.
 | Pile, 2000 bodies: ms per step | 2.52 | 1.02 | 1.04 | 2.24 | 3.99 | 2.18 | 3.14 |
 | Mixed scene: ms per step | 2.23 | 1.25 | 1.33 | 3.85 | 5.03 | 3.30 | 3.50 |
 | 1000 / 2000 / 4000 bodies: ms per step | 1.06 / 2.50 / 5.05 | 0.59 / 1.02 / 1.69 | 0.62 / 1.04 / 1.71 | 1.17 / 2.36 / 5.30 | 1.85 / 4.07 / 9.37 | 1.145 / 2.26 / 4.73 | 1.51 / 3.15 / 6.26 |
-| Mixed scene with rendering: p99 frame ms | 5.1 | 25.0 | 25.0 | 89.5 | 408 | 5.6 | 5.6 |
+| Mixed scene with rendering: p99 frame ms | 5.1 | 25.0 | 25.0 | 89.5 | 408 | 5.6 to 9.1 | 5.6 |
 | Mixed scene, render loop unlocked: fps | 299 | 54 | 51 | 68 | 2.8 | 262 | 217 |
-| Most bodies at 20 ms, rendering on / off | 3000 / 3500 | 2000 / 8000 | 2000 / 10000 | 2500 / 2500 | 1500 / 2000 | not measured | not measured |
+| Most bodies at 20 ms, rendering on / off | 3000 / 3500 | 2000 / 8000 | 2000 / 10000 | 2500 / 2500 | 1500 / 2000 | 3000 / 3000 | 2000 / 3000 |
 
-The two RID columns are from the body API test of 2026-11-08 (3 runs per cell, one desktop, stress profile). The Godot PhysX RID values come from the fork build at 97bc4de; the PhysX node values in the table are from the older build c6f3b659, so compare PhysX nodes and RID in [docs/engine-choice.md](docs/engine-choice.md) section 12.3, which has same-build node values (for example 4000 bodies: 6.12 ms nodes against 4.73 ms RID).
+The two RID columns are from the body API test of 2026-11-08 (3 runs per cell, one desktop, stress profile). A second set of 3 runs (stages A, B, D, E, 2026-11-08, both profiles) reproduced the stress medians within 3 %, except the Jolt RID mixed-scene p99 frame: 5.6 ms in the first set, 9.1 ms in the second (medians equal at 4.8 ms). The p99 jumps because more than 1 % of the frames took two physics steps in the second set (1.6 to 2.3 % against 0.6 to 0.7 %), so it is shown as a range. The Godot PhysX RID values come from the fork build at 97bc4de; the PhysX node values in the table are from the older build c6f3b659, so compare PhysX nodes and RID in [docs/engine-choice.md](docs/engine-choice.md) section 12.3, which has same-build node values (for example 4000 bodies: 6.12 ms nodes against 4.73 ms RID).
 
 With sleeping on (`game` profile), the 2000-body pile falls asleep in Bepu (0.09 ms per step) and in PhysX (0.23 ms per step). With default settings it stays awake under Jolt in both Godot and ezEngine. The benchmark reports sleeping as engine behaviour and does not force it equal.
 
