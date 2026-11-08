@@ -134,6 +134,7 @@ prog_draw() {
   line="$prefix [$bar] $pct%  $CELLS_DONE / ~$EXP_CELLS cells  elapsed $((el / 60)) min  $eta  fails $fails  | $*"
   echo "$line" > "$OUT_DIR/progress-$prefix.txt"
   [ "$PROG_TTY" = 1 ] && printf '\0337\033[%d;1H\033[2K%s\0338' "$PROG_ROWS" "$(echo "$line" | cut -c1-$(( $(stty size | awk '{print $2}') - 1 )))"
+  return 0   # without this a non-TTY run ends with status 1 (the && above is false) and run-all.sh exits 1 after "prog_draw done"
 }
 
 # ---- warm-up that covers the fall (godot NOTES: N=4000 paced needs 8 s; fall time sqrt(2h/g), h = layers x 0.6 m + 1) ----

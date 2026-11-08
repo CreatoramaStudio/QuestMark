@@ -61,6 +61,8 @@ for t in $targets; do
         -DGODOTCPP_TARGET="$t" -DQUESTBENCH_OUTPUT_DIR="$(w "$outdir")")
   [ -n "${PYTHON3:-}" ] && args+=(-DPython3_EXECUTABLE="$(w "$PYTHON3")")
   cmake "${args[@]}"
+  # start marker for ext-build-progress.sh: it counts only .obj files newer than this, so an incremental rebuild is not shown as done
+  touch "$bdir/.build-start"
   cmake --build "$(w "$bdir")" --config "$cfg" --target questbench --parallel
 done
 if [ "${SELECT_DEFAULT:-0}" = 1 ]; then

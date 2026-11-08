@@ -68,6 +68,7 @@ sub read_run {
       $m{fps} = $1 if /^fps[:=]\s*([\d.]+)/;
       $m{steps} = $1 if /^steps_per_s[:=]\s*([\d.]+)/;
       $m{ws} = $1 if /^working_set_mb[:=]\s*([\d.]+)/;
+      $m{wps} = 1000 / $m{steps} if defined $m{steps} && $m{steps} > 0 && /^steps_per_s[:=]/;   # headline: unpaced wall ms per physics step
       $m{awake_end} = $1 if /^awake_bodies_at_end[:=]\s*(\d+)/ || /^awake_bodies_last[:=]\s*(\d+)/;
     } close $sf; }
   (my $envf = $path) =~ s/\.csv$/.env.txt/;
@@ -131,6 +132,18 @@ sub keys_where { my ($re) = @_; return grep { (key_parts($_))[1] =~ $re } keys %
 print "# Benchmark summary\n\n";
 print "Physics rate: fixed 200 Hz (dt 0.005 s), render loop unlocked (vsync off, no frame cap). Results recorded at 60 Hz physics (older CSVs without the steps_per_frame column) are NOT comparable with 200 Hz results and are not given a pass verdict here. Profile: game = engine default sleeping, stress = sleeping off for A, D (mixed), F; B, C and G are the same in both profiles (see SPEC Profiles).\n\n";
 print "Known deviations between the engines (SPEC \"Settings parity\"; read the SPEC table for values and reasons): no restitution in Bepu; solver iterations and substeps are not comparable between Jolt and Bepu (both recorded); damping formulas differ at equal nominal 0.1; Jolt limit profiles old/raised exist only for Godot (ezEngine derives the limits from its body count); mixed ceiling is static in Godot and kinematic in Stride; RNG sequences differ; physics_ms stopwatches bound different work; shadow filtering and cascade implementations differ by engine. Use tools/parity_check.pl on two env.txt files for the per-run key comparison.\n\n";
+
+# ---- headline: unpaced wall time per physics step (SPEC "Headline metric") ----
+my @hl = sort { my @a = key_parts($a); my @b = key_parts($b); $a[0] cmp $b[0] or ($a[3] cmp $b[3]) or $a[1] cmp $b[1] or $a[2] cmp $b[2] } keys_where(qr/^(unlock-physics-|scale-unlock-)/);
+if (@hl) {
+print "## Headline: unpaced wall time per physics step\n\n";
+print "| engine/backend | profile | sleeping | scenario | runs | wall ms per step med | wall ms per step min-max | steps/s | awake min-max | Jolt limits |\n";
+print "|---|---|---|---|---|---|---|---|---|---|\n";
+for my $k (@hl) { my ($en, $s, $m, $p) = key_parts($k); my $c = $cell{$k}; my ($w0, $w1) = cr($c,'wps'); my ($a0) = cr($c,'awmin'); my (undef,$a1) = cr($c,'awmax');
+  printf "| %s | %s | %s | %s | %d | %s | %s-%s | %s | %d-%d | %s |\n", $en, $p, slpcell($c), $s, scalar @{$c->{runs}},
+    f(cm($c,'wps'),3), f($w0,3), f($w1,3), f(cm($c,'steps'),1), $a0, $a1, limcell($c); }
+print "\nUnits: ms. Wall ms per step = 1000 / steps_per_s of each run summary (measured wall s / physics steps, SPEC \"Headline metric\"); median and min-max across runs ('-' when a summary lacks steps_per_s). It includes our per-step code and the engine loop overhead and has no rendering; it is a throughput number, not the solver cost alone. Read it next to awake min-max (PhysX sleeps far more than Jolt).\n\n";
+}
 
 # ---- A to D ----
 my %so = ('pit-2000'=>1,'raycast-1000'=>2,'raycast-10000'=>3,'chains'=>4,'mixed'=>5);
