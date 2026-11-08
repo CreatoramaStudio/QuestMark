@@ -2,6 +2,7 @@
 # Usage: perl benchmark/tools/gen-readme-charts.pl > charts.md, then paste over the chart sections of README.md.
 # The values are copied by hand from the README numbers table: update them there and here together.
 use strict; use warnings;
+binmode(STDOUT, ":utf8");
 # chart(title, unit, lower_better, ymax, [name, value]...) -> mermaid block, sorted best first, label "name value unit (pct%)"
 sub chart {
   my ($title,$unit,$low,$ymax,@p)=@_; my $yl = $title =~ m{ms per step} ? "ms per step" : $title =~ m{frames} ? "fps" : "bodies"; my @d; push @d,[splice(@p,0,2)] while @p;
@@ -10,7 +11,12 @@ sub chart {
   for my $d (@d){ my $pct = $low ? $best/$d->[1]*100 : $d->[1]/$best*100;
     my $v=$d->[1]; my $s = sprintf("%.5g",$v);
     push @l, sprintf('"%s: %s%s (%d%%)"',$d->[0],$s,$unit,int($pct+0.5)); push @v,$v; }
-  return "```mermaid\nxychart-beta horizontal\n    title \"$title\"\n    x-axis [".join(", ",@l)."]\n    y-axis \"$yl\" 0 --> $ymax\n    bar [".join(", ",@v)."]\n```\n";
+  # spacer categories with value 0 above the first and below the last bar: space between the bars and the plot border
+  unshift @l, "\" \""; unshift @v, 0; push @l, "\"  \""; push @v, 0;
+  # frontmatter config: wider plot, taller per bar, padding around titles, labels and axes (nothing touches the border)
+  my $h = 100 + 64 * (@d + 2);
+  my $cfg = "---\nconfig:\n  xyChart:\n    width: 1000\n    height: $h\n    titlePadding: 28\n    titleFontSize: 18\n    plotReservedSpacePercent: 60\n    xAxis:\n      labelFontSize: 14\n      labelPadding: 18\n      titlePadding: 18\n    yAxis:\n      labelFontSize: 14\n      labelPadding: 18\n      titlePadding: 18\n---\n";
+  return "```mermaid\n${cfg}xychart-beta horizontal\n    title \"$title\"\n    x-axis [".join(", ",@l)."]\n    y-axis \"$yl\" 0 --> $ymax\n    bar [".join(", ",@v)."]\n```\n";
 }
 my @n=("ezEngine","Stride JIT","Stride AOT","Godot PhysX","Godot Jolt","PhysX RID","Jolt RID");
 sub z { my @v=@_; map { ($n[$_],$v[$_]) } 0..$#v }

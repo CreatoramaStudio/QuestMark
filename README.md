@@ -49,27 +49,78 @@ Every run uses fixed 200 Hz physics, which leaves a 5 ms budget per step. All nu
 Each value is the wall time per physics step with rendering off and the loop unpaced: 1000 / steps per second. Bars run best to worst; the percentage is the best value divided by this value (best = 100%, 50% means twice as slow).
 
 ```mermaid
+---
+config:
+  xyChart:
+    width: 1000
+    height: 676
+    titlePadding: 28
+    titleFontSize: 18
+    plotReservedSpacePercent: 60
+    xAxis:
+      labelFontSize: 14
+      labelPadding: 18
+      titlePadding: 18
+    yAxis:
+      labelFontSize: 14
+      labelPadding: 18
+      titlePadding: 18
+---
 xychart-beta horizontal
     title "Pile of 2000 awake bodies: ms per step"
-    x-axis ["Stride JIT: 1.02 ms (100%)", "Stride AOT: 1.04 ms (98%)", "PhysX RID: 2.18 ms (47%)", "Godot PhysX: 2.24 ms (46%)", "ezEngine: 2.52 ms (40%)", "Jolt RID: 3.14 ms (32%)", "Godot Jolt: 3.99 ms (26%)"]
+    x-axis [" ", "Stride JIT: 1.02 ms (100%)", "Stride AOT: 1.04 ms (98%)", "PhysX RID: 2.18 ms (47%)", "Godot PhysX: 2.24 ms (46%)", "ezEngine: 2.52 ms (40%)", "Jolt RID: 3.14 ms (32%)", "Godot Jolt: 3.99 ms (26%)", "  "]
     y-axis "ms per step" 0 --> 5
-    bar [1.02, 1.04, 2.18, 2.24, 2.52, 3.14, 3.99]
+    bar [0, 1.02, 1.04, 2.18, 2.24, 2.52, 3.14, 3.99, 0]
 ```
 
 ```mermaid
+---
+config:
+  xyChart:
+    width: 1000
+    height: 676
+    titlePadding: 28
+    titleFontSize: 18
+    plotReservedSpacePercent: 60
+    xAxis:
+      labelFontSize: 14
+      labelPadding: 18
+      titlePadding: 18
+    yAxis:
+      labelFontSize: 14
+      labelPadding: 18
+      titlePadding: 18
+---
 xychart-beta horizontal
     title "Mixed scene (3000 bodies, 100 chains, 1000 rays per step): ms per step"
-    x-axis ["Stride JIT: 1.25 ms (100%)", "Stride AOT: 1.33 ms (94%)", "ezEngine: 2.23 ms (56%)", "PhysX RID: 3.3 ms (38%)", "Jolt RID: 3.5 ms (36%)", "Godot PhysX: 3.85 ms (32%)", "Godot Jolt: 5.03 ms (25%)"]
+    x-axis [" ", "Stride JIT: 1.25 ms (100%)", "Stride AOT: 1.33 ms (94%)", "ezEngine: 2.23 ms (56%)", "PhysX RID: 3.3 ms (38%)", "Jolt RID: 3.5 ms (36%)", "Godot PhysX: 3.85 ms (32%)", "Godot Jolt: 5.03 ms (25%)", "  "]
     y-axis "ms per step" 0 --> 6
-    bar [1.25, 1.33, 2.23, 3.3, 3.5, 3.85, 5.03]
+    bar [0, 1.25, 1.33, 2.23, 3.3, 3.5, 3.85, 5.03, 0]
 ```
 
 ```mermaid
+---
+config:
+  xyChart:
+    width: 1000
+    height: 676
+    titlePadding: 28
+    titleFontSize: 18
+    plotReservedSpacePercent: 60
+    xAxis:
+      labelFontSize: 14
+      labelPadding: 18
+      titlePadding: 18
+    yAxis:
+      labelFontSize: 14
+      labelPadding: 18
+      titlePadding: 18
+---
 xychart-beta horizontal
     title "4000 awake bodies: ms per step"
-    x-axis ["Stride JIT: 1.69 ms (100%)", "Stride AOT: 1.71 ms (99%)", "PhysX RID: 4.73 ms (36%)", "ezEngine: 5.05 ms (33%)", "Godot PhysX: 5.3 ms (32%)", "Jolt RID: 6.26 ms (27%)", "Godot Jolt: 9.37 ms (18%)"]
+    x-axis [" ", "Stride JIT: 1.69 ms (100%)", "Stride AOT: 1.71 ms (99%)", "PhysX RID: 4.73 ms (36%)", "ezEngine: 5.05 ms (33%)", "Godot PhysX: 5.3 ms (32%)", "Jolt RID: 6.26 ms (27%)", "Godot Jolt: 9.37 ms (18%)", "  "]
     y-axis "ms per step" 0 --> 10
-    bar [1.69, 1.71, 4.73, 5.05, 5.3, 6.26, 9.37]
+    bar [0, 1.69, 1.71, 4.73, 5.05, 5.3, 6.26, 9.37, 0]
 ```
 
 ### Whole frame with rendering (higher is better)
@@ -77,29 +128,80 @@ xychart-beta horizontal
 Best to worst; the percentage is this value divided by the best value.
 
 ```mermaid
+---
+config:
+  xyChart:
+    width: 1000
+    height: 676
+    titlePadding: 28
+    titleFontSize: 18
+    plotReservedSpacePercent: 60
+    xAxis:
+      labelFontSize: 14
+      labelPadding: 18
+      titlePadding: 18
+    yAxis:
+      labelFontSize: 14
+      labelPadding: 18
+      titlePadding: 18
+---
 xychart-beta horizontal
     title "Mixed scene, render loop unlocked: frames per second"
-    x-axis ["ezEngine: 299.1 fps (100%)", "PhysX RID: 262 fps (88%)", "Jolt RID: 217 fps (73%)", "Godot PhysX: 67.6 fps (23%)", "Stride JIT: 53.5 fps (18%)", "Stride AOT: 50.6 fps (17%)", "Godot Jolt: 2.8 fps (1%)"]
+    x-axis [" ", "ezEngine: 299.1 fps (100%)", "PhysX RID: 262 fps (88%)", "Jolt RID: 217 fps (73%)", "Godot PhysX: 67.6 fps (23%)", "Stride JIT: 53.5 fps (18%)", "Stride AOT: 50.6 fps (17%)", "Godot Jolt: 2.8 fps (1%)", "  "]
     y-axis "fps" 0 --> 320
-    bar [299.1, 262, 217, 67.6, 53.5, 50.6, 2.8]
+    bar [0, 299.1, 262, 217, 67.6, 53.5, 50.6, 2.8, 0]
 ```
 
 ```mermaid
+---
+config:
+  xyChart:
+    width: 1000
+    height: 548
+    titlePadding: 28
+    titleFontSize: 18
+    plotReservedSpacePercent: 60
+    xAxis:
+      labelFontSize: 14
+      labelPadding: 18
+      titlePadding: 18
+    yAxis:
+      labelFontSize: 14
+      labelPadding: 18
+      titlePadding: 18
+---
 xychart-beta horizontal
     title "Most bodies with p99 frame at or below 20 ms, rendering on"
-    x-axis ["ezEngine: 3000 (100%)", "Godot PhysX: 2500 (83%)", "Stride JIT: 2000 (67%)", "Stride AOT: 2000 (67%)", "Godot Jolt: 1500 (50%)"]
+    x-axis [" ", "ezEngine: 3000 (100%)", "Godot PhysX: 2500 (83%)", "Stride JIT: 2000 (67%)", "Stride AOT: 2000 (67%)", "Godot Jolt: 1500 (50%)", "  "]
     y-axis "bodies" 0 --> 3500
-    bar [3000, 2500, 2000, 2000, 1500]
+    bar [0, 3000, 2500, 2000, 2000, 1500, 0]
 ```
 
 ### Physics-only capacity (higher is better)
 
 ```mermaid
+---
+config:
+  xyChart:
+    width: 1000
+    height: 548
+    titlePadding: 28
+    titleFontSize: 18
+    plotReservedSpacePercent: 60
+    xAxis:
+      labelFontSize: 14
+      labelPadding: 18
+      titlePadding: 18
+    yAxis:
+      labelFontSize: 14
+      labelPadding: 18
+      titlePadding: 18
+---
 xychart-beta horizontal
     title "Most bodies with p99 frame at or below 20 ms, rendering off"
-    x-axis ["Stride AOT: 10000 (100%)", "Stride JIT: 8000 (80%)", "ezEngine: 3500 (35%)", "Godot PhysX: 2500 (25%)", "Godot Jolt: 2000 (20%)"]
+    x-axis [" ", "Stride AOT: 10000 (100%)", "Stride JIT: 8000 (80%)", "ezEngine: 3500 (35%)", "Godot PhysX: 2500 (25%)", "Godot Jolt: 2000 (20%)", "  "]
     y-axis "bodies" 0 --> 10500
-    bar [10000, 8000, 3500, 2500, 2000]
+    bar [0, 10000, 8000, 3500, 2500, 2000, 0]
 ```
 
 ### The numbers
