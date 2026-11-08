@@ -158,6 +158,8 @@ launch() { # exe scenario mode run warm measure extra headless(0|1) outdir
   if [ "$engine" = godot ]; then
     local pe; case "${BENCH_ENGINE:-jolt}" in physx) pe=PhysX ;; *) pe="Jolt Physics" ;; esac
     { printf '[physics]\n\n3d/physics_engine="%s"\n' "$pe"
+      # the PhysX fork registers these keys only in GPU builds but reads them always: unset, jointed bodies get 1/1 instead of the 8/2 defaults (proved, see godot/PHYSX.md)
+      [ "$pe" = PhysX ] && printf 'physx_3d/simulation/jointed_position_iterations=8\nphysx_3d/simulation/jointed_velocity_iterations=2\n'
       if [ "${AFF_N:-0}" -gt 0 ]; then
         [ "$pe" = PhysX ] && printf 'physx_3d/simulation/cpu_worker_threads=%d\n' "$AFF_N"
         printf '\n[threading]\n\nworker_pool/max_threads=%d\n' "$AFF_N"
