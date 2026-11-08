@@ -17,6 +17,8 @@ struct QbOptions
   std::string m_sFlavour;
   std::string m_sCamera = "content";
   std::string m_sSleeping; ///< "", "off" or "default"
+  float m_fSleepVel = 0.0f;  ///< --sleep-vel=<m/s>: Jolt point velocity sleep threshold (0 = 0.03, the Jolt default); experiment only
+  float m_fSleepTime = 0.0f; ///< --sleep-time=<s>: Jolt time before sleep (0 = 0.5, the Jolt default); experiment only
   std::string m_sProfile = "game";
   std::string m_sShadows;  ///< "off" disables, anything else is on
   int m_iShadowMap = 2048;

@@ -269,11 +269,17 @@ void QbGameState::CreateWorldAndJolt()
     ezJoltSettingsComponent::CreateComponent(pObj, pSettings);
     pSettings->SetObjectGravity(ezVec3(0.0f, -9.81f, 0.0f));
     pSettings->SetMaxBodies((ezUInt32)m_iMaxBodies);
-    pSettings->SetSleepVelocityThreshold(0.03f); // Jolt default, equal to the Godot Jolt default
+    pSettings->SetSleepVelocityThreshold(m_Opt.m_fSleepVel > 0.0f ? m_Opt.m_fSleepVel : 0.03f); // Jolt default, equal to the Godot Jolt default
 
     m_pJolt = m_pOwnedWorld->GetOrCreateModule<ezJoltWorldModule>();
     m_pSystem = m_pJolt->GetJoltSystem();
     m_pBI = &m_pSystem->GetBodyInterfaceNoLock();
+    if (m_Opt.m_fSleepTime > 0.0f)
+    {
+      JPH::PhysicsSettings js = m_pSystem->GetPhysicsSettings();
+      js.mTimeBeforeSleep = m_Opt.m_fSleepTime;
+      m_pSystem->SetPhysicsSettings(js);
+    }
     m_sSpaceClass = QbToStd(m_pOwnedWorld->GetOrCreateModule<ezPhysicsWorldModuleInterface>()->GetDynamicRTTI()->GetTypeName());
   }
 

@@ -43,6 +43,10 @@ void QbParseOptions(QbOptions& out_opt)
       out_opt.m_sCamera = v;
     else if (k == "sleeping")
       out_opt.m_sSleeping = v;
+    else if (k == "sleep-vel")
+      out_opt.m_fSleepVel = (float)atof(v.c_str());
+    else if (k == "sleep-time")
+      out_opt.m_fSleepTime = (float)atof(v.c_str());
     else if (k == "profile")
       out_opt.m_sProfile = v;
     else if (k == "shadows")
