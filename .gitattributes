@@ -1,3 +1,5 @@
 # Shell and Perl scripts must keep LF: bash fails on CRLF line endings (core.autocrlf=true would convert them on checkout).
 *.sh text eol=lf
 *.pl text eol=lf
+# Batch files need CRLF: cmd.exe mis-parses LF-only files that use labels or multi-line blocks.
+*.bat text eol=crlf
