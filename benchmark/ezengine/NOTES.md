@@ -2,7 +2,7 @@
 
 C++ ezEngine application `QuestBench` (`ezGameApplication` plus a custom `ezGameState`, `QbGameState`). Physics is the ezEngine Jolt plugin (`ezJoltWorldModule`), the only physics engine of ezEngine, so the result label is `ezengine-jolt`. Rules: `../SPEC.md` (single source of truth). Reference semantics: `../godot/src/quest_bench.cpp` and `../stride/BenchGame.cs`.
 
-Status (2026-11-07): the code compiles in the Dev configuration and every scenario ran to exit 0 in short smoke form (warm-up 1 to 5 s, measure 3 to 20 s). NO timing run exists. Nothing in this file is a performance result. Labels: PROVED = checked by a command, file or run; UNVERIFIED = not checked; HYPOTHESIS = a guess that has not been tested.
+Status (2026-11-08): the code compiles in the Dev and Shipping (D3D11) configurations and every scenario ran to exit 0 in smoke form. The Shipping build was timed in the reduced full run of 2026-11-08 (results: docs/engine-choice.md section 12). Nothing in this file is a performance result; the text below was written before that run. Labels: PROVED = checked by a command, file or run; UNVERIFIED = not checked; HYPOTHESIS = a guess that has not been tested.
 
 ## Files
 - `CMakeLists.txt`: the project is built as an external project of an ezEngine checkout (`-DEZ_EXTERNAL_PROJECT_1=<this folder>`, done by `../tools/build-ezengine.sh`). `QB_PROJECT_DIR` (the source path of `Project/`) and `QB_EZ_TAG` are compiled into the exe only; `--project=<folder>` overrides the project folder at run time (needed after a move; `run-all.sh` always passes it, computed from the repo root).
@@ -44,7 +44,7 @@ Window capture (Shipping, pit-2000 render, DX11, one run, other apps open, not a
 - (e) Update and render overlap: ezEngine can run the world update and the rendering of the previous frame in parallel (`Rendering.Multithreading`). It is OFF by default here (`--mt-render=1` turns it on) so that a frame is update then render, as in the other two. `multithreaded_rendering` is written to env.txt. The effect of turning it on was not measured. Frame `wall_ms` therefore includes both, and `render_sync_ms` is the cost of copying body transforms into game objects.
 
 ## Known deviations from SPEC and from the other engines
-- Dev build in the smoke runs; a Shipping build exists now (above); its window was captured on 2026-11-07 (pit-2000, render, D3D11) and shows the pit with the 2000 bodies, so it does draw. Not measured as a result.
+- Dev build in the smoke runs; a Shipping build exists now (above); its window was captured on 2026-11-07 (pit-2000, render, D3D11) and shows the pit with the 2000 bodies, so it does draw. (Timed later, in the 2026-11-08 run.)
 - Physics mode opens an empty visible window (a).
 - Render path, light and ambient not fitted; renderer is Vulkan; shadow and MSAA values requested, not read back (c, d).
 - Restitution: Jolt supports it (0.1), set on the bodies and the engine default material; the combine rule in the contact listener is friction sqrt(f1 x f2) and restitution max(r1, r2) (as Godot's Jolt). Damping 0.1 on the bodies (Jolt damping; the formula is not compared to Bepu or to the Godot Jolt integration).
