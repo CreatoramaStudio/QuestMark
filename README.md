@@ -46,7 +46,7 @@ Every run uses fixed 200 Hz physics, which leaves a 5 ms budget per step. All nu
 
 ### Physics cost per step (lower is better)
 
-Each value is the wall time per physics step with rendering off and the loop unpaced: 1000 / steps per second. Bars run best to worst (the best bar is green); the percentage is the best value divided by this value (best = 100%, 50% means twice as slow).
+Each value is the wall time per physics step with rendering off and the loop unpaced: 1000 / steps per second. Bars run best to worst (bars at 100% are green); the percentage is the best value divided by this value (best = 100%, 50% means twice as slow).
 
 ![Pile of 2000 awake bodies: ms per step](docs/charts/pile-ms.svg)
 

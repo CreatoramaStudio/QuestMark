@@ -6,7 +6,7 @@
 <rect x="196" y="78" width="402.0" height="24" rx="3" class="best"/>
 <text x="606.0" y="95" font-size="14" class="t">3000 bodies<tspan class="m"> · 100%</tspan></text>
 <text x="186" y="135" font-size="14" text-anchor="end" class="t">PhysX RID</text>
-<rect x="196" y="118" width="402.0" height="24" rx="3" class="bar"/>
+<rect x="196" y="118" width="402.0" height="24" rx="3" class="best"/>
 <text x="606.0" y="135" font-size="14" class="t">3000 bodies<tspan class="m"> · 100%</tspan></text>
 <text x="186" y="175" font-size="14" text-anchor="end" class="t">Godot PhysX</text>
 <rect x="196" y="158" width="335.0" height="24" rx="3" class="bar"/>

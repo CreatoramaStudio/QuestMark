@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # Writes the README benchmark charts as standalone SVG files (docs/charts/*.svg) and prints the README chart sections (markdown image links).
-# Bars run best to worst; each label shows the value and the percentage of the best (best = 100%). Own background, so light and dark GitHub themes both read well.
+# Bars run best to worst (bars at 100% are green); each label shows the value and the percentage of the best (best = 100%). Own background, so light and dark GitHub themes both read well.
 # The values are copied by hand from the README numbers table: update them there and here together.
 # Usage: perl benchmark/tools/gen-charts.pl > .tmp/charts.md   (then paste over the chart sections of README.md between the markers)
 use strict; use warnings; use FindBin;
@@ -25,7 +25,7 @@ sub chart {
   for my $d (@d) {
     my ($name,$v) = @$d; my $y = $top + $i*$rowh; $i++;
     my $pct = $low ? $best/$v*100 : $v/$best*100; my $len = $v/$max*$L;
-    my $cls = $i == 1 ? "best" : "bar"; my $vs = sprintf("%.5g",$v);
+    my $cls = int($pct+0.5) >= 100 ? "best" : "bar"; my $vs = sprintf("%.5g",$v);
     $s .= qq(<text x="@{[$x0-10]}" y="@{[$y+$barh/2+5]}" font-size="14" text-anchor="end" class="t">@{[esc($name)]}</text>\n);
     $s .= qq(<rect x="$x0" y="$y" width="@{[sprintf('%.1f',$len)]}" height="$barh" rx="3" class="$cls"/>\n);
     $s .= qq(<text x="@{[sprintf('%.1f',$x0+$len+8)]}" y="@{[$y+$barh/2+5]}" font-size="14" class="t">$vs$unit<tspan class="m"> · @{[int($pct+0.5)]}%</tspan></text>\n);
@@ -42,7 +42,7 @@ chart("mixed-fps.svg","Mixed scene, render loop unlocked: frames per second"," f
 chart("capacity-render-on.svg","Most bodies with p99 frame at or below 20 ms, rendering on"," bodies",0,z(3000,2000,2000,2500,1500,3000,2000));
 chart("capacity-render-off.svg","Most bodies with p99 frame at or below 20 ms, rendering off"," bodies",0,z(3500,8000,10000,2500,2000,3000,3000));
 sub img { my ($f,$alt) = @_; "![$alt](docs/charts/$f)\n\n" }
-print "### Physics cost per step (lower is better)\n\nEach value is the wall time per physics step with rendering off and the loop unpaced: 1000 / steps per second. Bars run best to worst (the best bar is green); the percentage is the best value divided by this value (best = 100%, 50% means twice as slow).\n\n";
+print "### Physics cost per step (lower is better)\n\nEach value is the wall time per physics step with rendering off and the loop unpaced: 1000 / steps per second. Bars run best to worst (bars at 100% are green); the percentage is the best value divided by this value (best = 100%, 50% means twice as slow).\n\n";
 print img("pile-ms.svg","Pile of 2000 awake bodies: ms per step"), img("mixed-ms.svg","Mixed scene: ms per step"), img("bodies4000-ms.svg","4000 awake bodies: ms per step");
 print "### Whole frame with rendering (higher is better)\n\nBest to worst; the percentage is this value divided by the best value.\n\n";
 print img("mixed-fps.svg","Mixed scene, render loop unlocked: frames per second"), img("capacity-render-on.svg","Most bodies at 20 ms p99, rendering on");
