@@ -16,6 +16,10 @@
 #                      a PhysX request on a build without the module silently runs GodotPhysics. The Jolt limit flags are passed for jolt only.
 #   BENCH_FLAVOUR      optional label of the build (for example a fork name; letters, digits, underscore). File prefix: godot-<engine>[-<flavour>]-
 #                      (jolt without flavour keeps godot-jolt-). The label is also passed to the exe as --flavour.
+#   BODY_API           Godot only: nodes (default) | rid. Passed to the exe as --body-api. rid creates dynamic bodies and chain pin joints directly on
+#                      PhysicsServer3D and draws them with MultiMesh in render mode (SPEC "Settings parity", row body API). rid is NOT supported
+#                      for stage G (debris): the exe reports an error and exits with 2, so use --stages=ABCDEF. Use a separate BENCH_FLAVOUR for rid
+#                      runs (for example BENCH_FLAVOUR=rid BODY_API=rid) so the file names differ from the node runs.
 #   Profiles (SPEC "Profiles"): A (pit-2000), D (mixed), E (unlock) and F (scale) run in both profiles, game and stress (file names get
 #                      a "-stress" token after the prefix, game keeps the plain names); B, C and G run in game only.
 #   STRIDE_BENCH_EXE   StrideBench.exe (JIT build output or Native AOT publish output)
@@ -165,6 +169,7 @@ launch() { # exe scenario mode run warm measure extra headless(0|1) outdir
         printf '\n[threading]\n\nworker_pool/max_threads=%d\n' "$AFF_N"
       fi; } > "$(dirname "$x")/override.cfg"
     [ -n "${BENCH_FLAVOUR:-}" ] && extra="$extra --flavour=$BENCH_FLAVOUR"
+    [ -n "${BODY_API:-}" ] && extra="$extra --body-api=$BODY_API"
   fi
   [ "$engine" = ezengine ] && [ -n "${BENCH_FLAVOUR:-}" ] && extra="$extra --flavour=$BENCH_FLAVOUR"
   if [ -n "${CPU_AFFINITY:-}" ]; then
@@ -183,7 +188,7 @@ launch() { # exe scenario mode run warm measure extra headless(0|1) outdir
 cmdline() { # for dry-run display
   local x="$1" sc="$2" mode="$3" run="$4" w="$5" m="$6" extra="$7" hl="$8" pre=""
   [ "$engine" = godot ] && { [ "$hl" = 1 ] && pre="--headless -- " || pre="-- "; }
-  [ "$engine" = godot ] && extra="$extra${BENCH_FLAVOUR:+ --flavour=$BENCH_FLAVOUR}"
+  [ "$engine" = godot ] && extra="$extra${BENCH_FLAVOUR:+ --flavour=$BENCH_FLAVOUR}${BODY_API:+ --body-api=$BODY_API}"
   local st=""; [ "$engine" = stride ] && [ -n "${CPU_AFFINITY:-}" ] && st=": --bepu-threads=$AFF_N --render-threads=$AFF_N"
   echo "\"${x:-<exe>}\" ${pre}--scenario=$sc --mode=$mode --run=$run --warmup=$w --measure=$m${extra:+ $extra} --out=<stage>  [override.cfg engine: ${BENCH_ENGINE:-n/a}]${CPU_AFFINITY:+  [start /affinity $CPU_AFFINITY, $AFF_N threads$st]}"
 }

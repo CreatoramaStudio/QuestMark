@@ -6,6 +6,7 @@
 #   a mismatch. Values are compared on the first token (the text after the number is a free-form annotation); numbers with a
 #   relative tolerance of 1e-3 (absolute 0.002), vectors "(x, y, z)" component-wise; values starting with "n/a" on either side
 #   are reported as n/a, not as a mismatch.
+#   body_api (Godot --body-api nodes|rid) is compared too; a file without the line counts as nodes.
 # Exit code: 0 = no mismatch, 1 = at least one mismatch, 2 = usage / file error.
 use strict; use warnings;
 my @files = grep { !/^--/ } @ARGV; my $all = grep { $_ eq '--all' } @ARGV;
@@ -13,7 +14,7 @@ die "usage: parity_check.pl <a.env.txt> <b.env.txt> [--all]\n" unless @files == 
 
 # compared keys (the SPEC target values are the single source of truth; these must be equal in every run of the same profile and mode)
 my @keys = qw(profile sleeping shadows shadow_map_size msaa vsync max_fps physics_hz solver_iterations solver_substeps
-              camera_mode camera_position camera_look_at camera_fov_v_deg camera_near camera_far camera_content_radius camera_content_aabb);
+              camera_mode camera_position camera_look_at camera_fov_v_deg camera_near camera_far camera_content_radius camera_content_aabb body_api);
 # keys that are legitimately different per engine and only recorded (never a mismatch): listed with both values
 my %known = (solver_iterations => 'Jolt velocity_steps vs Bepu solver iterations are not the same quantity',
              solver_substeps   => 'Bepu substeps have no Jolt equivalent',
@@ -22,6 +23,9 @@ my %known = (solver_iterations => 'Jolt velocity_steps vs Bepu solver iterations
 sub load { my ($p) = @_; local $_; open(my $fh, '<', $p) or die "$p: $!\n"; my %h;
   while (<$fh>) { s/\r?\n$//; next unless /^([A-Za-z0-9_.]+):\s*(.*)$/; $h{$1} = $2 unless exists $h{$1}; } close $fh; return \%h; }
 my ($A, $B) = map { load($_) } @files;
+# body_api (Godot: nodes | rid, compared on the first token) is missing in env.txt files written before the --body-api option and in
+# Stride / ezEngine files; those all use one body path, which counts as "nodes". So a missing line is not reported as MISSING.
+for my $h ($A, $B) { $h->{body_api} = 'nodes (no body_api line in this env.txt)' unless exists $h->{body_api}; }
 sub nums { my ($v) = @_; return [ $v =~ /(-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)/g ]; }
 sub first_tok { my ($v) = @_; $v =~ s/^\s+//; $v =~ s/\s.*$//; return $v; }
 sub same { my ($x, $y) = @_;

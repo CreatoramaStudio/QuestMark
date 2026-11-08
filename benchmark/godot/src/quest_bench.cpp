@@ -23,6 +23,7 @@
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/scene_tree_timer.hpp>
+#include <godot_cpp/classes/shape3d.hpp>
 #include <godot_cpp/classes/sphere_mesh.hpp>
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/classes/viewport.hpp>
@@ -157,6 +158,8 @@ void QuestBench::_parse_args() {
 			tick_mark_opt = (v != "0" && v != "false");
 		} else if (k == "unpaced") {
 			unpaced = (v == "1" || v == "true");
+		} else if (k == "body-api") {
+			body_rid = (v == "rid");
 		}
 	}
 }
@@ -281,6 +284,11 @@ void QuestBench::_ready() {
 		ub->set_size(Vector3(1, 1, 1));
 		unit_box_mesh = ub;
 	}
+	if (body_rid && is_debris) {
+		UtilityFunctions::push_error("--body-api=rid is not implemented for the debris scenarios (G)");
+		get_tree()->quit(2);
+		return;
+	}
 	if (base_scenario == "pit-2000") {
 		pit_interior = 22.0;
 		_build_pit(22.0);
@@ -317,6 +325,9 @@ void QuestBench::_ready() {
 		UtilityFunctions::push_error("unknown scenario: ", scenario);
 		get_tree()->quit(2);
 		return;
+	}
+	if (body_rid && render) {
+		_setup_multimeshes();
 	}
 	// camera after the scenario has set its geometry (the bounds come from the builders)
 	_compute_camera();
@@ -506,6 +517,75 @@ RigidBody3D *QuestBench::_make_dynamic(int p_kind, const Vector3 &p_pos) {
 	return b;
 }
 
+RID QuestBench::_make_dynamic_rid(int p_kind, const Vector3 &p_pos) {
+	PhysicsServer3D *ps = PhysicsServer3D::get_singleton();
+	RID b = ps->body_create();
+	ps->body_set_mode(b, PhysicsServer3D::BODY_MODE_RIGID);
+	ps->body_set_space(b, get_world_3d()->get_space());
+	Ref<Shape3D> shape = p_kind == 0 ? Ref<Shape3D>(box_shape) : p_kind == 1 ? Ref<Shape3D>(sphere_shape) : Ref<Shape3D>(capsule_shape);
+	ps->body_add_shape(b, shape->get_rid(), Transform3D());
+	ps->body_set_param(b, PhysicsServer3D::BODY_PARAM_MASS, 1.0);
+	ps->body_set_param(b, PhysicsServer3D::BODY_PARAM_FRICTION, phys_mat->get_friction());
+	ps->body_set_param(b, PhysicsServer3D::BODY_PARAM_BOUNCE, phys_mat->get_bounce());
+	if (sleeping_off) {
+		ps->body_set_state(b, PhysicsServer3D::BODY_STATE_CAN_SLEEP, false);
+	}
+	ps->body_set_state(b, PhysicsServer3D::BODY_STATE_TRANSFORM, Transform3D(Basis(), p_pos));
+	body_rids.push_back(b);
+	mm_groups[p_kind].bodies.push_back(b);
+	return b;
+}
+
+void QuestBench::_setup_multimeshes() {
+	RenderingServer *rs = RenderingServer::get_singleton();
+	RID scenario = get_world_3d()->get_scenario();
+	Ref<Mesh> meshes[3] = { box_mesh, sphere_mesh, capsule_mesh };
+	for (int k = 0; k < 3; k++) {
+		MMGroup &g = mm_groups[k];
+		if (g.bodies.empty()) {
+			continue;
+		}
+		g.mesh = meshes[k];
+		g.mm = rs->multimesh_create();
+		rs->multimesh_allocate_data(g.mm, (int)g.bodies.size(), RenderingServer::MULTIMESH_TRANSFORM_3D);
+		rs->multimesh_set_mesh(g.mm, g.mesh->get_rid());
+		g.inst = rs->instance_create2(g.mm, scenario);
+		g.buf.resize((int64_t)g.bodies.size() * 12);
+	}
+	_sync_multimeshes();
+}
+
+// One body_get_state per body and one multimesh_set_buffer per shape kind (what a RID-based game does each frame; node bodies get this from the sync callback instead).
+void QuestBench::_sync_multimeshes() {
+	PhysicsServer3D *ps = PhysicsServer3D::get_singleton();
+	RenderingServer *rs = RenderingServer::get_singleton();
+	for (int k = 0; k < 3; k++) {
+		MMGroup &g = mm_groups[k];
+		if (g.bodies.empty()) {
+			continue;
+		}
+		float *w = g.buf.ptrw();
+		for (const RID &r : g.bodies) {
+			Transform3D t = (Transform3D)ps->body_get_state(r, PhysicsServer3D::BODY_STATE_TRANSFORM);
+			const Basis &b = t.basis;
+			w[0] = b.rows[0].x;
+			w[1] = b.rows[0].y;
+			w[2] = b.rows[0].z;
+			w[3] = t.origin.x;
+			w[4] = b.rows[1].x;
+			w[5] = b.rows[1].y;
+			w[6] = b.rows[1].z;
+			w[7] = t.origin.y;
+			w[8] = b.rows[2].x;
+			w[9] = b.rows[2].y;
+			w[10] = b.rows[2].z;
+			w[11] = t.origin.z;
+			w += 12;
+		}
+		rs->multimesh_set_buffer(g.mm, g.buf);
+	}
+}
+
 double QuestBench::_jit() {
 	return rng->randf_range(-0.05, 0.05);
 }
@@ -526,7 +606,11 @@ void QuestBench::_build_pit_bodies(bool p_ring, int p_count) {
 					double jy = _jit();
 					double jz = _jit();
 					Vector3 p((i - 5.5) * SPACING + jx, 1.0 + layer0 * SPACING + jy, (j - 5.5) * SPACING + jz);
-					add_child(_make_dynamic(n % 2, p));
+					if (body_rid) {
+	_make_dynamic_rid(n % 2, p);
+} else {
+	add_child(_make_dynamic(n % 2, p));
+}
 					n += 1;
 				}
 			}
@@ -559,7 +643,11 @@ void QuestBench::_build_pit_bodies(bool p_ring, int p_count) {
 			double jy = _jit();
 			double jz = _jit();
 			Vector3 p(c.x + jx, 1.0 + layer * SPACING + jy, c.y + jz);
-			add_child(_make_dynamic(n % 2, p));
+			if (body_rid) {
+	_make_dynamic_rid(n % 2, p);
+} else {
+	add_child(_make_dynamic(n % 2, p));
+}
 			n += 1;
 		}
 		layer += 1;
@@ -645,7 +733,31 @@ void QuestBench::_build_chains() {
 			double x = (cx - 4.5) * 1.0;
 			double z = (cz - 4.5) * 1.0;
 			PhysicsBody3D *prev = ceiling;
+			RID prev_rid = ceiling->get_rid();
+			Vector3 prev_pos = ceiling->get_position();
 			for (int l = 0; l < 10; l++) {
+				if (body_rid) {
+					// same joint as the PinJoint3D node below: pin at (x, 12 - 0.5 l, z), anchors in each body's local space, node defaults for the params
+					Vector3 link_pos(x, 12.0 - 0.25 - 0.5 * l, z);
+					Vector3 pin(x, 12.0 - 0.5 * l, z);
+					RID link = _make_dynamic_rid(2, link_pos);
+					chain_rids.push_back(link);
+					PhysicsServer3D *ps = PhysicsServer3D::get_singleton();
+					RID j = ps->joint_create();
+					joint_rids.push_back(j);
+					ps->joint_make_pin(j, prev_rid, pin - prev_pos, link, pin - link_pos);
+					ps->pin_joint_set_param(j, PhysicsServer3D::PIN_JOINT_BIAS, 0.3);
+					ps->pin_joint_set_param(j, PhysicsServer3D::PIN_JOINT_DAMPING, 1.0);
+					ps->pin_joint_set_param(j, PhysicsServer3D::PIN_JOINT_IMPULSE_CLAMP, 0.0);
+					ps->joint_set_solver_priority(j, 1);
+					ps->joint_disable_collisions_between_bodies(j, true);
+					prev_rid = link;
+					prev_pos = link_pos;
+					if (l == 9) {
+						impulse_rids.push_back(link);
+					}
+					continue;
+				}
 				RigidBody3D *link = _make_dynamic(2, Vector3(x, 12.0 - 0.25 - 0.5 * l, z));
 				chain_rids.push_back(link->get_rid());
 				add_child(link);
@@ -840,6 +952,24 @@ void QuestBench::_collect_rids(std::vector<RID> &r_out) {
 }
 
 void QuestBench::_exit_tree() {
+	if (body_rid) {
+		// free the server objects made by --body-api=rid (nodes free theirs themselves)
+		PhysicsServer3D *ps = PhysicsServer3D::get_singleton();
+		for (const RID &j : joint_rids) {
+			ps->free_rid(j);
+		}
+		for (const RID &b : body_rids) {
+			ps->free_rid(b);
+		}
+		joint_rids.clear();
+		body_rids.clear();
+		for (MMGroup &g : mm_groups) {
+			if (g.inst.is_valid()) {
+				RenderingServer::get_singleton()->free_rid(g.inst);
+				RenderingServer::get_singleton()->free_rid(g.mm);
+			}
+		}
+	}
 	if (tick_mark.is_valid()) {
 		if (XRServer::get_singleton() != nullptr) {
 			XRServer::get_singleton()->remove_interface(tick_mark);
@@ -885,6 +1015,13 @@ void QuestBench::_physics_process(double p_delta) {
 	if (!engine_printed) {
 		engine_printed = true;
 		UtilityFunctions::print("QuestBench engine proof: setting physics/3d/physics_engine=", setting("physics/3d/physics_engine"), " ; direct space state class=", space_class);
+	}
+	if (!impulse_done && !impulse_rids.empty()) {
+		impulse_done = true;
+		for (const RID &r : impulse_rids) {
+			impulse_pos0.push_back(((Transform3D)PhysicsServer3D::get_singleton()->body_get_state(r, PhysicsServer3D::BODY_STATE_TRANSFORM)).origin);
+			PhysicsServer3D::get_singleton()->body_apply_central_impulse(r, Vector3(2, 0, 0));
+		}
 	}
 	if (!impulse_done && !impulse_bodies.empty()) {
 		impulse_done = true;
@@ -963,6 +1100,10 @@ void QuestBench::_process(double) {
 	uint64_t now = now_us();
 	double wall_ms = (double)(now - last_us) / 1000.0;
 	last_us = now;
+	if (body_rid && render) {
+		// after the physics_ms boundary (step_ms below is computed from `now`), so the cost shows in the frame's wall time
+		_sync_multimeshes();
+	}
 	int steps_now = tick_in_frame;
 	double query_now = query_ms_frame;
 	query_ms_frame = 0.0;
@@ -1169,18 +1310,19 @@ void QuestBench::_finish() {
 			snprintf(buf, sizeof(buf), "bodies_outside_pit_at_end: %d (pit interior %.0f m)\n", outside, pit_interior);
 			sum += buf;
 		}
-		if (!impulse_bodies.empty()) {
+		if (!impulse_bodies.empty() || !impulse_rids.empty()) {
 			// joint/impulse check (PhysX port): end links must stay attached (chain length 5 m, ceiling at y 12) and have moved by the +x impulse
 			double min_y = 1e9, max_d = 0.0, sum_dx = 0.0;
 			for (const RID &rid : chain_rids) {
 				min_y = std::min(min_y, (double)((Transform3D)PhysicsServer3D::get_singleton()->body_get_state(rid, PhysicsServer3D::BODY_STATE_TRANSFORM)).origin.y);
 			}
-			for (size_t i = 0; i < impulse_bodies.size() && i < impulse_pos0.size(); i++) {
-				Vector3 p = impulse_bodies[i]->get_global_position();
+			size_t n_end = body_rid ? impulse_rids.size() : impulse_bodies.size();
+			for (size_t i = 0; i < n_end && i < impulse_pos0.size(); i++) {
+				Vector3 p = body_rid ? ((Transform3D)PhysicsServer3D::get_singleton()->body_get_state(impulse_rids[i], PhysicsServer3D::BODY_STATE_TRANSFORM)).origin : impulse_bodies[i]->get_global_position();
 				max_d = std::max(max_d, (double)(p - impulse_pos0[i]).length());
 				sum_dx += p.x - impulse_pos0[i].x;
 			}
-			snprintf(buf, sizeof(buf), "chain_check: all_links_min_y=%.3f (start >= 7.5; free fall would go far lower) end_links_max_move=%.3f end_links_mean_dx=%.3f n_end_links=%d\n", min_y, max_d, sum_dx / (double)impulse_bodies.size(), (int)impulse_bodies.size());
+			snprintf(buf, sizeof(buf), "chain_check: all_links_min_y=%.3f (start >= 7.5; free fall would go far lower) end_links_max_move=%.3f end_links_mean_dx=%.3f n_end_links=%d\n", min_y, max_d, sum_dx / (double)n_end, (int)n_end);
 			sum += buf;
 		}
 		if (is_debris) {
@@ -1233,6 +1375,7 @@ void QuestBench::_finish() {
 		ef->store_line("physics_space_state_class (runtime, get_world_3d()->get_direct_space_state()->get_class()): " + ps_class);
 		ef->store_line("engine_tag: " + eng_tag);
 		ef->store_line("flavour: " + flavour);
+		ef->store_line(String("body_api: ") + (body_rid ? "rid (PhysicsServer3D bodies and pin joints, no nodes; render mode: MultiMesh per shape kind, body_get_state + multimesh_set_buffer once per frame; statics stay nodes)" : "nodes (RigidBody3D + MeshInstance3D, PinJoint3D)"));
 		ef->store_line(String("sleeping: ") + (sleeping_off ? "off" : "default"));
 		ef->store_line("camera_mode: " + camera_mode + (render ? "" : " (physics mode: no camera node, values computed from the same rule)"));
 		ef->store_line(String("camera_position: ") + String("(%.3f, %.3f, %.3f)") % Array::make(cam_pos.x, cam_pos.y, cam_pos.z));

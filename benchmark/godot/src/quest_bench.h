@@ -5,6 +5,7 @@
 //   --run=1 --out=<dir> [--warmup=5 --measure=20] [--diag-busy-ms=<ms>]
 // Scenarios E/F: --scenario=unlock-render-mixed|unlock-physics-mixed|unlock-physics-pit-2000|scale (scale: --bodies=N --mode=physics|render [--unpaced=1])
 // Scenario G: --scenario=debris|debris-pooled --rate=<events per second> --mode=physics|render (warm-up defaults to 10 s for G)
+// Body API: --body-api=nodes|rid (default nodes). rid = bodies and chain joints made on PhysicsServer3D, MultiMesh drawing; not for debris (G).
 // Jolt limits: --jolt-limits=old|raised|bodies (default by scenario: F and G raised, others old; see register_types.cpp), --jolt-max-bodies/--jolt-max-pairs/--jolt-max-constraints=<n> override
 
 #include <godot_cpp/classes/box_shape3d.hpp>
@@ -18,6 +19,7 @@
 #include <godot_cpp/classes/sphere_shape3d.hpp>
 #include <godot_cpp/classes/static_body3d.hpp>
 #include <godot_cpp/classes/xr_interface_extension.hpp>
+#include <godot_cpp/variant/packed_float32_array.hpp>
 #include <godot_cpp/variant/rid.hpp>
 #include <godot_cpp/variant/vector2.hpp>
 #include <godot_cpp/variant/vector3.hpp>
@@ -145,6 +147,20 @@ private:
 	int64_t lead_missing = 0;
 	std::vector<double> tick_start_list;
 	std::vector<godot::RID> body_rids;
+	// --body-api=rid: free dynamic bodies and chain joints are created directly on PhysicsServer3D (no RigidBody3D / PinJoint3D nodes, no
+	// state-sync callback); render mode draws them with one MultiMesh per shape kind, filled from body_get_state once per frame.
+	bool body_rid = false;
+	struct MMGroup {
+		godot::RID mm, inst;
+		godot::Ref<godot::Mesh> mesh;
+		std::vector<godot::RID> bodies;
+		godot::PackedFloat32Array buf;
+	};
+	MMGroup mm_groups[3]; // 0 box, 1 sphere, 2 capsule
+	std::vector<godot::RID> impulse_rids, joint_rids;
+	godot::RID _make_dynamic_rid(int p_kind, const godot::Vector3 &p_pos);
+	void _setup_multimeshes();
+	void _sync_multimeshes();
 	int awake_last = 0;
 	double script_ms_last = 0.0;
 	std::vector<double> mon_phys, awake_cost, script_cost, phys_ticks;

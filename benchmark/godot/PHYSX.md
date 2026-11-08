@@ -56,6 +56,13 @@ Source: `.tmp/physx-clang/scripts/phase2-godot.sh`, run from the fork root.
 - The Godot `physics/3d/sleep_threshold_*` settings are ignored under Jolt (env.txt line `godot sleep_threshold_linear / angular / time_before_sleep`, `quest_bench.cpp` line 1299) and, per source reading of the fork, under PhysX as well. PhysX: mass-normalised energy threshold 0.01475 (about 0.17 m/s equivalent), stabilization on; the 0.5 s wake counter is only the initial value, the reset is hard-coded (about 0.4 s). These values come from source reading, not from a run.
 - Decision (user, 2026-11-08): sleep is not forced equal; it is reported as engine behaviour next to `awake_bodies`. The Jolt threshold diagnostic is in SPEC, row sleep.
 
+## Body API A/B with the fork (`--body-api=rid`, 2026-11-08)
+- Build used: the fork at 97bc4de (CPU-only, jointed solver iterations 8/2 from `override.cfg`). The extension DLL was rebuilt against the fork's API dump (it contains the new `--body-api` code) and exported into a copy of the existing fork export folder. The class of the direct space state (`GodotPhysXDirectSpaceState3D`) in env.txt proves PhysX ran.
+- rid mode in this build: bodies and pin joints go straight to `PhysicsServer3D`, with the same pin parameters as the `PinJoint3D` defaults (bias 0.3, damping 1.0, impulse clamp 0, solver priority 1, collisions between the bodies off). Scenario G is not supported in rid. See `NOTES.md`, "Body API option".
+- PROVED (3 runs per cell, stress, one desktop): ms per step nodes to RID: pit 2000 2.23 to 2.18, mixed 3.72 to 3.30, 1000 bodies 1.155 to 1.145, 2000 bodies 2.33 to 2.26, 4000 bodies 6.12 to 4.73. Mixed with rendering: about 73 to about 262 fps. So the PhysX fork gains little from RIDs in the piles (1 to 3 %) and more at 4000 bodies (23 %) and in the mixed scene (11 %).
+- The 4000-body node value here (6.12 ms) is higher than the 5.30 ms of the 2026-11-07 run (older fork build c6f3b659); the cause was not checked.
+- Full tables, comparison with Jolt and limits: `docs/engine-choice.md` section 12.3.
+
 ## Not done
 - The full 200 Hz protocol, Scenario G included, ran once for the PhysX build on 2026-11-07 (one desktop, results not committed). No Steam Deck run (no Deck available).
 
