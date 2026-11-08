@@ -50,5 +50,7 @@ if ($all) { my %seen = map { $_ => 1 } @keys;
 # only, never a mismatch (Stride/Bepu has no such buffer; raised profile = 1024 MiB).
 sub raw_jolt { my ($p, $name) = @_; open(my $fh, '<', $p) or return 'n/a'; while (<$fh>) { s/\r?\n$//; return $1 if /^jolt \Q$name\E[:]\s*(.*)$/; } return 'n/a'; }
 printf "INFO     %-26s A=[%s] B=[%s]  (Jolt-only, MiB; Stride/Bepu has no such buffer, ezEngine uses a growing allocator)\n", 'jolt temp_buffer_size', raw_jolt($files[0], 'temporary_memory_buffer_size'), raw_jolt($files[1], 'temporary_memory_buffer_size');
+# sleep rules differ per engine by design (SPEC "Settings parity", row sleep): shown as information only, never a mismatch.
+printf "INFO     %-26s A=[%s] B=[%s]  (engines differ: Jolt 0.03 m/s point velocity, PhysX energy threshold, Bepu unchecked; not forced equal)\n", 'sleep (jolt threshold)', raw_jolt($files[0], 'sleep_velocity_threshold'), raw_jolt($files[1], 'sleep_velocity_threshold');
 printf "\nparity_check:%d equal, %d mismatch, %d n/a (physics mode), see KNOWN lines for recorded engine differences\n", $ok, $mis, $na;
 exit($mis ? 1 : 0);
