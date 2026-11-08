@@ -6,8 +6,8 @@
 #               scale 1000/2000/4000 (unpaced), unlock-render-mixed, profile stress, 3 runs (6 s warm-up 5 s, measure 20 s / 10 s for scale).
 #               A subset for a first impression, NOT the SPEC protocol: do not publish it as the full result.
 #   --full      the SPEC protocol: tools/run-all.sh <engine> for each engine (about 1 h per variant).
-#   --rid       add a Godot variant that drives bodies through PhysicsServer3D RIDs (BODY_API=rid, flavour rid). Full mode runs stages ABCDEF
-#               for it (stage G is unsupported there).
+#   --rid       add a Godot variant that drives bodies through PhysicsServer3D RIDs (BODY_API=rid, flavour rid). Full mode runs stages ABCDEFG
+#               for it (all stages, G included).
 #   --aot       full mode only: also run the Stride Native AOT build (needs setup.sh --aot, done automatically here)
 #   --no-setup  do not run setup.sh first (the exe paths come from the environment or ENV_FILE)
 #   --summary-only  only merge and print the results already in OUT_DIR
@@ -133,7 +133,7 @@ for e in "${ENGINES[@]}"; do
   else
     export GODOT_BENCH_EXE STRIDE_BENCH_EXE EZENGINE_BENCH_EXE
     case "$e" in
-      godot) full_engine godot; [ "$RID" = 1 ] && full_engine godot BENCH_FLAVOUR=rid BODY_API=rid STAGES=ABCDEF ;;
+      godot) full_engine godot; [ "$RID" = 1 ] && full_engine godot BENCH_FLAVOUR=rid BODY_API=rid STAGES=ABCDEFG ;;
       stride) full_engine stride
               [ "$AOT" = 1 ] && full_engine stride STRIDE_FLAVOR=bepu_aot "STRIDE_BENCH_EXE=$(qb_abs "${STRIDE_AOT_EXE:-}")" ;;
       ezengine) full_engine ezengine ;;
