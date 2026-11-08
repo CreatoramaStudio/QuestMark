@@ -11,7 +11,7 @@ QuestMark is the engine benchmark and engine study for Quest, a planned physics-
 ## Rules for this project
 - Godot hot-path code is C++ (godot-cpp GDExtension), never GDScript. GDScript only for glue and scene setup.
 - Godot body API: `--body-api=nodes|rid` (`BODY_API` in run-all). Node-based and RID results are different variants: never compare them as one; the Godot ranking depends on the API (docs/engine-choice.md 12.3). Debris (G) is not supported in rid mode.
-- README charts come from `benchmark/tools/gen-readme-charts.pl` (values copied by hand from the README table).
+- README charts come from `benchmark/tools/gen-charts.pl` (writes `docs/charts/*.svg`, values copied by hand from the README table).
 - Benchmark fairness: engine settings stay as equal as possible (see the parity table in SPEC.md); any new setting goes into the table and `tools/parity_check.pl`.
 - Fixed physics step 200 Hz, render unlocked, profiles `game` and `stress`. Timings taken at 60 Hz are not comparable.
 - Never take timings while another build or smoke test runs; the full protocol needs an idle machine and the user's go-ahead.
