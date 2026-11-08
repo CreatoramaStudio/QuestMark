@@ -3,7 +3,7 @@
 QuestMark is the engine benchmark and engine study for Quest, a planned physics-heavy 3D game (AI agents write most of the code, target 60 fps on a handheld PC, Windows-only build run via Proton on Linux handhelds). The engine is not final: the study and the benchmark decide it.
 
 ## Layout
-- `docs/engine-choice.md`: engine study (source-read, 2026-11-06) and benchmark status. Ranking so far: Godot + Jolt, then Stride, then ezEngine.
+- `docs/engine-choice.md`: engine study (source-read, 2026-11-06), desktop benchmark results and the verdict (section 12.2). Verdict 2026-11-08, provisional until a Steam Deck run: ezEngine + Jolt, then Stride + Bepu, then Godot + Jolt.
 - `benchmark/`: Godot vs Stride (and Godot PhysX fork) benchmark. Start with `benchmark/README.md`; `benchmark/SPEC.md` is the single source of truth for scenarios, settings and pass rules.
 - `.tmp/`: scratch only (git-ignored, never committed); builds of godot-cpp, the PhysX SDK and the Godot fork live here. Delete your own leftovers when done.
 
