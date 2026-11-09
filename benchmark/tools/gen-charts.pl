@@ -52,6 +52,14 @@ chart("capacity-render-off-game.svg","Most bodies with p99 frame at or below 20 
 chart("raycast-10000-ms.svg","10000 rays per frame: wall ms per frame"," ms",1,z(345,394,498,653,503,644,500));
 chart("debris-render.svg","Debris (G): highest rate passing 20 ms p99, rendering on"," events/s",0,z(3,3,3,3,2,6,3));
 chart("debris-physics.svg","Debris (G): highest rate passing 20 ms p99, rendering off"," events/s",0,z(3,6,8,4,2,8,3));
+# Renderer A/B (2026-11-08, stages A and D, 3 runs per cell, median fps; values from .tmp/vk-ab and .tmp/vk-ab-godot, section 3.1a and 12.4 of docs/engine-choice.md)
+my @ab = ("ezEngine DX11","ezEngine Vulkan","Godot Jolt Vulkan","Godot Jolt D3D12");
+sub zab { my @v = @_; map { ($ab[$_], $v[$_]) } 0..$#v }
+chart("renderer-ab-pit-physics-stress.svg","Renderer A/B, pile of 2000, physics mode, stress: frames per second"," fps",0,zab(1223.6,702.1,144.9,144.9));
+chart("renderer-ab-pit-physics-game.svg","Renderer A/B, pile of 2000, physics mode, game: frames per second"," fps",0,zab(1178.8,728.9,144.7,144.9));
+chart("renderer-ab-mixed-render-stress.svg","Renderer A/B, mixed scene with rendering, stress: frames per second"," fps",0,zab(288.3,259.3,2.8,2.8));
+chart("renderer-ab-mixed-render-game.svg","Renderer A/B, mixed scene with rendering, game: frames per second"," fps",0,zab(277.8,231.3,2.8,2.8));
+
 sub img { my ($f,$alt) = @_; "![$alt](docs/charts/$f)\n\n" }
 print "### Physics cost per step (lower is better)\n\nEach value is the wall time per physics step with rendering off and the loop unpaced: 1000 / steps per second. Bars run best to worst (bars at 100% are green); the percentage is the best value divided by this value (best = 100%, 50% means twice as slow).\n\n";
 print img("pile-ms.svg","Pile of 2000 awake bodies: ms per step"), img("mixed-ms.svg","Mixed scene: ms per step"), img("bodies4000-ms.svg","4000 awake bodies: ms per step");
@@ -64,3 +72,15 @@ print "### Physics-only capacity (higher is better)\n\n";
 print img("capacity-render-off.svg","Most bodies at 20 ms p99, rendering off, stress"), img("capacity-render-off-game.svg","Most bodies at 20 ms p99, rendering off, game");
 print "### Debris (higher is better)\n\nScenario G always runs with default sleeping. The value is the highest debris rate (events per second, 64 pieces per event) that keeps the p99 frame time at or below 20 ms on the tested ladder.\n\n";
 print img("debris-render.svg","Debris: highest rate at 20 ms p99, rendering on"), img("debris-physics.svg","Debris: highest rate at 20 ms p99, rendering off");
+print "### Renderer A/B (higher is better)\n\nStages A and D only, median of 3 runs, one desktop, native Windows (no Steam Deck). ezEngine: the same exe with `-renderer DX11` and `-renderer Vulkan`; Godot: stock Jolt, nodes, `GODOT_RD_DRIVER=vulkan` and `d3d12`. ezEngine Vulkan is slower in every cell; Godot shows no difference beyond the run spread (details: docs/engine-choice.md sections 3.1a and 12.4). Median fps per cell (percentage against the same engine's other renderer):
+
+| Cell | ezEngine DX11 | ezEngine Vulkan | Godot Jolt Vulkan | Godot Jolt D3D12 |
+|---|---|---|---|---|
+| pile of 2000, physics mode, stress | 1223.6 | 702.1 (-43%) | 144.9 | 144.9 (0%) |
+| pile of 2000, physics mode, game | 1178.8 | 728.9 (-38%) | 144.7 | 144.9 (+0.1%) |
+| mixed scene, rendering, stress | 288.3 | 259.3 (-10%) | 2.8 | 2.8 (0%) |
+| mixed scene, rendering, game | 277.8 | 231.3 (-17%) | 2.8 | 2.8 (0%) |
+
+The Godot physics-mode fps looks pacing-bound (identical on both drivers). These bars compare each engine with its own other renderer; the Godot and ezEngine rows are not one ranking (the main charts above use other cells).\n\n";
+print img("renderer-ab-pit-physics-stress.svg","Renderer A/B, pile of 2000, physics mode, stress: fps"), img("renderer-ab-pit-physics-game.svg","Renderer A/B, pile of 2000, physics mode, game: fps");
+print img("renderer-ab-mixed-render-stress.svg","Renderer A/B, mixed scene with rendering, stress: fps"), img("renderer-ab-mixed-render-game.svg","Renderer A/B, mixed scene with rendering, game: fps");

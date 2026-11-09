@@ -139,6 +139,7 @@ Goal: the engines' settings are as equal as possible; the SPEC target values abo
 | vsync | off in every run (`vsync`) | off in render runs (`vsync`) | yes | |
 | frame cap | none, `max_fps` 0 in render and physics mode | none, `IsFixedTimeStep = false` in render and physics mode (`max_fps` 0) | yes | smoke on one machine |
 | MSAA | 4x (viewport msaa_3d, read back) | 4x (forward renderer `MSAALevel`, line 230) | yes | different implementations |
+| graphics API | Vulkan by default (read at run time, env.txt `render_backend`; D3D11 not built); the Windows driver can be set with `GODOT_RD_DRIVER` (vulkan or d3d12) via override.cfg `rendering_device/driver.windows`, recorded as `rendering_driver_setting` and `rendering_driver_in_use` in env.txt (older results lack these lines) | `StrideGraphicsApi` Direct3D11 (`benchmark/stride/StrideBench.csproj`) | NO | different APIs; Godot Vulkan against D3D12 measured equal on stages A and D (docs/engine-choice.md 12.4); ezEngine D3D11 against Vulkan is not equal (3.1a) |
 | shadows | on in game and stress | on (`Shadow.Enabled`) | yes | |
 | shadow technique | directional shadow map, parallel-split cascades, engine default filter and bias | directional shadow map, cascades, engine default filter | NO (implementations differ) | |
 | shadow map size | 2048 (atlas) | `LightShadowMapSize.XLarge` (hint; Stride reports a size class, `shadow_map_size`) | approx | the Stride value is a hint, the actual texel size is not read |
@@ -168,11 +169,11 @@ Same settings, the ezEngine implementation (`ezengine/src`, values read from its
 | Jolt limits | `MaxBodies` 10240 (A to E) or 70000 (scale, debris): pairs = 40 x, contacts = 4 x derived by the module; temporary allocator growing (no fixed size) | NO | cannot be set like the Godot `old` / `raised` profiles; recorded in env.txt (`jolt max_*`) |
 | threads | Jolt jobs on the ezEngine task system, worker counts recorded, no thread-count flag | UNVERIFIED | not enforced equal |
 | resolution / window / vsync / frame cap | 1280 x 720, windowed, vsync cvar off (present mode not read back), no cap | yes (vsync UNVERIFIED) | physics mode also opens a visible empty window (no headless mode) |
-| renderer | Vulkan (read at run time, `render_backend`; D3D11 not built) | NO | other engines use other graphics APIs |
+| renderer (graphics API) | D3D11 in the timed runs (`-renderer DX11`, `EZENGINE_RENDERER`, env.txt `render_backend` and `render_adapter`); the same exe also has Vulkan (`-renderer Vulkan`), measured 0 to 43% lower fps on stages A and D (docs/engine-choice.md 3.1a) | NO | Stride is D3D11 too; Godot ran Vulkan (see the Godot column) |
 | MSAA / shadows | 4x, atlas 2048, 4 cascades, shadow distance 59 m (pit) requested via cvars and component values | UNVERIFIED | effective MSAA and cascade size not read back |
 | light intensity / colour | 2.0, white (`--sun-intensity`; engine default 10 overexposed) | NO | units differ; NOT fitted (set by eye on one screenshot) |
 | ambient | white, 0.5 (`--ambient-intensity`; engine default 1) | NO | not fitted |
-| tonemap / background | stock pipeline, not controlled; default clear colour | UNVERIFIED | |
+| tonemap / background | stock pipeline, not controlled; no clear colour is set in `QbSetup.cpp`, so the engine default is used (black in the window, user observation 2026-11-08; not read back) | NO | Godot sets an explicit cornflower blue background (`quest_bench.cpp`, ambient white 0.5); effect on timing not measured (HYPOTHESIS: none) |
 | update / render overlap | `Rendering.Multithreading` off (`--mt-render=1` turns it on), recorded | yes | |
 | build | Dev configuration (Shipping does not build at head 100564a) | NO | SPEC asks for release builds |
 

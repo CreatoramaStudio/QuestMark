@@ -1565,6 +1565,29 @@ void QuestBench::_finish() {
 		ef->store_line("bench_extension_compiler: unknown");
 #endif
 		ef->store_line("rendering_method: " + setting("rendering/renderer/rendering_method"));
+		{
+			// Requested driver: the effective value of rendering/rendering_device/driver.windows (override.cfg beats project.godot); "driver" is the
+			// fallback key, "not set" when neither is in the settings (the engine then runs its own default).
+			ProjectSettings *ps = ProjectSettings::get_singleton();
+			String drv_setting = "not set";
+			if (ps->has_setting("rendering/rendering_device/driver.windows") && String(ps->get_setting("rendering/rendering_device/driver.windows")) != "") {
+				drv_setting = String(ps->get_setting("rendering/rendering_device/driver.windows"));
+			} else if (ps->has_setting("rendering/rendering_device/driver") && String(ps->get_setting("rendering/rendering_device/driver")) != "") {
+				drv_setting = String(ps->get_setting("rendering/rendering_device/driver"));
+			}
+			ef->store_line("rendering_driver_setting: " + drv_setting);
+			// Driver in use: RenderingServer::get_current_rendering_driver_name() (name of the driver the running server was created with, for
+			// example vulkan or d3d12). The headless dummy server has no driver: empty string, printed as n/a.
+			String drv_use = "n/a";
+			RenderingServer *rs = RenderingServer::get_singleton();
+			if (rs != nullptr) {
+				String n = rs->get_current_rendering_driver_name();
+				if (n != "") {
+					drv_use = n;
+				}
+			}
+			ef->store_line("rendering_driver_in_use: " + drv_use);
+		}
 		ef->store_line("physics_ticks_per_second: " + String::num_int64(Engine::get_singleton()->get_physics_ticks_per_second()));
 		ef->store_line("jolt velocity_steps: " + setting("physics/jolt_physics_3d/simulation/velocity_steps"));
 		ef->store_line("jolt position_steps: " + setting("physics/jolt_physics_3d/simulation/position_steps"));

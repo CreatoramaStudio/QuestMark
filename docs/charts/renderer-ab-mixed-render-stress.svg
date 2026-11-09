@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="780" height="266" viewBox="0 0 780 266" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<style>.t{fill:#1f2328}.m{fill:#57606a}.ax{stroke:#8c959f}.bar{fill:#2f81f7}.best{fill:#1a7f37}@media (prefers-color-scheme:dark){.t{fill:#e6edf3}.m{fill:#9198a1}.ax{stroke:#6e7681}.best{fill:#3fb950}}</style>
+<text x="32" y="44" font-size="17" font-weight="600" class="t">Renderer A/B, mixed scene with rendering, stress: frames per second</text>
+<line x1="196" y1="72" x2="196" y2="234" class="ax" stroke-width="1.5"/>
+<text x="186" y="95" font-size="14" text-anchor="end" class="t">ezEngine DX11</text>
+<rect x="196" y="78" width="402.0" height="24" rx="3" class="best"/>
+<text x="606.0" y="95" font-size="14" class="t">288.3 fps<tspan class="m"> · 100%</tspan></text>
+<text x="186" y="135" font-size="14" text-anchor="end" class="t">ezEngine Vulkan</text>
+<rect x="196" y="118" width="361.6" height="24" rx="3" class="bar"/>
+<text x="565.6" y="135" font-size="14" class="t">259.3 fps<tspan class="m"> · 90%</tspan></text>
+<text x="186" y="175" font-size="14" text-anchor="end" class="t">Godot Jolt Vulkan</text>
+<rect x="196" y="158" width="3.9" height="24" rx="3" class="bar"/>
+<text x="207.9" y="175" font-size="14" class="t">2.8 fps<tspan class="m"> · 1%</tspan></text>
+<text x="186" y="215" font-size="14" text-anchor="end" class="t">Godot Jolt D3D12</text>
+<rect x="196" y="198" width="3.9" height="24" rx="3" class="bar"/>
+<text x="207.9" y="215" font-size="14" class="t">2.8 fps<tspan class="m"> · 1%</tspan></text>
+</svg>

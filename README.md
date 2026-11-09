@@ -35,15 +35,15 @@ The setup and analysis are in [docs/engine-choice.md](docs/engine-choice.md), se
 
 Every run uses fixed 200 Hz physics, which leaves a 5 ms budget per step. The charts show both profiles (the title says "game" where it is the `game` profile, with default sleeping). The table of numbers below is the `stress` profile, where sleeping is off and every body stays awake. Engine labels:
 
-| Label | Engine and physics | Build |
-|---|---|---|
-| ezEngine Jolt | ezEngine with Jolt | Shipping, D3D11 |
-| Stride JIT | Stride 4.4.1 with Bepu | Release, JIT |
-| Stride AOT | Stride 4.4.1 with Bepu | Release, Native AOT |
-| Godot PhysX | Godot PhysX fork | CPU-only |
-| Godot Jolt | Godot 4.7.2 with Jolt | Release export |
-| Godot Jolt RID | Godot 4.7.2 with Jolt, bodies made on `PhysicsServer3D`, MultiMesh drawing | Release export |
-| Godot PhysX RID | Godot PhysX fork, bodies made on `PhysicsServer3D`, MultiMesh drawing | CPU-only |
+| Label | Engine and physics | Build | Graphics API (main results) |
+|---|---|---|---|
+| ezEngine Jolt | ezEngine with Jolt | Shipping | D3D11 (`-renderer DX11`); the exe also has Vulkan, 0 to 43% lower fps in the [Renderer A/B](#renderer-ab) section |
+| Stride JIT | Stride 4.4.1 with Bepu | Release, JIT | Direct3D11 (`StrideGraphicsApi` in `benchmark/stride/StrideBench.csproj`) |
+| Stride AOT | Stride 4.4.1 with Bepu | Release, Native AOT | Direct3D11 (same project) |
+| Godot PhysX | Godot PhysX fork | CPU-only | Vulkan (engine default, inferred: these runs predate the driver lines in env.txt) |
+| Godot Jolt | Godot 4.7.2 with Jolt | Release export | Vulkan (same inference); D3D12 measured equal in the [Renderer A/B](#renderer-ab) section |
+| Godot Jolt RID | Godot 4.7.2 with Jolt, bodies made on `PhysicsServer3D`, MultiMesh drawing | Release export | Vulkan (same inference) |
+| Godot PhysX RID | Godot PhysX fork, bodies made on `PhysicsServer3D`, MultiMesh drawing | CPU-only | Vulkan (same inference) |
 
 "Godot Jolt" and "Godot PhysX" without RID are the node-based variants (one `RigidBody3D` and one `MeshInstance3D` per body).  In the charts the RID variants are labelled "Jolt RID" and "PhysX RID", and "ezEngine" stands for ezEngine Jolt.
 
@@ -96,6 +96,27 @@ Scenario G always runs with default sleeping. The value is the highest debris ra
 ![Debris: highest rate at 20 ms p99, rendering on](docs/charts/debris-render.svg)
 
 ![Debris: highest rate at 20 ms p99, rendering off](docs/charts/debris-physics.svg)
+
+### Renderer A/B (higher is better)
+
+Stages A and D only, median of 3 runs, one desktop, native Windows (no Steam Deck). ezEngine: the same exe with `-renderer DX11` and `-renderer Vulkan`; Godot: stock Jolt, nodes, `GODOT_RD_DRIVER=vulkan` and `d3d12`. ezEngine Vulkan is slower in every cell; Godot shows no difference beyond the run spread (details: docs/engine-choice.md sections 3.1a and 12.4). Median fps per cell (percentage against the same engine's other renderer):
+
+| Cell | ezEngine DX11 | ezEngine Vulkan | Godot Jolt Vulkan | Godot Jolt D3D12 |
+|---|---|---|---|---|
+| pile of 2000, physics mode, stress | 1223.6 | 702.1 (-43%) | 144.9 | 144.9 (0%) |
+| pile of 2000, physics mode, game | 1178.8 | 728.9 (-38%) | 144.7 | 144.9 (+0.1%) |
+| mixed scene, rendering, stress | 288.3 | 259.3 (-10%) | 2.8 | 2.8 (0%) |
+| mixed scene, rendering, game | 277.8 | 231.3 (-17%) | 2.8 | 2.8 (0%) |
+
+The Godot physics-mode fps looks pacing-bound (identical on both drivers). These bars compare each engine with its own other renderer; the Godot and ezEngine rows are not one ranking (the main charts above use other cells).
+
+![Renderer A/B, pile of 2000, physics mode, stress: fps](docs/charts/renderer-ab-pit-physics-stress.svg)
+
+![Renderer A/B, pile of 2000, physics mode, game: fps](docs/charts/renderer-ab-pit-physics-game.svg)
+
+![Renderer A/B, mixed scene with rendering, stress: fps](docs/charts/renderer-ab-mixed-render-stress.svg)
+
+![Renderer A/B, mixed scene with rendering, game: fps](docs/charts/renderer-ab-mixed-render-game.svg)
 
 ### The numbers
 

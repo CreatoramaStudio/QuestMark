@@ -48,8 +48,8 @@ Update 2026-11-08: the paragraph above is the study-only reasoning. The desktop 
 
 | Windows API | Proton layer | Candidates (Windows default) |
 |---|---|---|
-| Vulkan | winevulkan, a thin pass-through to Mesa RADV | Godot (`driver.windows` defaults to `vulkan`, `main.cpp:2388`), Bevy/wgpu (backend choice not checked), BRUTAL, SDL_GPU (backend choice not checked) |
-| D3D11 | DXVK | ezEngine (DX11 is its only complete renderer), Stride (default API not checked) |
+| Vulkan | winevulkan, a thin pass-through to Mesa RADV | Godot (the engine default of `driver.windows` is `vulkan`, `main.cpp:2388`, but the editor writes `d3d12` into NEW projects since 4.6 (`editor_node.cpp:8351`, `get_initial_settings`); the QuestMark Godot benchmark project has no driver setting, so it ran the engine default, Vulkan (per `benchmark/godot/NOTES.md` item 12; the env files do not record the driver)), Bevy/wgpu (backend choice not checked), BRUTAL, SDL_GPU (backend choice not checked) |
+| D3D11 | DXVK | ezEngine (benchmarked build: DX11; it also contains Vulkan, which would take the Vulkan row, section 3.1a), Stride (default API not checked) |
 | D3D12 | vkd3d-proton | O3DE (default RHI not checked), The Forge 1.64 (D3D12 is its only public runtime, section 3.5) |
 | OpenGL | Wine's OpenGL path | raylib |
 
@@ -76,7 +76,7 @@ Translation overhead was not measured. That D3D translation costs more CPU than 
 | Candidate | Version / commit | Language | Physics | Renderer / graphics API | Platforms | Editor | Licence |
 |---|---|---|---|---|---|---|---|
 | **Godot** | 4.8-beta master, `95c0fa5` | GDScript, C#, C++ via GDExtension | Jolt 5.6.0 (one backport patch), default for projects created from 4.6; GodotPhysics3D still available | Vulkan, D3D12, Metal, GLES3 | Linux, Windows, macOS, others | Yes, all desktop OSes | MIT (full licence text not read) |
-| **ezEngine** | 26.9, `fb0a247` | C++, AngelScript, visual scripts | Jolt 5.5.1-dev snapshot (about 2026-06-06, section 3.7) | DX11 (complete), Vulkan (in progress, API 1.1). No DX12 | Full engine Windows only per README; non-rendering code builds on Windows, Android, Linux, macOS | Yes (Qt) | MIT |
+| **ezEngine** | 26.9, `fb0a247` | C++, AngelScript, visual scripts | Jolt 5.5.1-dev snapshot (about 2026-06-06, section 3.7) | DX11 and Vulkan (API 1.1), both in the build files; Vulkan is built by default, D3D11 is opt-in (section 3.1a). Vulkan maturity not read. No DX12 | Full engine Windows only per README; non-rendering code builds on Windows, Android, Linux, macOS | Yes (Qt) | MIT |
 | **O3DE** | 2.8.0, `703bbae` (2026-10-29) | C++, Lua, Script Canvas | PhysX 5.1.1-rev4 | Atom: DX12, Vulkan, Metal | Windows, Linux, others | Yes (Qt) | Apache-2.0 OR MIT (`LICENSE.txt:1-5`) |
 | **Stride** | 4.5.0-beta01, `27f25ec` | C# (.NET 10) | Bepu 2.5.0-beta.28 (Bullet kept alongside) | D3D11, D3D12, Vulkan | Windows, Linux (crashes reported) | Windows-only WPF | MIT |
 | **Bevy** | 0.20-dev, `ae61521` | Rust | None built in | wgpu 30 (Vulkan, D3D12, Metal) | Desktop, others | None | MIT or Apache-2.0 |
@@ -86,6 +86,31 @@ Translation overhead was not measured. That D3D translation costs more CPU than 
 | **raylib** | 6.5-dev, `4bfb72d` | C | None | OpenGL 1.1-4.3 / ES, software renderer | All major | None | zlib |
 | **The Forge** | 1.64, Codeberg `5abcdd9` (2026-08); GitHub frozen at 1.63 | C API, C++ apps, FSL shaders | None | D3D12 only in the public repo (Vulkan and Metal removed in 1.64) | Public repo: Windows only. README lists Deck, mobile and consoles (console code licensed separately) | None public (Gladiator editor named in README only) | Apache-2.0 (PC); consoles commercial |
 | **J.E.N.O.V.A** | `4bd544d`; Jenova-Runtime `f9cb794` | C++ scripting for Godot | n/a (Godot's) | n/a | Windows x64, Linux x64 | Godot editor | Runtime MIT; other parts proprietary or custom (section 10) |
+
+### 3.1a ezEngine renderer status: DX11 and Vulkan (2026-11-08)
+
+Earlier text called Vulkan unfinished and DX11 the only complete renderer. That came from the README and the project site. The build files and PR history say otherwise.
+
+- PROVED (build files of the ezEngine clone at `100564a`, read 2026-11-07: `Code/BuildSystem/CMake/CMakeUtils/ezUtilsDX11.cmake:11`, `ezUtilsVulkan.cmake:5`, `ezUtilsRenderer.cmake:27`):
+  - `EZ_BUILD_VULKAN` defaults ON.
+  - `EZ_BUILD_D3D11` defaults OFF, with the note "D3D11 is nearing end of life and may be removed in a future release".
+  - With `EZ_DEFAULT_RENDERER` empty, the default renderer is DX11 if built, else Vulkan.
+  - Our benchmark build turned D3D11 on explicitly (`-DEZ_BUILD_D3D11=ON`) and also contains Vulkan. The app takes `-renderer DX11|Vulkan`.
+- PROVED (GitHub API search and PR pages: titles, states and dates; PR text was read through a summarising fetch, so details may be missing), `ezEngine/ezEngine`:
+  - PR 1958 (merged): Vulkan built by default, D3D11 still the default renderer, `-renderer Vulkan` selects it.
+  - PR 1948 (Render Graph) and PRs 1955, 1976, 1977, 1963 (merged by 2026-08-11).
+  - PRs 2061 and 2080 ("Vulkan Fixes") and 2122 ("Vulkan: Fix stale shader across compute/graphics scopes"), merged September to October 2026.
+  - PR 2062 "Disable D3D11 by default and use Vulkan instead" (merged). The author says Vulkan was already the default for developers and that CI now uses Vulkan. A maintainer objected "vulkan performance is still lacking"; the author replied that D3D will not be removed "for a while". The thread has no numbers.
+  - PR 2038 (render pipeline rework, merged), PR 2153 (merged), PR 2150 ("Minor fixes", open).
+  - No open Vulkan issue was found; the searches were truncated.
+- PROVED (ezengine.net, read 2026-11-08, undated): "The renderer currently uses DX11"; the Vulkan port is "still in the early phase and not yet productively usable". The `README.md` of the clone says the same in other words. These statements conflict with the build defaults and PR history above. The site may be stale.
+- HYPOTHESIS (not measured): under Proton on the Deck, Vulkan would be a winevulkan pass-through to RADV, while the D3D11 build goes through DXVK.
+- Limits: Vulkan code maturity was not read. `RendererVulkan` has about 12.6k lines against about 6.7k in `RendererDX11`, with 28 TODO or not-implemented hits (counts by grep, not an assessment).
+- No ezEngine Vulkan timing existed before this note. All ezEngine numbers in this document are D3D11 (Shipping). A DX11 against Vulkan A/B (stages A and D) was run on 2026-11-08 (result below). A/B result (2026-11-08, PROVED by `*.summary.txt` of 48 runs: stages A and D, game and stress profiles, physics and render modes, 3 runs per cell, same Shipping exe, `-renderer DX11` against `-renderer Vulkan`, `render_backend` in env.txt confirms the backend in 48 of 48 files, 0 failed cells):
+  - Vulkan is slower in every cell by median of the three runs: unpaced fps in physics mode about 710 to 900 against 1120 to 1470 on DX11 (about 35 to 40 percent lower); in render mode 225 to 262 against 260 to 330 (about 0 to 28 percent lower; stress pit-2000 render is about equal at 257 to 263 against 261 to 331 with one DX11 outlier at 261).
+  - Physics step cost (tick frames, median) is 0 to 9 percent higher on Vulkan (for example pit-2000 game 2.77 against 2.69 ms, mixed game 2.22 against 2.06 ms); stress mixed render is within run noise (1.97 to 2.17 against 2.00 to 2.10 ms). The same Jolt build runs in both, so this is probably the renderer sharing the cores (HYPOTHESIS, not profiled).
+  - Frame-time p99 in render mode is higher or equal on Vulkan (pit-2000 game 5.9 to 8.4 against 5.0 ms; mixed 5.7 against 5.3 ms).
+  - Limits: one desktop with a discrete GPU, native Windows (no Proton, so no Deck statement), unpaced render loop, vsync off, one exe built at `100564a`, the idle state was sampled only at the start of the run, run-to-run spread on DX11 stress pit-2000 render is large (261 to 331 fps). The ranking in section 1 is unchanged; no Vulkan number exists for stages B, C, E, F or G.
 
 ### 3.2 Physics detail
 
@@ -105,7 +130,7 @@ Translation overhead was not measured. That D3D translation costs more CPU than 
 | | Language | Graphics APIs | Renderer highlights | Scene format | Agent fit | Main risk |
 |---|---|---|---|---|---|---|
 | **Godot** | GDScript, C#, C++ | Vulkan, D3D12, Metal, GL | SDFGI, VoxelGI, SSR, SSIL, SSAO, volumetric fog, FSR1, FSR2, TAA, SMAA, MetalFX, VRS | Text `.tscn` | Best: most training data, `--headless`, doctest, 833 class-doc XML files | No GPU-driven rendering; scene-tree overhead |
-| **ezEngine** | C++, AngelScript | Vulkan, DX11 | Clustered lighting, SSAO, baked probes; **MSAA only** | OpenDDL text | Good: `AGENTS.md`, MCP editor plugin | Weakest renderer of the engines; small community |
+| **ezEngine** | C++, AngelScript | DX11, Vulkan (`-renderer DX11\|Vulkan`; Vulkan maturity not read, section 3.1a) | Clustered lighting, SSAO, baked probes; **MSAA only** | OpenDDL text | Good: `AGENTS.md`, MCP editor plugin | Weakest renderer of the engines; small community |
 | **O3DE** | C++, Lua, Script Canvas | DX12, Vulkan, Metal | Ray tracing, probe GI, TAA, meshlets (proof of concept) | JSON prefab | Weak: about 16k C++ files, GUID/Reflect/editor-twin boilerplate per component | Heaviest engine; declining community |
 | **Stride** | C# (.NET 10) | D3D11, D3D12, Vulkan | Clustered lighting, SSR, TAA, FXAA, light probes | YAML | C# suits agents; 57 test projects | Beta packages; no ragdoll; Windows-only editor |
 | **Bevy** | Rust | Vulkan, DX12, Metal | GPU-driven culling, occlusion culling (opt-in); meshlets and Solari experimental | Code / BSN (new) | Strong compiler feedback; live inspection over JSON-RPC (BRP) | No physics; API breaks about every 3 months |
@@ -266,7 +291,7 @@ CPU design per engine is in section 5; reported problems per engine are in secti
 | | How it runs on the Deck | Fit for AI agents |
 |---|---|---|
 | **Godot** | Windows Vulkan build under Proton (winevulkan pass-through) | **Best**: largest knowledge base, text scenes |
-| **ezEngine** | Windows D3D11 build under Proton (DXVK); its Vulkan renderer is unfinished | Good: `AGENTS.md`, MCP plugin, text scenes |
+| **ezEngine** | Windows D3D11 build under Proton (DXVK, the variant benchmarked); the same build also contains a Vulkan renderer (winevulkan under Proton, not measured, section 3.1a) | Good: `AGENTS.md`, MCP plugin, text scenes |
 | **O3DE** | Windows build under Proton (DX12 via vkd3d-proton, or Vulkan; default RHI not checked) | Weak: about 16k files, boilerplate |
 | **Stride** | Windows build under Proton (Distant Worlds 2 rated Playable); D3D11 via DXVK or Vulkan (default not checked) | Good C#; Windows-only WPF editor |
 | **Bevy** | Windows build under Proton; wgpu backend choice under Proton not checked | Code-only, BRP inspection; API breaks about every 3 months |
@@ -455,7 +480,7 @@ Many statuses are snippet-level. None was measured on a Deck. Web research cover
 | | First-use shader stutter on Vulkan; ubershaders (4.4) help but do not cover everything | 4.4 release notes, #90400 | fetched / snippet |
 | | 2023 critique: C# raycasts cost about 50x the raw engine call; what was fixed since not verified | Sam Pruden article; HN item 37598985 | fetched |
 | | One shipped 3D game reported editor crashes 2-3 times a day; built game did not crash | Pantopie postmortem | fetched |
-| **ezEngine** | Full engine Windows/D3D11 only; Vulkan port ongoing; Linux editor not usable (`README.md:15`) | README | checked locally |
+| **ezEngine** | Full engine Windows/D3D11 only; Vulkan port ongoing; Linux editor not usable (`README.md:15`). Superseded for the renderer: build files and PR history show Vulkan built by default (section 3.1a) | README | checked locally |
 | | Release 26.9 (2026-08-20) added a render graph that inserts Vulkan barriers, a step toward full Vulkan switch; 25.3 added SteamRT Sniper cross-compile | Releases page | fetched |
 | | About 72 contributors, about 2k stars, about 265 forks; no shipped commercial game found (only a sample game) | Open Hub, GitHub | fetched; small-team risk is inference |
 | | Jolt migration finished Oct 2022; only Jolt issue found was #630 (allocator hook request, not a bug) | JoltPhysics discussion #292 | fetched |
@@ -856,6 +881,29 @@ Reference rows from the other engines (2026-11-07/08 runs, stress; section 12.2)
 
 **Consequence for the verdict (not decided here).** The Godot rows depend on the body API; see the note after the verdict list in section 12.2. The final order is the user's decision.
 
+### 12.4 Godot rendering driver: Vulkan against Direct3D 12 (2026-11-08)
+
+Why: the Godot developers made D3D12 the default driver for NEW projects in 4.6 because Vulkan drivers on Windows are less reliable (PR GH-113213 and the 4.6 dev 5 announcement, read through a web search summary, not the pages; the talk the user remembered was not found in these docs). The engine default is still `vulkan` (`main/main.cpp:2389`); the editor only writes `d3d12` into new projects (`editor/editor_node.cpp:8351`). The QuestMark Godot project has no driver setting, so every Godot result before this section ran Vulkan (inferred from `benchmark/godot/NOTES.md` item 12; the older env files do not record the driver). Stride and ezEngine ran Direct3D 11 (section 3.1a). The new env.txt lines `rendering_driver_setting` and `rendering_driver_in_use` and the run-all variable `GODOT_RD_DRIVER` (with `BENCH_FLAVOUR`) exist since this test.
+
+- PROVED (env.txt of 48 of 48 files: `rendering_driver_setting` and `rendering_driver_in_use` equal `vulkan` in the 24 Vulkan files and `d3d12` in the 24 D3D12 files; `rendering_method` forward_plus and `JoltPhysicsDirectSpaceState3D` in all 48; 0 failed cells): stages A and D, game and stress profiles, physics and render modes, 3 runs per cell, stock Godot with Jolt, one export, node body API, 200 Hz.
+- PROVED (summary files): **the two drivers give the same result within the run spread in this scene set.**
+  - The physics step (median of `physics_step_ms`, per run) is 1 to 2.5 percent lower on D3D12 in the pit scenes (pit-2000 game physics 3.75 against 3.81 ms; pit-2000 render 4.40 against 4.51 ms; stress pit-2000 render 4.43 against 4.52 ms). In the mixed scenes the steps are equal (3.83 to 3.87 against 3.81 to 3.85 ms in physics mode, 4.49 to 4.55 against 4.38 to 4.56 ms in render mode).
+  - The mixed render scene collapses to the same 2.7 to 2.85 fps on both (tick 283 to 296 ms, p99 about 400 to 430 ms). **So the 2.8 fps of Godot on nodes is not a Vulkan driver effect:** it stays on D3D12. Section 12.2 item 4 (hypothesis: the node plus `MeshInstance3D` path) is consistent with this; no profile exists yet.
+  - Frame rates in render mode are noisy: pit-2000 render fps is 55.6 to 65.3 (Vulkan) against 54.1 to 62.5 (D3D12) across three runs, and p99 frame is 60 to 93 ms against 65 to 94 ms. Mixed physics mode has a spread of 44 to 74 fps (D3D12) and 66 to 74 (Vulkan) with p99 185 to 283 ms against 196 to 217 ms, and stress mixed physics 52 to 84 (Vulkan) against 74 to 99 (D3D12). These spreads are larger than any difference between the drivers, so no driver ranking follows from the fps values.
+  - Physics-mode pit scenes run at about 144.6 to 144.9 fps on both (identical; why was not checked, probably the window pacing).
+- PROVED (same runs as section 3.1a and this section; medians of 3 runs per cell, stages A and D, one desktop, native Windows): the two renderer changes are NOT the same.
+
+  | Cell (median fps) | ezEngine DX11 | ezEngine Vulkan | Godot Vulkan | Godot D3D12 |
+  |---|---|---|---|---|
+  | pit-2000 physics, stress | 1223.6 | 702.1 (-43%) | 144.9 | 144.9 (0%) |
+  | pit-2000 physics, game | 1178.8 | 728.9 (-38%) | 144.7 | 144.9 (0%) |
+  | mixed render, stress | 288.3 | 259.3 (-10%) | 2.8 | 2.8 (0%) |
+  | mixed render, game | 277.8 | 231.3 (-17%) | 2.8 | 2.8 (0%) |
+
+  ezEngine lost frame rate in every cell on Vulkan; Godot did not change beyond its run spread. Charts: README, section "Renderer A/B". HYPOTHESIS (not profiled): ezEngine's Vulkan renderer is less mature (a maintainer wrote "vulkan performance is still lacking" in PR 2062), while Godot's two backends cost about the same at these loads. The Godot physics-mode fps of about 145 looks pacing-bound (identical on both drivers), so it says little about the driver. The ezEngine and Godot columns are not one ranking: compare each engine only with its own other renderer.
+- HYPOTHESIS (not tested): the Steam Deck under Proton may behave differently: D3D12 there goes through vkd3d-proton, while Vulkan is a pass-through (section 3.2 table). Windows driver quality is a statement about desktop Windows GPU drivers.
+- Limits: one desktop with a discrete GPU, native Windows, stock Godot with Jolt only (the PhysX fork was not run on D3D12), stages A and D only (no ray, chain, scale or debris scenes), nodes only (no RID), unpaced render loop. A benchmark runner executed read-only listing commands for a few seconds at the start of the second run (reported by the runner). Conclusion scope: for these scenes, the choice of Vulkan against D3D12 does not move the Godot numbers measurably, so the ranking in section 1 is unchanged and the earlier Godot results ran on a driver that gives the same numbers. It says nothing about stability, shader compile hitches or crash rate of either driver, which were not measured.
+
 ---
 
 ## 13. Corrections log
@@ -885,6 +933,8 @@ Later statements supersede earlier ones. Items are in the order found.
 19. **ezEngine and Jolt head check (user request, 2026-11-06).** (a) The first head check listed the ezEngine "Inverse Depth" commit as a later change; it is the pinned commit `fb0a247`. (b) The doc's "Jolt 5.5.1" for ezEngine was only the `Core.h` label; the files match upstream at about 2026-06-06 (section 3.7). Results and ranking effect: sections 3.6 and 3.7.
 20. **Godot, O3DE and Stride head check (user request, 2026-11-06).** The first O3DE row said the version label changed and articulation inertia calculation was added. Both were wrong (`engine.json` still says 2.8.0; the net diff has no articulation change). Section 3.6 is corrected and holds the Godot and Stride results.
 21. **Ranking changed by the desktop benchmark (2026-11-08).** The study-only ranking of 2026-11-06 was 1 Godot + Jolt, 2 Stride, 3 ezEngine. It assumed that Godot's CPU problems have workarounds and that its renderer and agent knowledge outweigh them. The benchmark (section 12.2) measured Godot + Jolt last in every physics and whole-frame category, with the same Jolt 1.6 to 2.4 times dearer per step than in ezEngine. New ranking: 1 ezEngine + Jolt, 2 Stride + Bepu, 3 Godot + Jolt. It is provisional until a Steam Deck run. The RID/MultiMesh workaround for Godot was not tested.
+22. **ezEngine Vulkan (2026-11-08).** The doc said Vulkan was unfinished and DX11 the only complete renderer (README and project site). Build files and PR history show Vulkan built by default and D3D11 opt-in; Vulkan maturity was not read and no Vulkan timing existed. Section 3.1a holds the evidence and the pending A/B; the rows in sections 2, 3.1, 3.3, 4.2 and 8 were updated. The benchmarked variant remains D3D11.
+23. **Godot rendering driver (2026-11-08).** The doc said Godot `driver.windows` defaults to Vulkan, which hid that new projects since 4.6 get D3D12 and that our benchmark ran Vulkan. Fix: the Vulkan row of the Proton API table (near the top) and section 12.4, which measures both drivers (no measurable difference in stages A and D).
 
 **Source conflicts not resolved by any correction:**
 - BRUTAL platforms: README:89 (Windows or Linux) versus the samples README (also macOS).

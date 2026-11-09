@@ -16,6 +16,11 @@
 #                      a PhysX request on a build without the module silently runs GodotPhysics. The Jolt limit flags are passed for jolt only.
 #   BENCH_FLAVOUR      optional label of the build (for example a fork name; letters, digits, underscore). File prefix: godot-<engine>[-<flavour>]-
 #                      (jolt without flavour keeps godot-jolt-). The label is also passed to the exe as --flavour.
+#   GODOT_RD_DRIVER    Godot only, optional: vulkan | d3d12 (empty = write nothing, the engine default Vulkan applies). Appends a [rendering] section
+#                      with rendering_device/driver.windows="<value>" to the override.cfg written for every run. Requires BENCH_FLAVOUR (for example
+#                      BENCH_FLAVOUR=vulkan) so result file names cannot mix drivers. ABORTS a cell when env.txt rendering_driver_in_use is
+#                      present and differs from the requested value (n/a in headless physics cells: not checked). env.txt always records
+#                      rendering_driver_setting and rendering_driver_in_use; results made before these lines existed (2026-11-08 and older) lack them.
 #   BODY_API           Godot only: nodes (default) | rid. Passed to the exe as --body-api. rid creates dynamic bodies and chain pin joints directly on
 #                      PhysicsServer3D and draws them with MultiMesh in render mode (SPEC "Settings parity", row body API). rid is NOT supported
 #                      stage G (debris) works with rid too (pieces are server bodies, one MultiMesh). Use a separate BENCH_FLAVOUR for rid
@@ -89,6 +94,9 @@ case "$engine" in
   godot)
     BENCH_ENGINE="${BENCH_ENGINE:-jolt}"; export BENCH_ENGINE; export BENCH_FLAVOUR="${BENCH_FLAVOUR:-}"
     case "$BENCH_ENGINE" in jolt|physx) ;; *) echo "BENCH_ENGINE must be jolt|physx: $BENCH_ENGINE" >&2; exit 2 ;; esac
+    GODOT_RD_DRIVER="${GODOT_RD_DRIVER:-}"; export GODOT_RD_DRIVER
+    case "$GODOT_RD_DRIVER" in ""|vulkan|d3d12) ;; *) echo "GODOT_RD_DRIVER must be empty, vulkan or d3d12: $GODOT_RD_DRIVER" >&2; exit 2 ;; esac
+    if [ -n "$GODOT_RD_DRIVER" ] && [ -z "$BENCH_FLAVOUR" ]; then echo "GODOT_RD_DRIVER requires BENCH_FLAVOUR (for example BENCH_FLAVOUR=$GODOT_RD_DRIVER) so result file names cannot mix drivers" >&2; exit 2; fi
     flavor="$BENCH_ENGINE${BENCH_FLAVOUR:+-$BENCH_FLAVOUR}"; prefix="godot-$flavor"; exe="$(abs "${GODOT_BENCH_EXE:-}")"
     LAG_N="${LAG_N:-4000}"; SIM_PASS20="${SIM_PASS20:-2000}"; SIM_PASS33="${SIM_PASS33:-4000}" ;;
   stride)
@@ -167,7 +175,9 @@ launch() { # exe scenario mode run warm measure extra headless(0|1) outdir
       if [ "${AFF_N:-0}" -gt 0 ]; then
         [ "$pe" = PhysX ] && printf 'physx_3d/simulation/cpu_worker_threads=%d\n' "$AFF_N"
         printf '\n[threading]\n\nworker_pool/max_threads=%d\n' "$AFF_N"
-      fi; } > "$(dirname "$x")/override.cfg"
+      fi
+      [ -n "${GODOT_RD_DRIVER:-}" ] && printf '\n[rendering]\n\nrendering_device/driver.windows="%s"\n' "$GODOT_RD_DRIVER"
+      true; } > "$(dirname "$x")/override.cfg"
     [ -n "${BENCH_FLAVOUR:-}" ] && extra="$extra --flavour=$BENCH_FLAVOUR"
     [ -n "${BODY_API:-}" ] && extra="$extra --body-api=$BODY_API"
   fi
@@ -260,6 +270,14 @@ verify_engine() {
   if [ "$tag" != "$BENCH_ENGINE" ]; then
     say "ABORT: requested BENCH_ENGINE=$BENCH_ENGINE but the run recorded engine_tag=${tag:-<none>} (a PhysX request on a build without the module runs GodotPhysics). Files kept in $stage."
     exit 3
+  fi
+  if [ -n "${GODOT_RD_DRIVER:-}" ]; then
+    local drv; drv="$(sed -n 's/^rendering_driver_in_use:[[:space:]]*//p' "$ef" | head -1 | tr -d '\r')"
+    # n/a (headless physics cell, no rendering server driver) or a missing line (old exe) is not checked
+    if [ -n "$drv" ] && [ "$drv" != "n/a" ] && [ "$drv" != "$GODOT_RD_DRIVER" ]; then
+      say "ABORT: requested GODOT_RD_DRIVER=$GODOT_RD_DRIVER but the run recorded rendering_driver_in_use=$drv. Files kept in $stage."
+      exit 3
+    fi
   fi
 }
 
