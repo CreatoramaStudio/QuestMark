@@ -21,16 +21,19 @@ Known deviations from the published numbers: setup uses the standard (non-mono) 
 
 ## Benchmark summary (2026-11-08)
 
-**Verdict, provisional until a Steam Deck run: 1 ezEngine + Jolt, 2 Stride + Bepu, 3 Godot (PhysX fork ahead of Jolt on the measured numbers; the final order is your decision).**
+**Verdict, provisional until a Steam Deck run: 1 ezEngine + Jolt, 2 Stride + Bepu, 3a Godot + PhysX fork, 3b Godot + Jolt (PhysX fork ahead of Jolt on the measured numbers; the final order is your decision).**
 
-- **ezEngine** is the only engine that keeps the game-like mixed scene well inside the frame budget with rendering on.
-- **Stride** has by far the cheapest physics, but its frame gets expensive once it renders.
-- **Node-based Godot + Jolt** is the slowest engine in every test. The same Jolt costs 1.6 to 2.4 times more per step in Godot than in ezEngine.
+- **ezEngine** is the only engine, except Godot on RIDs (last bullet), that keeps the game-like mixed scene well inside the frame budget with rendering on (p99 5.1 to 5.2 ms, 299 fps). It has the best render-mode scale (3000 bodies at 20 ms, stress) and the lowest Jolt cost per step.
+- **Stride** has by far the cheapest physics (Bepu 2.0 to 2.5 times below ezEngine Jolt, 8000 to 10000 bodies at 20 ms in physics mode), but its frame gets expensive once it renders (about 54 fps in the mixed scene; cause not profiled).
+- **Godot + PhysX fork (3a)**, through the node path, reaches about ezEngine's per-step cost on piles (pit-2000 2.24 against 2.52 ms) and is faster than Godot Jolt in every physics cell. Its pile sleeps with default settings. It is a single-maintainer fork and our build is CPU-only.
+- **Node-based Godot + Jolt (3b)** is the slowest engine in every test. The same Jolt costs 1.6 to 2.4 times more per step in Godot than in ezEngine.
+- **Sleeping differs by engine design** and is reported, not forced equal: with default settings the Bepu and PhysX piles fall asleep, the Jolt pile stays awake in both Godot and ezEngine.
+- **10000 rays per step at 200 Hz** fail real time in every engine, so that scene does not separate the candidates. Creating bodies at run time (debris) is about 6 to 10 times dearer in node-based Godot than in ezEngine.
 - **Godot on RIDs + MultiMesh** changes the whole-frame picture. In the mixed scene with rendering, Godot Jolt goes from 2.8 to 217 fps and Godot PhysX from about 73 to 262 fps, which beats Stride (54 and 51 fps); ezEngine stays ahead at 299. In the debris scenario (game profile, one run per rate) PhysX RID passes 6 events per second with rendering and 8 without, the highest with rendering; Jolt RID passes 3 and 3, the same as ezEngine with rendering and equal to it without. Per physics step Stride is still cheapest (pile 1.02 ms against 3.14 ms for Godot Jolt RID). The ranking above was made with node-based Godot and is not changed here: the final order is the user's decision.
 
 The setup and analysis are in [docs/engine-choice.md](docs/engine-choice.md), sections 12.2 and 12.3.
 
-Every run uses fixed 200 Hz physics, which leaves a 5 ms budget per step. All numbers come from the `stress` profile, where sleeping is off and every body stays awake. Engine labels:
+Every run uses fixed 200 Hz physics, which leaves a 5 ms budget per step. The charts show both profiles (the title says "game" where it is the `game` profile, with default sleeping). The table of numbers below is the `stress` profile, where sleeping is off and every body stays awake. Engine labels:
 
 | Label | Engine and physics | Build |
 |---|---|---|
