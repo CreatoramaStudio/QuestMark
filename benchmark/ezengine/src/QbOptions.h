@@ -4,7 +4,7 @@
 #include <vector>
 
 /// Command line of the benchmark. Same flag names and defaults as the Godot and Stride sides (benchmark/SPEC.md), `--key=value` form only.
-/// Extras: --project (project folder override), --ray-api, --mt-render, --max-bodies, --sun-intensity, --ambient-intensity, --slice-ms.
+/// Extras: --project (project folder override), --ray-api, --mt-render, --max-bodies, --sun-intensity, --ambient-intensity, --background, --slice-ms.
 struct QbOptions
 {
   std::string m_sScenario = "pit-2000";
@@ -33,6 +33,7 @@ struct QbOptions
   double m_fSunIntensity = 2.0;     ///< engine default is 10 (overexposed with the default pipeline, seen in a screenshot); 2 is a visual choice, not fitted
   double m_fAmbientIntensity = 0.5; ///< engine default is 1; 0.5 as in Godot, not fitted
   double m_fSliceMs = 10.0;         ///< unpaced runs: wall time of one batch of back-to-back steps per world update
+  std::string m_sBackground = "default"; ///< --background=default|cornflower: default = stock pipeline clear colour (unchanged behaviour); cornflower = Godot's (0.392, 0.584, 0.929) via the world blackboard
   std::string m_sProjectOverride;
   std::string m_sCmdline; ///< all arguments joined, for env.txt
 };

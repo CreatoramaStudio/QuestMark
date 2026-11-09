@@ -73,6 +73,8 @@ void QbParseOptions(QbOptions& out_opt)
       out_opt.m_fSunIntensity = atof(v.c_str());
     else if (k == "ambient-intensity")
       out_opt.m_fAmbientIntensity = atof(v.c_str());
+    else if (k == "background")
+      out_opt.m_sBackground = v;
     else if (k == "slice-ms")
       out_opt.m_fSliceMs = atof(v.c_str());
     else if (k == "project")

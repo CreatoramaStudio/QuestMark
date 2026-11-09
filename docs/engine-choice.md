@@ -904,6 +904,23 @@ Why: the Godot developers made D3D12 the default driver for NEW projects in 4.6 
 - HYPOTHESIS (not tested): the Steam Deck under Proton may behave differently: D3D12 there goes through vkd3d-proton, while Vulkan is a pass-through (section 3.2 table). Windows driver quality is a statement about desktop Windows GPU drivers.
 - Limits: one desktop with a discrete GPU, native Windows, stock Godot with Jolt only (the PhysX fork was not run on D3D12), stages A and D only (no ray, chain, scale or debris scenes), nodes only (no RID), unpaced render loop. A benchmark runner executed read-only listing commands for a few seconds at the start of the second run (reported by the runner). Conclusion scope: for these scenes, the choice of Vulkan against D3D12 does not move the Godot numbers measurably, so the ranking in section 1 is unchanged and the earlier Godot results ran on a driver that gives the same numbers. It says nothing about stability, shader compile hitches or crash rate of either driver, which were not measured.
 
+### 12.5 Background and light parity: effect on performance (2026-11-09)
+
+Why: Godot sets an explicit cornflower blue background; ezEngine and Stride ran their stock pipeline clear colour (ezEngine near-black blue), and the sun intensities were not fitted equally. The options `--background=default|cornflower` (ezEngine and Stride) and the fitted sun values were added (`benchmark/SPEC.md`, parity tables) and one scene was timed with the options off and on.
+
+- PROVED (window captures, one shot per value, mean Rec.709 luminance of content pixels; Godot reference 184.90): ezEngine sun 5.8 with cornflower gives 184.88 (default 2.0 gives 138.90); Stride sun 0.375 gives 184.03 (default 0.55 gives about 197, so the earlier Stride fit to Godot no longer reproduces; HYPOTHESIS: the pit layout changed after that fit). Corner pixel of the background: Godot (100,149,237), Stride (100,149,237) both off and on (its default was already that blue), ezEngine (100,150,238) with the option and (2,14,25) without.
+- PROVED (env.txt `background` and light lines in every file of the four sets): off = `default` with sun 2.0 (ezEngine) or 0.55 (Stride); on = `cornflower` with sun 5.8 (ezEngine) or 0.375 (Stride). 48 of 48 runs, 0 failed cells. Scene: pit-2000 (stage A), physics and render mode, game and stress profile, 3 runs per cell, same exe per engine (ezEngine Shipping D3D11, Stride JIT), medians below.
+
+| Cell (median fps, runs low/mid/high) | ezEngine off | ezEngine on | Stride off | Stride on |
+|---|---|---|---|---|
+| stress, render | 352.3 (352/352/369) | 365.2 (365/365/369) | 114.4 (114/114/115) | 114.4 (114/114/116) |
+| game, render | 364.8 (362/365/365) | 348.1 (347/348/367) | 126.5 (116/126/128) | 125.9 (126/126/126) |
+| stress, physics | 1358.2 (1357/1358/1379) | 1344.5 (1273/1344/1369) | 1801.1 (1758/1801/1845) | 1951.2 (1909/1951/2227) |
+| game, physics | 1314.5 (1228/1314/1327) | 1307.7 (1242/1308/1352) | 2490.8 (2468/2491/3000) | 2632.2 (2372/2632/2687) |
+
+- Result: **no performance change that stands out from the run spread.** In the render cells the ezEngine difference changes sign (+3.7 percent stress, -4.6 percent game) and lies inside the spread of the runs; Stride render is equal (114.4 against 114.4, 126.5 against 125.9). Physics step medians in the stress profile are equal (ezEngine 2.54 against 2.54 ms, Stride 1.30 against 1.29 ms) and p99 frame times are equal within about 0.1 ms except Stride game render (12.4 against 19.2 ms, one run; the game-profile pile sleeps and its numbers move with the sleep time, not compared).
+- Limits: one scene, one desktop, native Windows, off before on within each engine (drift would show as a difference), 3 runs per cell, fps is the unpaced loop. Stride game-profile step medians (1.17 against 0.48 ms) differ because the pile is asleep (awake 0 or 1 of 2000 at the end); they are not a background effect and were not investigated. Bloom of the stock ezEngine pipeline is still on and the vignette is off in cornflower mode, so the ezEngine look is close, not identical. In ezEngine captures the right interior pit wall is not visible while Godot shows it (HYPOTHESIS: face culling or winding of the wall boxes; not investigated). The ranking in section 1 is unchanged; the existing results were taken with the defaults and stay valid.
+
 ---
 
 ## 13. Corrections log

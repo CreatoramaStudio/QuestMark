@@ -7,6 +7,7 @@ Scenarios E and F: `--scenario=unlock-render-mixed|unlock-physics-mixed|unlock-p
 Scenario G: `--scenario=debris|debris-pooled --rate=R --mode=physics|render` (R events per second, may be fractional; warm-up defaults to 10 s for these two), see "Scenario G (`debris`)" below.
 Native AOT variant: `dotnet publish -c Release -r win-x64 -p:BenchAot=true -o <dir>`, see "Native AOT variant" at the end.
 Extra options (not in SPEC): `--warmup=<s>`, `--measure=<s>`, `--uncapped` (render only), `--timer1ms=0|1` (default 1 = `timeBeginPeriod(1)`), `--hidden` (physics mode only),
+`--background=default|cornflower` (render look, default `default` = unchanged: `CreateDefault` without clear colour; `cornflower` passes `clearColor` = (0.392, 0.584, 0.929) explicitly; env.txt `background:`),
 diagnostics (default off): `--diag=1` (writes `<csv>.diag.csv`: per-frame Update start/duration, Draw start/duration, EndDraw (Present) duration), `--nomodels=1`, `--bepu-threads=N`, `--render-threads=N`.
 Defaults are the SPEC values (5 s warm-up, 20 s measured).
 
@@ -265,6 +266,11 @@ The ray batch (B, D) runs once per Bepu step (`PhysicsTimerComponent.OnStep`, ca
 ### Light and material brightness fit
 Material albedo is white 1.0 (was orange 0.8/0.45/0.2; Godot uses its white default material). Directional light intensity 0.55 and ambient 0.3 (flags `--sun-intensity`, `--ambient-intensity`; env keys `light_intensity`, `ambient_intensity`). Method: window screenshots of the same scene from both engines, mean luminance (0.2126 R + 0.7152 G + 0.0722 B of the sRGB bytes) over the pixels that differ from the background corner pixel (sum of channel differences above 24), every second pixel. Godot (`.tmp/render-fix4`, 1280 x 720): pit-2000 197.06, mixed 203.34, scale-1000 199.06; content fraction 0.156 / 0.145 / 0.173; std of content luminance 25.1 / 22.4 / 24.5. Stride with the final values (AOT, 1600 x 900 screenshot): pit-2000 197.34, mixed 200.38, scale-1000 197.71; content fraction 0.156 / 0.147 / 0.174; std 27.5 / 28.2 / 27.9; whole-image mean 153.1 / 153.1 / 154.1 against Godot 153.1 / 153.4 / 154.3. Earlier trials (pit-2000, one shot each): sun 3.0 / ambient 0.5 saturated (content 240); sun 0.0 / ambient 0.5 gave 188.7, sun 0.15 / 0.5 gave 199.5 but std only 7.4 (flat); sun 0.55 / ambient 0.3 gave 197.3, std 27.5. Limits: one screenshot per cell, Godot shots were taken by the other agent at a different time in the run (different pile state), the fit matches mean and spread only, not per-face values; the ambient is therefore 0.3 and not the Godot 0.5 (the SPEC row "ambient equal" no longer holds). Tone mapping of both engines not read.
 
+### Background and light check against the current Godot (2026-11-09, window captures, pit-2000 game profile, render, one shot each)
+- PROVED: `--background=default` and `--background=cornflower` both give corner pixel (100, 149, 237), identical to Godot's (JIT 1600 x 900 capture and AOT capture). So the Stride default background already is Godot's cornflower blue; the option makes it explicit (`GraphicsCompositorHelper.CreateDefault(..., clearColor: new Color4(0.392f, 0.584f, 0.929f, 1f))`, compiled and run).
+- Content luminance (same method as above, Godot mask not used, corner threshold 24): Godot now 184.90 (1280 x 720, 4 shots, 2 exes), Stride default 198.03, cornflower 197.17 (JIT), 197.28 (AOT cornflower). The earlier fit's Godot reference (197.06, 2026-11-06) is no longer reproduced: Stride is about 12 levels brighter than the current Godot. HYPOTHESIS: the Godot scene changed since (the pit layout moved to 12 x 12 columns after the fit); not verified.
+- Sun sweep (ambient 0.3, cornflower, one shot each): 0.33 -> 181.53, 0.375 -> 184.03, 0.45 -> 190.88, 0.50 -> 193.49, 0.55 -> 197.17. `--sun-intensity=0.375` matches the current Godot reference; the default 0.55 is NOT changed (existing results stay reproducible). Limits: pile state at capture time differs a little, resolution differs (1600 x 900 vs 1280 x 720), one scene.
+
 ### Settings parity (Stride column; env.txt prints each effective value with the Godot key names)
 | setting | Stride value | source | deviation |
 |---|---|---|---|
@@ -280,6 +286,7 @@ Material albedo is white 1.0 (was orange 0.8/0.45/0.2; Godot uses its white defa
 | MSAA | 4x | line 230 | none known |
 | vsync | off | line 84 | none |
 | tone mapping / exposure | Stride default (not changed, not read) | | deviation: Godot uses its own tonemapper; not equalised |
+| background | `--background=default` (CreateDefault, no clear colour) or `cornflower` (explicit); both measured (100, 149, 237) | `BenchGame.cs` `SetupCameraAndLight`, `Options.cs` | none (same as Godot's cornflower blue, PROVED by capture) |
 | light / ambient | sun 0.55, ambient 0.3, white material albedo 1.0 (fitted, see "Light and material brightness fit") | `Options.cs` `SunIntensity`, `AmbientIntensity` | Godot 1.0 / 0.5; units differ; matched by mean image luminance (Stride 197.3 vs Godot 197.1 on pit-2000) |
 | threads | Bepu default thread count (printed in env.txt) | | not equal to Jolt's job-system threads |
 

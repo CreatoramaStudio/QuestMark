@@ -34,6 +34,8 @@
 #                      --max-bodies, see ezengine/NOTES.md). The script passes --project=<abs path of benchmark/ezengine/Project> (computed at run time),
 #                      and aborts when env.txt physics_space_state_class is not ezJoltWorldModule. BENCH_FLAVOUR is accepted (file prefix
 #                      ezengine-jolt[-flavour]-). No headless mode: physics runs also open the window.
+#   EXTRA_EXE_ARGS    optional extra exe arguments appended to every cell command line of this run (all engines), for example
+#                      "--background=cornflower --sun-intensity=5.8". Use a separate OUT_DIR so result sets cannot mix.
 #   OUT_DIR            output directory (default: benchmark/results). Relative paths in OUT_DIR and the *_BENCH_EXE variables are taken
 #                      from the project root, not from the current directory.
 #   WARMUP / MEASURE / RUNS   seconds and repeats for A-E (default 5 / 20 / 3 = SPEC)
@@ -288,6 +290,7 @@ run_cell() {
   local kind="$1" token="$2" sc="$3" mode="$4" run="$5" w="$6" m="$7" extra="$8" hl="$9" x="${10}" to="${11}" chk="${12}"
   local base="$OUT_DIR/$prefix$PROF_TOK-$token-$mode-$run" attempt t0 rc prob f
   extra="$extra --profile=$PROF"
+  [ -n "${EXTRA_EXE_ARGS:-}" ] && extra="$extra $EXTRA_EXE_ARGS"
   [ "$engine" = ezengine ] && extra="$extra -renderer ${EZENGINE_RENDERER:-DX11} --project=$(if command -v cygpath >/dev/null 2>&1; then cygpath -m "$root/benchmark/ezengine/Project"; else echo "$root/benchmark/ezengine/Project"; fi)"
   [ "$engine" = godot ] && [ "$BENCH_ENGINE" = jolt ] && extra="$extra --jolt-limits=$(limits_for "$sc")"
   extra="${extra# }"

@@ -33,6 +33,7 @@ namespace StrideBench
         public double PhysicsHz = 200.0; // --physics-hz=N: Bepu fixed step rate (SPEC: 200 Hz in every scenario); the display loop stays 60 Hz
         public float AmbientIntensity = 0.3f; // --ambient-intensity=x
         public float SunIntensity = 0.55f;  // --sun-intensity=x: directional light intensity (Stride units; brightness-matched to Godot 1.0 white, see NOTES)
+        public bool BackgroundCornflower = false; // --background=default|cornflower (render mode): cornflower sets the compositor clear colour explicitly to Godot's (0.392, 0.584, 0.929); default = untouched CreateDefault behaviour
         public bool CameraSky = false; // --camera=content|sky (render mode): sky = same position as content, looking straight up
         public bool ModeGiven;
         public bool WarmupGiven;
@@ -86,6 +87,9 @@ namespace StrideBench
                     case "camera":
                         if (val != "content" && val != "sky") throw new ArgumentException("--camera must be content|sky");
                         o.CameraSky = val == "sky"; break;
+                    case "background":
+                        if (val != "default" && val != "cornflower") throw new ArgumentException("--background must be default|cornflower");
+                        o.BackgroundCornflower = val == "cornflower"; break;
                     case "sun-intensity": o.SunIntensity = float.Parse(val, CultureInfo.InvariantCulture); break;
                     case "ambient-intensity": o.AmbientIntensity = float.Parse(val, CultureInfo.InvariantCulture); break;
                     case "presize": o.Presize = int.Parse(val, CultureInfo.InvariantCulture); break;

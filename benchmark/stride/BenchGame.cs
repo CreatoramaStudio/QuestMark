@@ -218,7 +218,9 @@ namespace StrideBench
             ambientEntity.Add(new LightComponent { Type = new LightAmbient { Color = new ColorRgbProvider(new Color3(1f, 1f, 1f)) }, Intensity = opts.AmbientIntensity });
             scene.Entities.Add(ambientEntity);
 
-            SceneSystem.GraphicsCompositor = GraphicsCompositorHelper.CreateDefault(false, camera: cam);
+            SceneSystem.GraphicsCompositor = opts.BackgroundCornflower
+                ? GraphicsCompositorHelper.CreateDefault(false, camera: cam, clearColor: new Color4(0.392f, 0.584f, 0.929f, 1f))
+                : GraphicsCompositorHelper.CreateDefault(false, camera: cam);
             var fwd = FindForward(SceneSystem.GraphicsCompositor.Game);
             if (fwd != null)
             {
@@ -1078,6 +1080,7 @@ namespace StrideBench
             env.AppendLine("solver_substeps: " + sim.SolverSubStep.ToString(inv));
             env.AppendLine("light_intensity: " + opts.SunIntensity.ToString("0.###", inv) + " (directional, white, Stride units, fitted to Godot 1.0 by mean image luminance; see NOTES)");
             env.AppendLine("ambient_intensity: " + opts.AmbientIntensity.ToString("0.###", inv) + " (ambient white, Stride units, fitted together with the sun; Godot 0.5); material_albedo: 1.0 white; tonemap: Stride default (not read)");
+            env.AppendLine("background: " + (opts.Render ? (opts.BackgroundCornflower ? "cornflower (0.392, 0.584, 0.929), set explicitly via GraphicsCompositorHelper.CreateDefault clearColor" : "default (CreateDefault with no clearColor; the helper default, not read back)") : "n/a (physics mode)"));
             env.AppendLine("camera_mode: " + (opts.CameraSky ? "sky" : "content") + (opts.Render ? "" : " (physics mode: no camera, values computed from the same rule)"));
             env.AppendLine("camera_position: " + V3(camPos, inv));
             env.AppendLine("camera_look_at: " + V3(opts.CameraSky ? camPos + new Vector3(0, 1, 0) : camLookAt, inv));

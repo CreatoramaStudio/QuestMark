@@ -59,5 +59,7 @@ sub raw_line { my ($p, $pre) = @_; open(my $fh, "<", $p) or return "n/a"; while 
 printf "INFO     %-26s A=[%s] B=[%s]  (PhysX fork only; unset in a CPU-only build it is 1 / 1, run-all.sh sets 8 / 2)
 ", "physx jointed iterations", raw_line($files[0], "physx jointed_position_iterations"), raw_line($files[1], "physx jointed_position_iterations");
 printf "INFO     %-26s A=[%s] B=[%s]  (engines differ: Jolt 0.03 m/s point velocity, PhysX energy threshold, Bepu unchecked; not forced equal)\n", 'sleep (jolt threshold)', raw_jolt($files[0], 'sleep_velocity_threshold'), raw_jolt($files[1], 'sleep_velocity_threshold');
+# background (render look): Godot has no env.txt key, Stride and ezEngine write "background: default|cornflower ..." (--background option); information only, never a mismatch.
+printf "INFO     %-26s A=[%s] B=[%s]  (render look; Stride and ezEngine --background=default|cornflower, Godot always cornflower and writes no key; a cornflower run is the Godot-like look)\n", 'background', substr(raw_line($files[0], 'background'), 0, 60), substr(raw_line($files[1], 'background'), 0, 60);
 printf "\nparity_check:%d equal, %d mismatch, %d n/a (physics mode), see KNOWN lines for recorded engine differences\n", $ok, $mis, $na;
 exit($mis ? 1 : 0);

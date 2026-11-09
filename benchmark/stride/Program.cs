@@ -16,7 +16,7 @@ namespace StrideBench
             catch (Exception e)
             {
                 Console.Error.WriteLine(e.Message);
-                Console.Error.WriteLine("usage: StrideBench --scenario=pit-2000|raycast-1000|raycast-10000|chains|mixed|unlock-render-mixed|unlock-physics-mixed|unlock-physics-pit-2000|scale [--bodies=N --unpaced=1]|debris|debris-pooled [--rate=R] --mode=physics|render --run=1 --out=<dir> [--warmup=5 --measure=20 --uncapped=1 --camera=content|sky --profile=game|stress --sleeping=default|off --shadows=on|off --msaa=1|2|4|8 --vsync=on|off --physics-hz=200  --sun-intensity=F --ambient-intensity=F]");
+                Console.Error.WriteLine("usage: StrideBench --scenario=pit-2000|raycast-1000|raycast-10000|chains|mixed|unlock-render-mixed|unlock-physics-mixed|unlock-physics-pit-2000|scale [--bodies=N --unpaced=1]|debris|debris-pooled [--rate=R] --mode=physics|render --run=1 --out=<dir> [--warmup=5 --measure=20 --uncapped=1 --camera=content|sky --profile=game|stress --sleeping=default|off --shadows=on|off --msaa=1|2|4|8 --vsync=on|off --physics-hz=200  --background=default|cornflower --sun-intensity=F --ambient-intensity=F]");
                 return 2;
             }
             if (opts.TimerRes1ms) timeBeginPeriod(1);

@@ -4,6 +4,7 @@
 #include <Core/ResourceManager/ResourceManager.h>
 #include <Foundation/Application/Application.h>
 #include <Foundation/Configuration/CVar.h>
+#include <Core/Utils/Blackboard.h>
 #include <Foundation/Logging/Log.h>
 #include <JoltPlugin/Components/JoltSettingsComponent.h>
 #include <JoltPlugin/Resources/JoltMaterial.h>
@@ -412,6 +413,25 @@ ezGameObjectHandle QbGameState::CreateRenderObject(int iMesh, const ezVec3& vPos
   return hObj;
 }
 
+/// Hable filmic curve as in the stock Tonemap.ezShader (FilmicTonemap), used to pre-compensate the clear colour.
+static double QbFilmic(double x)
+{
+  const double A = 0.15, B = 0.35, C = 0.10, D = 0.20, E = 0.02, F = 0.30;
+  return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
+}
+
+/// Inverse of QbFilmic by bisection (the curve is monotone for x >= 0).
+static double QbFilmicInverse(double y)
+{
+  double lo = 0.0, hi = 1000.0;
+  for (int i = 0; i < 200; ++i)
+  {
+    const double mid = 0.5 * (lo + hi);
+    (QbFilmic(mid) < y ? lo : hi) = mid;
+  }
+  return 0.5 * (lo + hi);
+}
+
 void QbGameState::SetupRenderScene()
 {
   std::string L;
@@ -476,6 +496,27 @@ void QbGameState::SetupRenderScene()
   L += "parity.material: Materials/Bench.ezMaterial on every mesh (project material with engine default shading; not the Godot/Stride default material)\n";
   L += "parity.cast_shadow_meshes: ezMeshComponent default (cast shadows on)\n";
   L += "camera_forward_read_back: (" + QbFmt("%.4f", vFwd.x) + ", " + QbFmt("%.4f", vFwd.y) + ", " + QbFmt("%.4f", vFwd.z) + ")\n";
-  L += "background: not set (no sky; the stock pipeline clear colour is used, not the cornflower blue of Godot and Stride)";
+  if (m_Opt.m_sBackground == "cornflower")
+  {
+    // The stock MainRenderPipeline clears its colour sources (ezSourcePass "ColorSource0".."ColorSource3") to a near-black blue, and the scene colour then goes
+    // through the TonemapPass (Hable filmic curve, white point 11.2, exposure 1, vignette texture) before it is shown. To get Godot's cornflower blue (0.392, 0.584, 0.929)
+    // = sRGB bytes (100, 149, 237) on screen, the clear colour is the inverse of the filmic curve at the target linear colour, and the vignette texture is replaced by the
+    // engine's white texture (the vignette darkened the screen corners and made the background non-uniform). Pipeline passes are reflected objects: a world blackboard entry
+    // "<pass name>.<property>" overrides the property (ezView::RebuildPropertyMappings), so the engine source and the project data stay untouched.
+    const double fWhite = QbFilmic(11.2);
+    ezColor clr;
+    const ezColor target = ezColorGammaUB(100, 149, 237);
+    clr.r = (float)QbFilmicInverse((double)target.r * fWhite);
+    clr.g = (float)QbFilmicInverse((double)target.g * fWhite);
+    clr.b = (float)QbFilmicInverse((double)target.b * fWhite);
+    clr.a = 1.0f;
+    ezBlackboard* pBoard = m_pOwnedWorld->GetBlackboard().Borrow();
+    for (const char* szPass : {"ColorSource0", "ColorSource1", "ColorSource2", "ColorSource3"})
+      pBoard->SetEntryValue(ezStringBuilder(szPass, ".ClearColor"), clr);
+    pBoard->SetEntryValue("TonemapPass.VignettingTexture", ezVariant(ezString("White.color")));
+    L += "background: cornflower (0.392, 0.584, 0.929) = sRGB bytes (100, 149, 237); stock pipeline ColorSource0..3 ClearColor set via world blackboard to the filmic-tonemap inverse (" + QbFmt("%.4f, %.4f, %.4f", clr.r, clr.g, clr.b) + " linear, scene colour before tonemapping; assumes exposure 1, white point 11.2, no bloom contribution) and TonemapPass vignette texture set to White.color; effective colour checked on a screenshot only";
+  }
+  else
+    L += "background: default (not set: the stock pipeline clear colour is used, near-black blue; Godot and Stride use cornflower blue, see --background=cornflower)";
   m_sRenderEnv = L;
 }
