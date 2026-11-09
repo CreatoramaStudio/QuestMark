@@ -37,11 +37,11 @@ Every run uses fixed 200 Hz physics, which leaves a 5 ms budget per step. The ch
 
 | Label | Engine and physics | Build | Graphics API (main results) |
 |---|---|---|---|
-| ezEngine Jolt | ezEngine with Jolt | Shipping | D3D11 (`-renderer DX11`); the exe also has Vulkan, 0 to 43% lower fps in the [Renderer A/B](#renderer-ab) section |
+| ezEngine Jolt | ezEngine with Jolt | Shipping | D3D11 (`-renderer DX11`); the exe also has Vulkan, 0 to 43% lower fps in the [Renderer A/B](#renderer-ab-higher-is-better) section |
 | Stride JIT | Stride 4.4.1 with Bepu | Release, JIT | Direct3D11 (`StrideGraphicsApi` in `benchmark/stride/StrideBench.csproj`) |
 | Stride AOT | Stride 4.4.1 with Bepu | Release, Native AOT | Direct3D11 (same project) |
 | Godot PhysX | Godot PhysX fork | CPU-only | Vulkan (engine default, inferred: these runs predate the driver lines in env.txt) |
-| Godot Jolt | Godot 4.7.2 with Jolt | Release export | Vulkan (same inference); D3D12 measured equal in the [Renderer A/B](#renderer-ab) section |
+| Godot Jolt | Godot 4.7.2 with Jolt | Release export | Vulkan (same inference); D3D12 measured equal in the [Renderer A/B](#renderer-ab-higher-is-better) section |
 | Godot Jolt RID | Godot 4.7.2 with Jolt, bodies made on `PhysicsServer3D`, MultiMesh drawing | Release export | Vulkan (same inference) |
 | Godot PhysX RID | Godot PhysX fork, bodies made on `PhysicsServer3D`, MultiMesh drawing | CPU-only | Vulkan (same inference) |
 
