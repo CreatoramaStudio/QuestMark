@@ -21,14 +21,16 @@ Known deviations from the published numbers: setup uses the standard (non-mono) 
 
 ## Benchmark summary (2026-11-09)
 
-**Verdict, provisional until a Steam Deck run: 1 ezEngine + Jolt, 2 Stride + Bepu, 3a Godot + PhysX fork, 3b Godot + Jolt (PhysX fork ahead of Jolt on the measured numbers; the final order is your decision).**
+**Verdict (2026-11-10), provisional until a Steam Deck run: 1 ezEngine + Jolt, 2 Godot + PhysX fork, 3 Stride + Bepu, 4 Godot + Jolt (ranked in play under load; the final order is your decision).**
 
-Update 2026-11-09: the order is unchanged, but ezEngine's lead is narrower. The ranking compares each engine's default usage first (ezEngine: its own Jolt physics components; Godot: nodes; Stride: Bepu), and the deciding measure for a rendered 60 fps game is the frame with rendering. ezEngine is the only engine whose default path keeps the game-like mixed scene well inside the 60 fps budget with rendering (p99 8.6 / 8.9 ms, stress / game, against 19.3 ms or more for every other default path). Per physics step its default path is no longer ahead of Godot PhysX. On per-step physics alone Stride would be first and Godot PhysX ahead of ezEngine. Details and limits: docs/engine-choice.md section 12.2.
+Update 2026-11-10: the order follows a new rule: a real game scene under load must not drop frames while playing, and a freeze at start-up does not count (it can run behind a loading screen). The rule, data and numbers are in [In play under load](#in-play-under-load-the-verdict-rule). In play (stress profile, frames after the first 5 s) ezEngine holds 60 fps on 100% of frames, the PhysX fork on 95.3%, Stride on 0.4 to 10.3% and Godot Jolt nodes on 0%. This replaces the earlier 2026-11-10 reading (worse-profile whole window, Stride second), which counted the start-up frames. Scorecard and limits: docs/engine-choice.md section 12.2.
+
+Update 2026-11-09 (earlier text; the order is now the one in the bold line above): the order was unchanged then, but ezEngine's lead is narrower. The ranking compares each engine's default usage first (ezEngine: its own Jolt physics components; Godot: nodes; Stride: Bepu), and the deciding measure for a rendered 60 fps game is the frame with rendering. ezEngine is the only engine whose default path keeps the game-like mixed scene well inside the 60 fps budget with rendering (p99 8.6 / 8.9 ms, stress / game, against 19.3 ms or more for every other default path). Per physics step its default path is no longer ahead of Godot PhysX. On per-step physics alone Stride would be first and Godot PhysX ahead of ezEngine. Details and limits: docs/engine-choice.md section 12.2.
 
 - **ezEngine** (default usage, through its own Jolt physics components) is the only engine whose default path keeps the game-like mixed scene well inside the frame budget with rendering on (p99 8.6 / 8.9 ms, stress / game; 222 fps unlocked). Per step it costs 10 to 40 % more than ezEngine direct Jolt (same session) and is level with Godot Jolt on RIDs. **ezEngine direct Jolt** (the alternative path: bodies made and stepped through the Jolt BodyInterface) is 10 to 40 % cheaper per step and has the best rendered frame measured (p99 5.1 / 5.2 ms, 299 fps), so it is a measured fallback for physics hot spots. Capacity with rendering at 20 ms (stress): ezEngine 2500 bodies, direct Jolt 3000 (game profile: 2500 against 2000). Debris with rendering: ezEngine 3.5 events per second, direct Jolt 3 (direct Jolt never tested 3.5, so equal within ladder resolution). Ladders measured 2026-11-10 on the components path (docs/engine-choice.md section 12.6).
-- **Stride** has by far the cheapest physics (Bepu 2.3 to 3.8 times below ezEngine, 8000 to 10000 bodies at 20 ms in physics mode), but its frame gets expensive once it renders (about 54 fps in the mixed scene, p99 24 to 39 ms; cause not profiled).
-- **Godot + PhysX fork (3a)**, through the node path, is 28 % lower per step than ezEngine on the pile (pit-2000 2.24 against 3.10 ms), 18 % lower at 4000 bodies (5.30 against 6.45 ms), 14 % lower at 1000 bodies (1.17 against 1.366 ms) and 20 % higher in the mixed scene (3.85 against 3.22 ms). Against ezEngine direct Jolt it is 21 % lower on the pile (2.82 ms), 3.5 % lower at 4000 bodies (5.49 ms, PhysX single runs, inside run-to-run drift) and level at 1000 bodies (1.158 ms, within about 1 %). ezEngine values measured 2026-11-09 (3 runs, median). It is faster than Godot Jolt in every physics cell. Its pile sleeps with default settings. In the mixed scene with rendering, nodes give p99 19.3 / 89.5 ms (game / stress). It is a single-maintainer fork and our build is CPU-only.
-- **Node-based Godot + Jolt (3b)** is the slowest engine in every test. The same Jolt costs 1.2 to 1.6 times more per step in Godot nodes than in ezEngine (default components path), and 1.4 to 2.2 times more than in ezEngine direct Jolt (stress and game profile cells).
+- **Stride** has by far the cheapest physics (Bepu 2.3 to 3.8 times below ezEngine, 8000 to 10000 bodies at 20 ms in physics mode), but its frame gets expensive once it renders (about 54 fps in the mixed scene, p99 24 to 39 ms; cause not profiled). In play under load (3) it holds 60 fps on only 10.3% of frames (JIT) and 0.4% (AOT), p99 22.4 and 24.9 ms.
+- **Godot + PhysX fork (2)**, through the node path, is 28 % lower per step than ezEngine on the pile (pit-2000 2.24 against 3.10 ms), 18 % lower at 4000 bodies (5.30 against 6.45 ms), 14 % lower at 1000 bodies (1.17 against 1.366 ms) and 20 % higher in the mixed scene (3.85 against 3.22 ms). Against ezEngine direct Jolt it is 21 % lower on the pile (2.82 ms), 3.5 % lower at 4000 bodies (5.49 ms, PhysX single runs, inside run-to-run drift) and level at 1000 bodies (1.158 ms, within about 1 %). ezEngine values measured 2026-11-09 (3 runs, median). It is faster than Godot Jolt in every physics cell. Its pile sleeps with default settings. In the mixed scene with rendering, nodes give p99 19.3 / 89.5 ms (game / stress, whole window). In play under load it holds 60 fps on 95.3% of frames with p99 20.9 ms; the 89.5 ms whole-window p99 is a start-up backlog. Whether a mid-game spike could start a similar recovery is a hypothesis, not measured. It is a single-maintainer fork and our build is CPU-only; those risks were not used for the order, and the final order is your decision.
+- **Node-based Godot + Jolt (4)** is the slowest engine in every test. The same Jolt costs 1.2 to 1.6 times more per step in Godot nodes than in ezEngine (default components path), and 1.4 to 2.2 times more than in ezEngine direct Jolt (stress and game profile cells).
 - **Sleeping differs by engine design** and is reported, not forced equal: with default settings the Bepu and PhysX piles fall asleep, the Jolt pile stays awake in both Godot and ezEngine.
 - **10000 rays per step at 200 Hz** fail real time in every engine (ezEngine 353 ms per frame, direct Jolt 345), so that scene does not separate the candidates. Creating bodies at run time (debris) is about 6 to 10 times dearer in node-based Godot than in ezEngine direct Jolt (the spawn cost was not measured on the default path; the debris ladder was, see the table).
 - **Godot on RIDs + MultiMesh** (Godot's alternative path) changes the whole-frame picture. In the mixed scene with rendering, Godot Jolt goes from 2.8 to 217 fps and Godot PhysX from about 73 to 262 fps, which beats Stride (54 and 51 fps); ezEngine runs 222 fps (direct Jolt 299). With RIDs Godot reaches p99 5.5 to 9.2 ms with rendering, which would rank Godot above Stride on the rendered frame; this comparison uses Godot's alternative path, so it does not change the default-usage order. In the debris scenario (game profile, one run per rate) PhysX RID passes 7 events per second with rendering and 8 without (corrected 2026-11-10 from 6 and 8, see Limits), the highest with rendering; Jolt RID passes 3 and 3, the same as ezEngine direct Jolt with rendering and equal to it without. Per physics step Stride is still cheapest (pile 1.02 ms against 3.14 ms for Godot Jolt RID). The ranking above was made with node-based Godot and is not changed here: the final order is the user's decision.
@@ -50,6 +52,25 @@ Every run uses fixed 200 Hz physics, which leaves a 5 ms budget per step. The ch
 
 "Godot Jolt" and "Godot PhysX" without RID are the node-based variants (one `RigidBody3D` and one `MeshInstance3D` per body).  In the charts the RID variants are labelled "Jolt RID" and "PhysX RID". Naming (user decision 2026-11-09): using ezEngine through its own Jolt physics components is the default way to use the engine and is called "ezEngine"; creating and stepping bodies through the Jolt BodyInterface directly is the alternative and is called "ezEngine direct Jolt". The analogy: Godot's default is nodes, its alternative is RIDs; ezEngine's default is components, its alternative is direct Jolt. Every ezEngine number published before 2026-11-09 evening came from the direct Jolt path.
 
+### In play under load (the verdict rule)
+
+The ranking rule since 2026-11-10: a real game scene under load must not drop frames while playing; a freeze at start-up does not count (it can run behind a loading screen). Data: mixed scene with rendering (3000 bodies, 100 chains, 1000 rays per step), stress profile (all bodies awake), frames after the first 5 s of the 20 s measured window, median of 3 runs, one desktop (no Steam Deck). "At 60 fps" = frames of 16.7 ms or less.
+
+| Variant | p99 frame | median frame | max frame | frames at 60 fps |
+|---|---|---|---|---|
+| ezEngine (components, default) | 8.45 ms | 4.58 ms | 9.49 ms | 100% |
+| ezEngine direct Jolt | 5.08 ms | 3.93 ms | 5.63 ms | 100% |
+| Godot PhysX fork (nodes) | 20.89 ms | 10.75 ms | 26.31 ms | 95.3% |
+| Stride JIT | 22.44 ms | 18.10 ms | 25.67 ms | 10.3% |
+| Stride AOT | 24.94 ms | 19.96 ms | 28.19 ms | 0.4% |
+| Godot Jolt (nodes) | 387 ms | 347 ms | 387 ms | 0% |
+| Godot PhysX fork (RID, alternative) | 5.58 ms | 4.44 ms | 6.32 ms | 100% |
+| Godot Jolt (RID, alternative) | 9.07 ms | 4.82 ms | 10.45 ms | 100% |
+
+![In play under load: p99 frame ms](docs/charts/inplay-p99-stress.svg)
+
+![In play under load: frames at 60 fps](docs/charts/inplay-60fps-stress.svg)
+
 ### Physics cost per step (lower is better)
 
 The charts show "ezEngine" (default, components path, slice accounting, 2026-11-09 run) and "ezEngine direct Jolt" (alternative). The capacity and debris charts have both since the 2026-11-10 ladder run on the components path. The capacity and debris charts were regenerated on 2026-11-10 with the corrected ladder rule for all series (docs/engine-choice.md section 13 item 29).
@@ -70,7 +91,7 @@ Each value is the wall time per physics step with rendering off and the loop unp
 
 ### Frame time with rendering (lower is better)
 
-99th percentile frame time of the mixed scene with rendering on; the frame budget is 20 ms.
+99th percentile frame time of the mixed scene with rendering on over the whole 20 s measured window, start-up included (the Godot PhysX fork stress value comes from its start-up backlog; in play see the section above); the frame budget is 20 ms.
 
 ![Mixed scene with rendering, stress profile: p99 frame ms](docs/charts/mixed-p99-stress.svg)
 
@@ -141,7 +162,7 @@ With sleeping on (`game` profile), the 2000-body pile falls asleep in Bepu (0.09
 
 ### Limits
 
-- **Verdict scope (2026-11-10):** the capacity (F) and debris (G) ladders of ezEngine (components path) were run on 2026-11-10 (`run-all.sh ezengine --stages=FG`, 3 runs at the last pass and first fail, other stages 1 run, idle machine, 0 failed cells). The ladder values in the table are uncertain by about one stage. The verdict is still provisional (desktop only, no Steam Deck).
+- **Verdict scope (2026-11-10):** the capacity (F) and debris (G) ladders of ezEngine (components path) were run on 2026-11-10 (`run-all.sh ezengine --stages=FG`, 3 runs at the last pass and first fail, other stages 1 run, idle machine, 0 failed cells). The ladder values in the table are uncertain by about one stage. The verdict is still provisional (desktop only, no Steam Deck). The in-play numbers use 3 runs per variant, 15 s analysed per run, and engines from different sessions.
 - **Ladder rule correction (2026-11-10):** the table values are now the highest tested stage whose median passes (the `merge-results.pl` ladder table, midpoints included) for all series. The `LADDER ... last pass` line in run-all logs could drop a passing stage, and earlier published values followed it in part (several G values, the RID F and G values). Changed: debris Stride JIT 6 to 8 (physics), Stride AOT 8 to 10, PhysX fork nodes 4 to 5, Godot Jolt nodes 2 to 2.5, PhysX RID 6 to 7 (render); F: Godot Jolt RID render 2000 to 2500, physics game 2000 to 3000; PhysX RID physics 3000 to 3500. Details: docs/engine-choice.md section 13 item 29.
 - **Hardware:** one desktop machine and no Steam Deck run. On the Deck, ezEngine and Stride go through DXVK while Godot's Vulkan goes straight through (winevulkan), so desktop ratios may not carry over.
 - **Run dates:**

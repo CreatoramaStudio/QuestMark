@@ -58,7 +58,7 @@ sub zc { my @v = @_; map { ($c[$_], $v[$_]) } 0..$#v }
 #   debris-render.svg / debris-physics.svg                  <- G ladder debris (game only), render / physics mode (highest rate passing 20 ms p99)
 # Not charted from components: the renderer-ab-* charts (other series).
 %comp = map { $_ => undef } qw(pile-ms.svg pile-game-ms.svg mixed-ms.svg bodies1000-ms.svg bodies4000-ms.svg mixed-fps.svg mixed-fps-game.svg
-  mixed-p99-stress.svg mixed-p99-game.svg raycast-10000-ms.svg capacity-render-on.svg capacity-render-on-game.svg capacity-render-off.svg
+  mixed-p99-stress.svg mixed-p99-game.svg inplay-p99-stress.svg inplay-60fps-stress.svg raycast-10000-ms.svg capacity-render-on.svg capacity-render-on-game.svg capacity-render-off.svg
   capacity-render-off-game.svg debris-render.svg debris-physics.svg);
 # Filled 2026-11-09 from .tmp/comp-chart-1 (3 runs, median; ms values = 1000 / steps_per_s_window, the same like-for-like rule as the raw ezEngine bars).
 @comp{qw(pile-ms.svg pile-game-ms.svg mixed-ms.svg bodies1000-ms.svg bodies4000-ms.svg)} = (3.10, 3.20, 3.22, 1.366, 6.45);
@@ -86,6 +86,13 @@ chart("capacity-render-off-game.svg","Most bodies with p99 frame at or below 20 
 chart("raycast-10000-ms.svg","10000 rays per frame: wall ms per frame"," ms",1,z(345,394,498,653,503,644,500));
 chart("debris-render.svg","Debris (G): highest rate passing 20 ms p99, rendering on"," events/s",0,z(3,3,3,3,2.5,7,3));
 chart("debris-physics.svg","Debris (G): highest rate passing 20 ms p99, rendering off"," events/s",0,z(3,8,10,5,2.5,8,3));
+# In play under load (2026-11-10): mixed scene with rendering (stage D), stress profile (all 3000 bodies awake), frames after the first 5 s of the 20 s
+# measured window (start-up excluded; it can run behind a loading screen), median of 3 runs per variant. Computed by .tmp/ladder-audit/steady.pl from the
+# stage D CSVs: ezEngine = .tmp/comp-chart-1, ezEngine direct Jolt = results-200hz-r2, Stride and Godot nodes = results-200hz, RID = results-rid-abde.
+# "at 60 fps" = share of frames with wall_ms <= 16.7. Same values in the README table under "In play under load".
+@comp{qw(inplay-p99-stress.svg inplay-60fps-stress.svg)} = (8.45, 100);
+chart("inplay-p99-stress.svg","In play under load (stress, start-up excluded): p99 frame time"," ms",1,z(5.08,22.44,24.94,20.89,387.3,5.58,9.07));
+chart("inplay-60fps-stress.svg","In play under load (stress, start-up excluded): frames at 60 fps","% of frames",0,z(100,10.3,0.4,95.3,0,100,100));
 # Renderer A/B (2026-11-08, stages A and D, 3 runs per cell, median fps; values from .tmp/vk-ab and .tmp/vk-ab-godot, section 3.1a and 12.4 of docs/engine-choice.md)
 my @ab = ("ezEngine direct Jolt DX11","ezEngine direct Jolt Vulkan","Godot Jolt Vulkan","Godot Jolt D3D12");
 sub zab { my @v = @_; map { ($ab[$_], $v[$_]) } 0..$#v }
@@ -95,10 +102,27 @@ chart("renderer-ab-mixed-render-stress.svg","Renderer A/B, mixed scene with rend
 chart("renderer-ab-mixed-render-game.svg","Renderer A/B, mixed scene with rendering, game: frames per second"," fps",0,zab(277.8,231.3,2.8,2.8));
 
 sub img { my ($f,$alt) = @_; "![$alt](docs/charts/$f)\n\n" }
+print "### In play under load (the verdict rule)
+
+The ranking rule since 2026-11-10: a real game scene under load must not drop frames while playing; a freeze at start-up does not count (it can run behind a loading screen). Data: mixed scene with rendering (3000 bodies, 100 chains, 1000 rays per step), stress profile (all bodies awake), frames after the first 5 s of the 20 s measured window, median of 3 runs, one desktop (no Steam Deck). \"At 60 fps\" = frames of 16.7 ms or less.
+
+| Variant | p99 frame | median frame | max frame | frames at 60 fps |
+|---|---|---|---|---|
+| ezEngine (components, default) | 8.45 ms | 4.58 ms | 9.49 ms | 100% |
+| ezEngine direct Jolt | 5.08 ms | 3.93 ms | 5.63 ms | 100% |
+| Godot PhysX fork (nodes) | 20.89 ms | 10.75 ms | 26.31 ms | 95.3% |
+| Stride JIT | 22.44 ms | 18.10 ms | 25.67 ms | 10.3% |
+| Stride AOT | 24.94 ms | 19.96 ms | 28.19 ms | 0.4% |
+| Godot Jolt (nodes) | 387 ms | 347 ms | 387 ms | 0% |
+| Godot PhysX fork (RID, alternative) | 5.58 ms | 4.44 ms | 6.32 ms | 100% |
+| Godot Jolt (RID, alternative) | 9.07 ms | 4.82 ms | 10.45 ms | 100% |
+
+";
+print img("inplay-p99-stress.svg","In play under load: p99 frame ms"), img("inplay-60fps-stress.svg","In play under load: frames at 60 fps");
 print "### Physics cost per step (lower is better)\n\nEach value is the wall time per physics step with rendering off and the loop unpaced: 1000 / steps per second. Bars run best to worst (bars at 100% are green); the percentage is the best value divided by this value (best = 100%, 50% means twice as slow).\n\n";
 print img("pile-ms.svg","Pile of 2000 awake bodies: ms per step"), img("mixed-ms.svg","Mixed scene: ms per step"), img("bodies4000-ms.svg","4000 awake bodies: ms per step");
 print img("bodies1000-ms.svg","1000 awake bodies: ms per step"), img("pile-game-ms.svg","Pile of 2000 bodies, default sleeping (game profile): ms per step"), img("raycast-10000-ms.svg","10000 rays per frame: wall ms per frame");
-print "### Frame time with rendering (lower is better)\n\n99th percentile frame time of the mixed scene with rendering on; the frame budget is 20 ms.\n\n";
+print "### Frame time with rendering (lower is better)\n\n99th percentile frame time of the mixed scene with rendering on over the whole 20 s measured window, start-up included (the Godot PhysX fork stress value comes from its start-up backlog; in play see the section above); the frame budget is 20 ms.\n\n";
 print img("mixed-p99-stress.svg","Mixed scene with rendering, stress profile: p99 frame ms"), img("mixed-p99-game.svg","Mixed scene with rendering, game profile: p99 frame ms");
 print "### Whole frame with rendering (higher is better)\n\nBest to worst; the percentage is this value divided by the best value. Charts without game in the title are the stress profile.\n\n";
 print img("mixed-fps.svg","Mixed scene, render loop unlocked, stress: frames per second"), img("mixed-fps-game.svg","Mixed scene, render loop unlocked, game: frames per second"), img("capacity-render-on.svg","Most bodies at 20 ms p99, rendering on, stress"), img("capacity-render-on-game.svg","Most bodies at 20 ms p99, rendering on, game");
