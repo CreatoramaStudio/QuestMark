@@ -1471,6 +1471,11 @@ void QuestBench::_finish() {
 		ef->store_line("backend: " + setting("physics/3d/physics_engine"));
 		ef->store_line("physics_space_state_class (runtime, get_world_3d()->get_direct_space_state()->get_class()): " + ps_class);
 		ef->store_line("engine_tag: " + eng_tag);
+#ifdef QB_QM_TAG
+		ef->store_line(String("bench_source: QuestMark ") + QB_QM_TAG + " (commit of this repo at CMake configure time; -dirty = uncommitted changes then)");
+#else
+		ef->store_line("bench_source: QuestMark unknown (commit of this repo at CMake configure time; -dirty = uncommitted changes then)");
+#endif
 		ef->store_line("flavour: " + flavour);
 		ef->store_line(String("body_api: ") + (body_rid ? "rid (PhysicsServer3D bodies and pin joints, no nodes; render mode: MultiMesh per shape kind, body_get_state + multimesh_set_buffer once per frame; statics stay nodes)" : "nodes (RigidBody3D + MeshInstance3D, PinJoint3D)"));
 		ef->store_line(String("sleeping: ") + (sleeping_off ? "off" : "default"));

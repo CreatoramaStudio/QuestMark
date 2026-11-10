@@ -33,4 +33,17 @@ if(NOT QB_EZ_TAG)
 endif()
 target_compile_definitions(${PROJECT_NAME} PRIVATE QB_EZ_TAG="${QB_EZ_TAG}")
 
+# QuestMark commit recorded in env.txt (bench_source): this repo (two levels above this folder), read at configure time; "-dirty" when git status is not empty.
+get_filename_component(QB_QM_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
+execute_process(COMMAND git -C "${QB_QM_ROOT}" rev-parse --short HEAD OUTPUT_VARIABLE QB_QM_TAG OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+if(NOT QB_QM_TAG)
+  set(QB_QM_TAG "unknown")
+else()
+  execute_process(COMMAND git -C "${QB_QM_ROOT}" status --porcelain OUTPUT_VARIABLE QB_QM_STATUS OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+  if(QB_QM_STATUS)
+    set(QB_QM_TAG "${QB_QM_TAG}-dirty")
+  endif()
+endif()
+target_compile_definitions(${PROJECT_NAME} PRIVATE QB_QM_TAG="${QB_QM_TAG}")
+
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")

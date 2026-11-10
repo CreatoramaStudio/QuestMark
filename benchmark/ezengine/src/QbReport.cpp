@@ -16,6 +16,9 @@
 #ifndef QB_EZ_TAG
 #  define QB_EZ_TAG "unknown"
 #endif
+#ifndef QB_QM_TAG
+#  define QB_QM_TAG "unknown"
+#endif
 
 // The Windows headers come last: they define macros (min, max, GetObject, ...) that break the engine headers above.
 #ifndef WIN32_LEAN_AND_MEAN
@@ -155,7 +158,7 @@ void QbGameState::WriteReport()
   sum += buf;
   sum += "profile=" + m_sProfile + " sleeping=" + (m_bSleepingOff ? "off" : "default") + " vsync=" + (m_bVsync ? "on" : "off") + "\n";
   sum += QbStats("wall_ms", m_Wall);
-  sum += QbStats("physics_ms (own stopwatch: PhysicsSystem::Update only, sum of the steps of one frame; 0 on frames without a tick)", m_Phys);
+  sum += QbStats("physics_ms (own stopwatch: PhysicsSystem::Update only in the raw path, whole ezWorld::Update in the components path; sum of the steps of one frame; 0 on frames without a tick)", m_Phys);
   sum += "engine_monitor_TIME_PHYSICS_PROCESS_ms: n/a (no such monitor in ezEngine)\n";
   sum += QbStats("physics_ms, tick frames only", m_PhysTicks);
   sum += QbStats("physics_frame_ms (= physics_ms column: sum of the steps in one frame, tick frames only)", m_PhysTicks);
@@ -174,8 +177,21 @@ void QbGameState::WriteReport()
     snprintf(buf, sizeof(buf), "WARNING physics_update_errors: %lld steps returned a non-None JPH::EPhysicsUpdateError (flags OR-ed 0x%x: 1 manifold cache full, 2 body pair cache full, 4 contact constraints full)\n", m_iUpdateErrorCount, m_uiUpdateErrorFlags);
     sum += buf;
   }
+  else if (m_bComponents)
+    sum += "physics_update_errors: n/a (components path: the engine module discards PhysicsSystem::Update's return value)\n";
   else
     sum += "physics_update_errors: 0 (every PhysicsSystem::Update returned None)\n";
+  if (!m_sFatalError.empty())
+    sum += "ERROR: " + m_sFatalError + "\n";
+  if (m_bComponents && m_sFatalError.empty() && !m_bStepCounterOn)
+    sum += "jolt_module_steps: off (--count-jolt-steps=0; the step listener changes Jolt's timing, so it is a diagnostic only)\n";
+  if (m_bComponents && m_sFatalError.empty() && m_bStepCounterOn)
+  {
+    const unsigned long long uiUpd = m_uiJoltCtrEnd - m_uiJoltCtrStart;
+    const unsigned long long uiSteps = m_uiJoltStepsEnd - m_uiJoltStepsStart;
+    snprintf(buf, sizeof(buf), "jolt_module_steps: collision steps %llu, module updates with a step %llu (world updates that ran at least one step), steps recorded %lld in the measure window (%s)\n", uiSteps, uiUpd, m_iTicksRec, (long long)uiSteps == m_iTicksRec ? "equal" : "DIFFERENT");
+    sum += buf;
+  }
 
   {
     const double fMeasuredMs = m_fCumMs;
@@ -202,9 +218,24 @@ void QbGameState::WriteReport()
     {
       snprintf(buf, sizeof(buf), "pacing: unpaced (back-to-back 1/200 s steps in slices of %.1f ms, one CSV row per step; the window message pump and world update run between slices, %.1f ms in the window)\n", m_Opt.m_fSliceMs, m_fUnpacedOverheadMs);
       sum += buf;
+      snprintf(buf, sizeof(buf), "steps_per_s_window: %.3f (steps / (measured_s + pacing overhead s), comparable with Godot and Stride)\n", fMeasuredS + m_fUnpacedOverheadMs / 1000.0 > 0.0 ? (double)m_iTicksRec / (fMeasuredS + m_fUnpacedOverheadMs / 1000.0) : 0.0);
+      sum += buf;
     }
     else
       sum += "pacing: fixed 200 Hz accumulator in ezGameState::BeforeWorldUpdate, vsync " + std::string(m_bVsync ? "on" : "off") + ", no frame cap, max 64 steps per frame (the excess is dropped), steps per frame vary with the frame rate\n";
+    if (m_bComponents && !m_bCompSlice) // slice mode: the delta and pacing lines are valid (TickWork runs every step, the loop is the raw slice loop)
+    {
+      // steps_per_s, ticks_counted, paced_steps, real_time_factor and dropped_steps_estimate stay valid: the world clock is driven by the benchmark accumulator, so the module takes exactly the counted steps; the delta and pacing lines belong to the raw loop
+      for (const char* key : {"physics_delta_s", "pacing"})
+      {
+        const size_t uiPos = sum.rfind(std::string("\n") + key + ": ");
+        if (uiPos == std::string::npos)
+          continue;
+        const size_t uiEnd = sum.find('\n', uiPos + 1);
+        sum.replace(uiPos + 1, (uiEnd == std::string::npos ? sum.size() : uiEnd + 1) - (uiPos + 1),
+          std::string(key) + ": n/a (components path: the world clock is driven by the benchmark accumulator, ezJoltWorldModule steps inside ezWorld::Update; see NOTES.md)\n");
+      }
+    }
 
     std::vector<double> wallTick;
     for (size_t i = 0; i < m_Rows.size(); i++)
@@ -252,12 +283,41 @@ void QbGameState::WriteReport()
     snprintf(buf, sizeof(buf), "awake_bodies_at_end: %d of %d dynamic bodies\n", iAwakeEnd, bDebris ? (int)m_iLivePieces : (int)m_Dynamic.size());
     sum += buf;
 
+    if (m_Opt.m_bPhaseTiming && QbPh().m_iFrames > 0)
+    {
+      const QbPhaseState& ph = QbPh();
+      const double fF = (double)ph.m_iFrames;
+      const double fS = ph.m_iSteps > 0 ? (double)ph.m_iSteps : 1.0;
+      auto seg = [&](const char* szName, double fTot, const char* szNote)
+      {
+        snprintf(buf, sizeof(buf), "phase_ms: %s per_frame=%.4f per_step=%.4f total=%.1f frames=%lld steps=%lld%s\n", szName, fTot / fF, fTot / fS, fTot, ph.m_iFrames, ph.m_iSteps, szNote);
+        sum += buf;
+      };
+      for (int i = 0; i < QB_PH_COUNT; i++)
+        seg(QbPhName(i), ph.m_Tot[i], "");
+      seg("sum_of_segments", [&] { double t = 0; for (int i = 0; i < QB_PH_COUNT; i++) t += ph.m_Tot[i]; return t; }(), " (chained, equals frame_total)");
+      seg("frame_total", ph.m_TotFrame, " (Run() entry to exit, measure window frames only)");
+      seg("sub_before_jolt_step", ph.m_TotSub[QB_PS_BEFORE_JSTEP], " (raw path: PhysicsSystem::Update calls, inside before_world_update)");
+      seg("sub_before_extra_updates", ph.m_TotSub[QB_PS_BEFORE_EXTRA], " (components: extra ezWorld::Update calls, inside before_world_update)");
+      static const char* const s_ExtraNames[9] = {"init", "preasync", "jolt_start", "async", "jolt_fetch", "postasync", "transform", "posttransform", "tail"};
+      for (int i = 0; i < 9; i++)
+      {
+        char name[64];
+        snprintf(name, sizeof(name), "extra_update_%s", s_ExtraNames[i]);
+        seg(name, ph.m_TotExtra[i], " (extra updates inside before_world_update, components path)");
+      }
+      snprintf(buf, sizeof(buf), "phase_markers: hits per marker (preFirst preBeforeJolt preLast postFirst postAfterFetch postLast transFirst transLast) = %lld %lld %lld %lld %lld %lld %lld %lld\n", ph.m_iMarkerHits[0], ph.m_iMarkerHits[1], ph.m_iMarkerHits[2], ph.m_iMarkerHits[3], ph.m_iMarkerHits[4], ph.m_iMarkerHits[5], ph.m_iMarkerHits[6], ph.m_iMarkerHits[7]);
+      sum += buf;
+    }
+
     if (m_fPitInterior > 0.0)
     {
       const double fHalf = m_fPitInterior / 2.0;
       int iOutside = 0;
-      auto check = [&](const JPH::BodyID& id)
+      auto check = [&](JPH::BodyID id)
       {
+        if (id.IsInvalid())
+          return;
         const JPH::RVec3 o = m_pBI->GetPosition(id);
         if (std::fabs((double)o.GetX()) > fHalf || std::fabs((double)o.GetZ()) > fHalf || (double)o.GetY() < -0.5)
           iOutside++;
@@ -266,7 +326,7 @@ void QbGameState::WriteReport()
       {
         for (const QbDebrisEvent& ev : m_LiveEvents)
           for (const QbPiece& p : ev.m_Pieces)
-            check(p.m_Id);
+            check(m_bComponents ? BodyOf(p.m_hObj) : p.m_Id);
       }
       else
       {
@@ -289,8 +349,31 @@ void QbGameState::WriteReport()
         fMaxD = std::max(fMaxD, (double)d.GetLength());
         fSumDx += d.x;
       }
-      snprintf(buf, sizeof(buf), "chain_check: all_links_min_y=%.3f (start >= 7.5; free fall would go far lower) end_links_max_move=%.3f end_links_mean_dx=%.3f n_end_links=%d\n", fMinY, fMaxD, fSumDx / (double)m_ImpulseLinks.size(), (int)m_ImpulseLinks.size());
+      const double fBottomY0 = 12.0 - 0.25 - 0.5 * 9; // lowest link centre at the start (BuildChains: ceiling bottom 12, link l at 12 - 0.25 - 0.5 l, l = 9)
+      snprintf(buf, sizeof(buf), "chain_check: all_links_min_y=%.3f (start %.2f; free fall would go far lower) end_links_max_move=%.3f end_links_mean_dx=%.3f n_end_links=%d (end_links_* are an end-of-run snapshot of a damped swing and depend on the steps from kick to report; compare chain_fixed_step)\n", fMinY, fBottomY0, fMaxD, fSumDx / (double)m_ImpulseLinks.size(), (int)m_ImpulseLinks.size());
       sum += buf;
+      // chain_fixed_step: always on (TickWork reads the end links once, QB_CHAIN_FIXED_STEPS steps after the kick, both paths).
+      // chain_peak: --chain-sample=1 only (sampled in TickWork once per physics step before the step), plus one last sample here at the report.
+      const long long kRep = m_iTickGlobal - m_iKickTick;
+      if (m_fChainFixed >= 0.0)
+        snprintf(buf, sizeof(buf), "chain_fixed_step: end_links_max_move=%.3f at_steps_after_kick=%lld (%.3f s) kick_step=%lld report_step=%lld\n", m_fChainFixed, QB_CHAIN_FIXED_STEPS, (double)QB_CHAIN_FIXED_STEPS / (double)QB_PHYS_HZ, m_iKickTick, m_iTickGlobal);
+      else
+        snprintf(buf, sizeof(buf), "chain_fixed_step: not reached (run has %lld steps after the kick, needs %lld) kick_step=%lld report_step=%lld\n", kRep, QB_CHAIN_FIXED_STEPS, m_iKickTick, m_iTickGlobal);
+      sum += buf;
+      if (!m_Opt.m_bChainSample)
+        sum += "chain_peak: off (--chain-sample=0; per-step sampling runs inside the timed step work, so it is a diagnostic only)\n";
+      else
+      {
+      double fPeak = m_fChainPeak;
+      long long iPeakAt = m_iChainPeakTick;
+      if (m_iKickTick >= 0 && fMaxD > fPeak)
+      {
+        fPeak = fMaxD;
+        iPeakAt = kRep;
+      }
+      snprintf(buf, sizeof(buf), "chain_peak: end_links_max_move_peak=%.3f at_step_after_kick=%lld (%.3f s) sampling=once per physics step before the step, plus the report state; kick_step=%lld report_step=%lld steps_kick_to_report=%lld\n", fPeak, iPeakAt, (double)iPeakAt / (double)QB_PHYS_HZ, m_iKickTick, m_iTickGlobal, kRep);
+      sum += buf;
+      }
     }
 
     if (bDebris)
@@ -320,7 +403,10 @@ void QbGameState::WriteReport()
       sum += buf;
       snprintf(buf, sizeof(buf), "pool: initial %lld, misses %lld, free at end %d\n", m_iPoolSize0, m_iPoolMisses, (int)m_PoolFree.size());
       sum += buf;
-      snprintf(buf, sizeof(buf), "impulse_probe: |v| right after spawn %.4f, at next tick %.4f (a radial piece should read about 1.5 m/s +-20%%)\n", m_fVelAfterSpawn, m_fVelNextTick);
+      if (m_bComponents)
+        snprintf(buf, sizeof(buf), "impulse_probe (components): |v| right after spawn %.4f (impulse queued, not applied yet), after the next step %.4f (a radial piece should read about 1.5 m/s +-20%%); |omega| set %.4f, right after spawn %.4f, after the next step %.4f\n", m_fVelAfterSpawn, m_fVelNextTick, m_fAngExpected, m_fAngAfterSpawn, m_fAngNextTick);
+      else
+        snprintf(buf, sizeof(buf), "impulse_probe: |v| right after spawn %.4f, at next tick %.4f (a radial piece should read about 1.5 m/s +-20%%)\n", m_fVelAfterSpawn, m_fVelNextTick);
       sum += buf;
       sum += "debris_render_meshes: shared 0.5 box mesh resource, one game object with a mesh component per piece (blocks: shared unit box mesh scaled); physics mode has no meshes\n";
     }
@@ -348,6 +434,7 @@ void QbGameState::WriteReport()
 
   char camBuf[256];
   line(std::string("engine: ezEngine ") + QB_EZ_TAG + " (commit of the checkout that was built)");
+  line(std::string("bench_source: QuestMark ") + QB_QM_TAG + " (commit of this repo at CMake configure time; -dirty = uncommitted changes then)");
   line("backend: jolt (ezEngine JoltPlugin, the engine's only physics engine; Jolt is bundled in the engine checkout)");
   line("physics_space_state_class (runtime, RTTI type name of the ezPhysicsWorldModuleInterface implementation in the world): " + (m_sSpaceClass.empty() ? std::string("<not captured>") : m_sSpaceClass));
   line("engine_tag: jolt");
@@ -375,7 +462,7 @@ void QbGameState::WriteReport()
   line("parity.near: 0.1");
   line("parity.far: 2000");
   line(QbF("parity.camera_content_radius: %.3f", m_fCamRadius));
-  line(std::string("parity.physics_hz: 200") + (m_bUnpaced ? " (simulated step 1/200 s; unpaced loop, see NOTES)" : " (fixed accumulator in the benchmark loop, PhysicsSystem::Update(1/200 s, 1 collision step))"));
+  line(std::string("parity.physics_hz: 200") + (m_bComponents ? " (ezJoltWorldModule Fixed 200 Hz inside ezWorld::Update)" : m_bUnpaced ? " (simulated step 1/200 s; unpaced loop, see NOTES)" : " (fixed accumulator in the benchmark loop, PhysicsSystem::Update(1/200 s, 1 collision step))"));
   line("physics_hz: 200 (fixed simulated step 1/200 s)");
   line("parity.max_physics_steps_per_frame: 64 (benchmark accumulator cap; the excess is dropped)");
   line(QbF("parity.gravity: (%.3f, %.3f, %.3f) (JPH PhysicsSystem gravity read back)", (double)m_pSystem->GetGravity().GetX(), (double)m_pSystem->GetGravity().GetY(), (double)m_pSystem->GetGravity().GetZ()));
@@ -469,8 +556,28 @@ void QbGameState::WriteReport()
   line(std::string("multithreaded_rendering: ") + (m_Opt.m_bMtRender ? "on" : "off") + " (Rendering.Multithreading cvar; off = update and render run one after the other on the main thread)");
   line("render_scale: 1.0 (App.RenderScale cvar set to 1)");
   line(QbF("unpaced_slice_ms: %.1f (unpaced runs only)", m_Opt.m_fSliceMs));
+  if (m_bComponents && m_bUnpaced)
+    line(std::string("comp_unpaced: ") + (m_bCompSlice ? "slice (back-to-back ezWorld::Update steps in slices, Fixed stepping, app frame once per slice, overhead counted as in the raw path)" : "frame (one whole app frame per step, Variable stepping)"));
   line("rng: ezRandom seeded with 12345 (draw order as the Godot side; the values differ from Godot's RNG, so the scene layouts differ in detail)");
-  line("physics_stepping: JPH::PhysicsSystem::Update called by the benchmark, cvar Jolt.Simulation.Pause = true so the module does not step (see NOTES)");
+  if (m_bComponents)
+  {
+    line("physics_path: components (ezJoltDynamicActorComponent / ezJoltStaticActorComponent with box and sphere shape components; bodies created, stepped and synced to the game objects by ezJoltWorldModule inside ezWorld::Update)");
+    line("physics_stepping: ezJoltWorldModule, stepping mode Fixed at 200 Hz, max 64 sub steps per frame (cvar Jolt.Simulation.Pause = false); the excess time stays accumulated in the module, the raw loop drops it");
+    line("physics_ms_meaning: components path = time of the whole ezWorld::Update of the frame (Jolt step(s) + transform sync + every other world update), NOT one Jolt step; steps per frame are exact (the benchmark drives the world clock, capped at the Jolt job-pool limit, see NOTES.md); physics_ms per tick frame is whole update / steps. Compare wall_ms with the raw path");
+    line("components_unverified: the module is not profiled here; per-body cost differences to the raw path (compound shape per actor, contact listener, group filter, user data) are not measured separately");
+  }
+  else
+    line("physics_path: raw (bodies created through JPH BodyInterface by the benchmark, no actor components)");
+  if (m_Opt.m_bRawGroup || m_Opt.m_bRawCompound || m_Opt.m_bRawUpdateInTask)
+    line(std::string("raw_experiment: ") + (m_Opt.m_bRawGroup ? "unique collision group per body (module group filter) " : "") + (m_Opt.m_bRawCompound ? "own shape per body in a one-child StaticCompoundShape " : "") + (m_Opt.m_bRawUpdateInTask ? "PhysicsSystem::Update inside an ez task (EarlyThisFrame), main thread waits" : "") + " (emulates parts of the actor components; not the default raw path)");
+  if (m_Opt.m_bPhaseTiming)
+    line("phase_timing: 1 (per app frame stopwatch segments, see phase_ms lines in summary.txt; adds ~2 stopwatch reads per segment per frame, so wall_ms is slightly above a run without it)");
+  if (m_Opt.m_bChainSample)
+    line("chain_sample: 1 (chain end links sampled once per physics step inside the timed step work; timings of this run are not comparable)");
+  if (m_Opt.m_bCountJoltSteps)
+    line(std::string("count_jolt_steps: 1 (") + (m_bComponents ? "JPH::PhysicsStepListener registered; it disables Jolt's no-active-bodies early return and adds one job per step, so timings of this run are not comparable" : "ignored, raw path") + ")");
+  if (!m_bComponents)
+    line("physics_stepping: JPH::PhysicsSystem::Update called by the benchmark, cvar Jolt.Simulation.Pause = true so the module does not step (see NOTES)");
   line("material: ezJoltCore default material set to friction 0.5 / restitution 0.1 for this process (shapes use the default material)");
   line("cmdline: " + m_Opt.m_sCmdline);
 }

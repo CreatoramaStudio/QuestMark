@@ -23,4 +23,29 @@
     <PackageReference Include="Stride.Physics" Version="4.4.1" />
     <PackageReference Include="Stride.AssetCompiler" Version="4.4.1" IncludeAssets="build;buildTransitive" PrivateAssets="all" />
   </ItemGroup>
+  <!-- QuestMark commit for env.txt (bench_source): git short hash of this repo at build time, "-dirty" when git status porcelain output is not empty, "unknown" when git fails.
+       Written as a const string into obj/QmBuildInfo.g.cs (no reflection, safe under Native AOT). Runs on every build and publish; never fails the build. -->
+  <Target Name="QmGitInfo" BeforeTargets="CoreCompile">
+    <Exec Command="git -C &quot;$(MSBuildProjectDirectory)&quot; rev-parse --short HEAD" ConsoleToMSBuild="true" IgnoreExitCode="true" ContinueOnError="true" StandardOutputImportance="low" StandardErrorImportance="low" IgnoreStandardErrorWarningFormat="true">
+      <Output TaskParameter="ConsoleOutput" ItemName="QmGitHashLine" />
+      <Output TaskParameter="ExitCode" PropertyName="QmGitHashExit" />
+    </Exec>
+    <Exec Command="git -C &quot;$(MSBuildProjectDirectory)&quot; status --porcelain" ConsoleToMSBuild="true" IgnoreExitCode="true" ContinueOnError="true" StandardOutputImportance="low" StandardErrorImportance="low" IgnoreStandardErrorWarningFormat="true">
+      <Output TaskParameter="ConsoleOutput" ItemName="QmGitStatusLine" />
+      <Output TaskParameter="ExitCode" PropertyName="QmGitStatusExit" />
+    </Exec>
+    <PropertyGroup>
+      <QmGitHash>@(QmGitHashLine, '')</QmGitHash>
+      <QmGitStatus>@(QmGitStatusLine, '')</QmGitStatus>
+      <QmTag>unknown</QmTag>
+      <QmTag Condition="'$(QmGitHashExit)' == '0' and '$(QmGitHash)' != ''">$(QmGitHash.Trim())</QmTag>
+      <QmTag Condition="'$(QmTag)' != 'unknown' and '$(QmGitStatusExit)' == '0' and '$(QmGitStatus.Trim())' != ''">$(QmTag)-dirty</QmTag>
+      <QmInfoFile>$(IntermediateOutputPath)QmBuildInfo.g.cs</QmInfoFile>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(QmInfoFile)" Lines="namespace StrideBench { internal static class QmBuildInfo { public const string Tag = &quot;$(QmTag)&quot;%3B } }" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <Compile Include="$(QmInfoFile)" />
+      <FileWrites Include="$(QmInfoFile)" />
+    </ItemGroup>
+  </Target>
 </Project>

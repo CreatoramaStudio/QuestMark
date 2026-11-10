@@ -1,6 +1,7 @@
 #include <Jolt/Jolt.h>
 
 #include <Core/Graphics/Geometry.h>
+#include <Foundation/Threading/TaskSystem.h>
 #include <Core/ResourceManager/ResourceManager.h>
 #include <Foundation/Application/Application.h>
 #include <Foundation/Configuration/CVar.h>
@@ -27,6 +28,69 @@
 
 EZ_BEGIN_DYNAMIC_REFLECTED_TYPE(QbGameState, 1, ezRTTIDefaultAllocator<QbGameState>)
 EZ_END_DYNAMIC_REFLECTED_TYPE;
+
+// ---- --phase-timing: marker world module and render event handlers (only used when the option is on) ----
+// clang-format off
+EZ_IMPLEMENT_WORLD_MODULE(QbPhaseModule);
+
+EZ_BEGIN_DYNAMIC_REFLECTED_TYPE(QbPhaseModule, 1, ezRTTINoAllocator)
+EZ_END_DYNAMIC_REFLECTED_TYPE;
+// clang-format on
+
+QbPhaseModule::QbPhaseModule(ezWorld* pWorld)
+  : ezWorldModule(pWorld)
+{
+}
+
+QbPhaseModule::~QbPhaseModule() = default;
+
+void QbPhaseModule::AddMark(const char* szName, ezWorldUpdatePhase::Enum phase, float fPriority, const ezWorldModule::UpdateFunction& fn)
+{
+  ezWorldModule::UpdateFunctionDesc desc(fn, szName);
+  desc.m_Phase = phase;
+  desc.m_fPriority = fPriority;
+  desc.m_bOnlyUpdateWhenSimulating = false;
+  RegisterUpdateFunction(desc);
+}
+
+void QbPhaseModule::Initialize()
+{
+  // Sorting inside a phase: higher priority first, then by name. Jolt: StartSimulation PreAsync -100000, FetchResults PostAsync +100000, every other
+  // update function in the engine uses |priority| <= 10000 (grep of m_fPriority in Engine and EnginePlugins). The async phase gets no marker (tasks).
+  const float fFirst = 1.0e9f, fLast = -1.0e9f;
+  AddMark("QbPhase.0.PreFirst", ezWorldUpdatePhase::PreAsync, fFirst, ezWorldModule::UpdateFunction(&QbPhaseModule::Mark<0>, this));
+  AddMark("QbPhase.1.PreBeforeJolt", ezWorldUpdatePhase::PreAsync, -99999.0f, ezWorldModule::UpdateFunction(&QbPhaseModule::Mark<1>, this));
+  AddMark("QbPhase.2.PreLast", ezWorldUpdatePhase::PreAsync, fLast, ezWorldModule::UpdateFunction(&QbPhaseModule::Mark<2>, this));
+  AddMark("QbPhase.3.PostFirst", ezWorldUpdatePhase::PostAsync, fFirst, ezWorldModule::UpdateFunction(&QbPhaseModule::Mark<3>, this));
+  AddMark("QbPhase.4.PostAfterFetch", ezWorldUpdatePhase::PostAsync, 99999.0f, ezWorldModule::UpdateFunction(&QbPhaseModule::Mark<4>, this));
+  AddMark("QbPhase.5.PostLast", ezWorldUpdatePhase::PostAsync, fLast, ezWorldModule::UpdateFunction(&QbPhaseModule::Mark<5>, this));
+  AddMark("QbPhase.6.TransFirst", ezWorldUpdatePhase::PostTransform, fFirst, ezWorldModule::UpdateFunction(&QbPhaseModule::Mark<6>, this));
+  AddMark("QbPhase.7.TransLast", ezWorldUpdatePhase::PostTransform, fLast, ezWorldModule::UpdateFunction(&QbPhaseModule::Mark<7>, this));
+}
+
+static void QbOnExtractionEvent(const ezRenderWorldExtractionEvent& e)
+{
+  QbPhaseState& s = QbPh();
+  if (e.m_Type == ezRenderWorldExtractionEvent::Type::BeginExtraction)
+    s.m_tExtractBegin = ezTime::Now();
+  else if (e.m_Type == ezRenderWorldExtractionEvent::Type::EndExtraction)
+  {
+    s.m_tExtractEnd = ezTime::Now();
+    s.m_bSawExtract = true;
+  }
+}
+
+static void QbOnRenderEvent(const ezRenderWorldRenderEvent& e)
+{
+  QbPhaseState& s = QbPh();
+  if (e.m_Type == ezRenderWorldRenderEvent::Type::BeginRender)
+    s.m_tRenderBegin = ezTime::Now();
+  else if (e.m_Type == ezRenderWorldRenderEvent::Type::EndRender)
+  {
+    s.m_tRenderEnd = ezTime::Now();
+    s.m_bSawRender = true;
+  }
+}
 
 static std::string QbToStd(ezStringView sView)
 {
@@ -86,7 +150,6 @@ void QbGameState::OnActivation(ezWorld* pWorld, ezStringView sStartPosition, con
   ResolveScenario();
   if (m_bBadScenario)
   {
-    ezLog::Error("unknown scenario '{}'", m_Opt.m_sScenario.c_str());
     if (ezApplication* pApp = ezApplication::GetApplicationInstance())
       pApp->SetReturnCode(2);
     m_bFinished = true;
@@ -118,6 +181,9 @@ void QbGameState::OnDeactivation()
 {
   SUPER::OnDeactivation();
 
+  if (m_bStepCounterOn && m_pSystem != nullptr)
+    m_pSystem->RemoveStepListener(&m_StepCounter); // the system still exists here: it dies with the world module in m_pOwnedWorld.Clear() below
+  m_bStepCounterOn = false;
   m_ShapeBox = nullptr;
   m_ShapeSphere = nullptr;
   m_ShapeCapsule = nullptr;
@@ -130,7 +196,7 @@ void QbGameState::OnDeactivation()
 void QbGameState::ApplyCVars()
 {
   // the module's own stepping stays off: bodies are stepped by TickWork (PhysicsSystem::Update) so that the step can be timed alone, see NOTES.md
-  QbSetBoolCVar("Jolt.Simulation.Pause", true);
+  QbSetBoolCVar("Jolt.Simulation.Pause", !m_bComponents); // components path: the module steps and syncs itself
   QbSetBoolCVar("Rendering.Multithreading", m_Opt.m_bMtRender);
   QbSetBoolCVar("App.VSync", m_bVsync);
   QbSetFloatCVar("App.RenderScale", 1.0f);
@@ -211,12 +277,27 @@ void QbGameState::ResolveScenario()
   }
   else
   {
+    ezLog::Error("unknown scenario '{}'", m_Opt.m_sScenario.c_str()); // every other bad value logs its own message
     m_bBadScenario = true;
     return;
   }
 
   m_sBase = sSc;
   m_bUnpaced = bUnpaced;
+  m_bComponents = (m_Opt.m_sPhysicsPath == "components");
+  if (m_Opt.m_bBadOption)
+  {
+    ezLog::Error("bad --comp-unpaced value (slice|frame): {}", m_Opt.m_sCompUnpaced.c_str());
+    m_bBadScenario = true;
+    return;
+  }
+  m_bCompSlice = m_bComponents && m_bUnpaced && m_Opt.m_sCompUnpaced != "frame"; // --comp-unpaced=slice (default) | frame
+  if (m_Opt.m_sPhysicsPath != "raw" && !m_bComponents)
+  {
+    ezLog::Error("bad --physics-path value (raw|components): {}", m_Opt.m_sPhysicsPath.c_str());
+    m_bBadScenario = true;
+    return;
+  }
   m_bRender = (sMode == "render");
   m_sFileMode = (sSc == "scale" && bUnpaced) ? std::string("unlock-physics") : sMode;
 
@@ -252,6 +333,7 @@ void QbGameState::ResolveScenario()
     m_iMaxBodies = m_Opt.m_iBodies + 1000;
 
   m_iRayCount = (sSc == "raycast-10000") ? 10000 : (sSc == "raycast-1000" || sSc == "mixed") ? 1000 : 0;
+  m_bTickScript = m_bDebris || m_iRayCount > 0 || sSc == "chains" || sSc == "mixed";
 }
 
 void QbGameState::CreateWorldAndJolt()
@@ -271,10 +353,44 @@ void QbGameState::CreateWorldAndJolt()
     pSettings->SetObjectGravity(ezVec3(0.0f, -9.81f, 0.0f));
     pSettings->SetMaxBodies((ezUInt32)m_iMaxBodies);
     pSettings->SetSleepVelocityThreshold(m_Opt.m_fSleepVel > 0.0f ? m_Opt.m_fSleepVel : 0.03f); // Jolt default, equal to the Godot Jolt default
+    if (m_bComponents)
+    {
+      // the module steps inside ezWorld::Update: Fixed mode at 200 Hz, the benchmark accumulator drives the world clock, one world update per step (RunPaced)
+      if (m_bUnpaced && !m_bCompSlice)
+        pSettings->SetSteppingMode(ezJoltSteppingMode::Variable); // one step per world update with the world clock time diff (fixed at 1/200 s below)
+      else
+        pSettings->SetSteppingMode(ezJoltSteppingMode::Fixed);
+      pSettings->SetFixedFrameRate((float)QB_PHYS_HZ);
+      pSettings->SetMaxSubSteps(QB_MAX_STEPS_PER_FRAME);
+    }
 
+    if (m_bCompSlice)
+      SetClockSteps(0); // slice mode: Fixed stepping like the paced path; the benchmark sets 1/200 s + 1 ns per step update (RunUnpacedComp), a 1 ns step makes no module step
+    else if (m_bComponents && m_bUnpaced)
+      m_pOwnedWorld->GetClock().SetFixedTimeStep(ezTime::MakeFromSeconds(QB_DT)); // every update advances the world by exactly one physics step (--comp-unpaced=frame)
     m_pJolt = m_pOwnedWorld->GetOrCreateModule<ezJoltWorldModule>();
     m_pSystem = m_pJolt->GetJoltSystem();
     m_pBI = &m_pSystem->GetBodyInterfaceNoLock();
+    if (m_bComponents && m_Opt.m_bCountJoltSteps)
+    {
+      // --count-jolt-steps=1 only (diagnostic): a registered listener disables Jolt's early return when no body is active and adds one job per step,
+      // so default timing runs have no listener. Removed in OnDeactivation before the world (and the system) is destroyed.
+      m_pSystem->AddStepListener(&m_StepCounter);
+      m_bStepCounterOn = true;
+    }
+    if (m_Opt.m_bPhaseTiming)
+    {
+      // marker update functions in every synchronous phase and render event handlers; nothing of this exists without the option
+      QbPh().m_bOn = true;
+      m_pOwnedWorld->GetOrCreateModule<QbPhaseModule>();
+      static ezEventSubscriptionID s_uiExtractionSub = 0, s_uiRenderSub = 0;
+      s_uiExtractionSub = ezRenderWorld::GetExtractionEvent().AddEventHandler(ezMakeDelegate(&QbOnExtractionEvent));
+      s_uiRenderSub = ezRenderWorld::GetRenderEvent().AddEventHandler(ezMakeDelegate(&QbOnRenderEvent));
+      (void)s_uiExtractionSub;
+      (void)s_uiRenderSub;
+      if (m_Opt.m_bMtRender)
+        ezLog::Warning("--phase-timing with --mt-render=1: update, extraction and render overlap, the serial segments are not valid");
+    }
     if (m_Opt.m_fSleepTime > 0.0f)
     {
       JPH::PhysicsSettings js = m_pSystem->GetPhysicsSettings();

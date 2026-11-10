@@ -1,11 +1,20 @@
 #include <Jolt/Jolt.h>
 
 #include <JoltPlugin/System/JoltCollisionFiltering.h>
+#include <JoltPlugin/Actors/JoltDynamicActorComponent.h>
+#include <JoltPlugin/Actors/JoltStaticActorComponent.h>
+#include <JoltPlugin/Constraints/JoltPointConstraintComponent.h>
+#include <JoltPlugin/Shapes/JoltShapeBoxComponent.h>
+#include <JoltPlugin/Shapes/JoltShapeCapsuleComponent.h>
+#include <JoltPlugin/Shapes/JoltShapeSphereComponent.h>
+#include <GameEngine/Physics/WeightCategory.h>
 
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyInterface.h>
 #include <Jolt/Physics/Body/BodyLockInterface.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/StaticCompoundShape.h>
 #include <Jolt/Physics/Constraints/PointConstraint.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 
@@ -36,8 +45,21 @@ QbStatic QbGameState::AddStaticBox(const ezVec3& vSize, const ezVec3& vPos, ezUI
   s.mRestitution = 0.1f;
   if (uiGroup != 0xFFFFFFFFu)
     s.mCollisionGroup = JPH::CollisionGroup(m_pJolt->GetGroupFilter(), uiGroup, 0);
+  else if (m_Opt.m_bRawGroup)
+    s.mCollisionGroup = JPH::CollisionGroup(m_pJolt->GetGroupFilter(), m_uiRawGroupNext++, 0);
 
   QbStatic res;
+  if (m_bComponents)
+  {
+    // the chain ceiling (own filter group) is drawn but has no physics body in the components path: the first constraint of a chain is then fixed to the world
+    // (a constraint to a static actor is not supported by ezJoltConstraintComponent), and without a body there is nothing for link 0 to collide with
+    if (uiGroup == 0xFFFFFFFFu)
+      res.m_hPhys = AddComponentBody(ezGameObjectHandle(), 3, vPos, ezQuat::MakeIdentity(), 0.0f, false, vSize);
+    if (m_bRender)
+      res.m_hObj = CreateRenderObject(3, vPos, ezQuat::MakeIdentity(), vSize, false);
+    Bound(vPos - vSize * 0.5f, vPos + vSize * 0.5f);
+    return res;
+  }
   res.m_Id = m_pBI->CreateAndAddBody(s, JPH::EActivation::DontActivate);
   if (m_bRender)
     res.m_hObj = CreateRenderObject(3, vPos, ezQuat::MakeIdentity(), vSize, false);
@@ -48,6 +70,13 @@ QbStatic QbGameState::AddStaticBox(const ezVec3& vSize, const ezVec3& vPos, ezUI
 
 void QbGameState::AddStaticShape(int iKind, const ezVec3& vPos, const ezQuat& qRot)
 {
+  if (m_bComponents)
+  {
+    AddComponentBody(ezGameObjectHandle(), iKind, vPos, qRot, 0.0f, false, ezVec3::MakeZero());
+    if (m_bRender)
+      CreateRenderObject(iKind, vPos, qRot, ezVec3(1.0f), false);
+    return;
+  }
   const JPH::Shape* pShape = (iKind == 0) ? (const JPH::Shape*)m_ShapeBox.GetPtr() : (iKind == 1) ? (const JPH::Shape*)m_ShapeSphere.GetPtr() : (const JPH::Shape*)m_ShapeCapsule.GetPtr();
   JPH::BodyCreationSettings s(pShape, QbToJoltPos(vPos), QbToJoltQuat(qRot), JPH::EMotionType::Static,
     ezJoltCollisionFiltering::ConstructObjectLayer(0, ezJoltBroadphaseLayer::Static));
@@ -74,7 +103,27 @@ void QbGameState::BuildPit(double fInterior, double fWallH)
 
 JPH::BodyID QbGameState::AddDynamic(int iKind, const ezVec3& vPos, const ezQuat& qRot, ezUInt32 uiGroup, ezGameObjectHandle& out_hObj, float fMass, bool bAddNow)
 {
+  if (m_bComponents)
+  {
+    // components path: no body yet; the actor component creates it when the module starts the simulation (first world update), see ResolveComponentBodies
+    out_hObj = ezGameObjectHandle();
+    if (m_bRender)
+      out_hObj = CreateRenderObject(iKind, vPos, qRot, ezVec3(1.0f), true);
+    out_hObj = AddComponentBody(out_hObj, iKind, vPos, qRot, fMass, true, ezVec3::MakeZero());
+    if (!m_bDebris)
+      m_DynObjects.push_back(out_hObj);
+    return JPH::BodyID();
+  }
   const JPH::Shape* pShape = (iKind == 0) ? (const JPH::Shape*)m_ShapeBox.GetPtr() : (iKind == 1) ? (const JPH::Shape*)m_ShapeSphere.GetPtr() : (const JPH::Shape*)m_ShapeCapsule.GetPtr();
+  JPH::ShapeRefC ownShape; // --raw-compound: own shape per body inside a one-child compound (what the actor components build)
+  if (m_Opt.m_bRawCompound && iKind <= 1)
+  {
+    JPH::Ref<JPH::ShapeSettings> inner = (iKind == 0) ? (JPH::ShapeSettings*)new JPH::BoxShapeSettings(JPH::Vec3(0.25f, 0.25f, 0.25f)) : (JPH::ShapeSettings*)new JPH::SphereShapeSettings(0.25f);
+    JPH::StaticCompoundShapeSettings cs;
+    cs.AddShape(JPH::Vec3::sZero(), JPH::Quat::sIdentity(), inner);
+    ownShape = cs.Create().Get();
+    pShape = ownShape.GetPtr();
+  }
   JPH::BodyCreationSettings s(pShape, QbToJoltPos(vPos), QbToJoltQuat(qRot), JPH::EMotionType::Dynamic,
     ezJoltCollisionFiltering::ConstructObjectLayer(0, ezJoltBroadphaseLayer::Dynamic));
   s.mFriction = 0.5f;
@@ -86,6 +135,8 @@ JPH::BodyID QbGameState::AddDynamic(int iKind, const ezVec3& vPos, const ezQuat&
   s.mMassPropertiesOverride.mMass = fMass;
   if (uiGroup != 0xFFFFFFFFu)
     s.mCollisionGroup = JPH::CollisionGroup(m_pJolt->GetGroupFilter(), uiGroup, 0);
+  else if (m_Opt.m_bRawGroup)
+    s.mCollisionGroup = JPH::CollisionGroup(m_pJolt->GetGroupFilter(), m_uiRawGroupNext++, 0);
 
   JPH::Body* pBody = m_pBI->CreateBody(s);
   const JPH::BodyID id = pBody->GetID();
@@ -255,13 +306,39 @@ void QbGameState::BuildChains()
       const float x = (float)((cx - 4.5) * 1.0);
       const float z = (float)((cz - 4.5) * 1.0);
       JPH::BodyID prev = ceiling.m_Id;
+      ezGameObjectHandle hPrevObj;
       ezUInt32 uiPrevGroup = m_uiCeilingGroup;
       for (int l = 0; l < 10; l++)
       {
-        const ezUInt32 uiGroup = m_pJolt->CreateObjectFilterID();
-        m_pJolt->EnableJoinedBodiesCollisions(uiPrevGroup, uiGroup, false);
+        // raw path only: own filter id per link and the pair ignore entry. The components path gets no pair collision from the group filter: its constraint component does it (SetPairCollision(false) below), and the actor takes no group here.
+        ezUInt32 uiGroup = 0;
+        if (!m_bComponents)
+        {
+          uiGroup = m_pJolt->CreateObjectFilterID();
+          m_pJolt->EnableJoinedBodiesCollisions(uiPrevGroup, uiGroup, false);
+        }
         ezGameObjectHandle h;
         const JPH::BodyID link = AddDynamic(2, ezVec3(x, (float)(12.0 - 0.25 - 0.5 * l), z), ezQuat::MakeIdentity(), uiGroup, h);
+        if (m_bComponents)
+        {
+          // engine path: a point constraint component on a game object at the pin; parent = the link above (link 0: the world), child = this link, no collision inside the pair
+          m_ChainObjs.push_back(h);
+          if (l == 9)
+            m_ImpulseObjs.push_back(h);
+          EZ_LOCK(m_pOwnedWorld->GetWriteMarker());
+          ezGameObjectDesc cd;
+          cd.m_LocalPosition = ezVec3(x, (float)(12.0 - 0.5 * l), z);
+          ezGameObject* pCObj = nullptr;
+          m_pOwnedWorld->CreateObject(cd, pCObj);
+          ezJoltPointConstraintComponent* pCon = nullptr;
+          ezJoltPointConstraintComponent::CreateComponent(pCObj, pCon);
+          if (l > 0)
+            pCon->SetParentActor(hPrevObj);
+          pCon->SetChildActor(h);
+          pCon->SetPairCollision(false);
+          hPrevObj = h;
+          continue;
+        }
         m_Dynamic.push_back(link);
         m_ChainLinks.push_back(link);
         joints.push_back({prev, link, ezVec3(x, (float)(12.0 - 0.5 * l), z)});
@@ -274,6 +351,8 @@ void QbGameState::BuildChains()
   }
 
   // constraints need the bodies to exist in the system
+  if (m_bComponents)
+    return; // the constraint components create the joints when the simulation starts
   FlushAdd();
   const JPH::BodyLockInterface& locks = m_pSystem->GetBodyLockInterfaceNoLock();
   for (const Joint& j : joints)
@@ -331,7 +410,180 @@ QbPiece QbGameState::MakePiece(const ezVec3& vPos, bool bAsleep)
   QbPiece piece;
   piece.m_vPark = vPos;
   piece.m_Id = AddDynamic(0, vPos, ezQuat::MakeIdentity(), 0xFFFFFFFFu, piece.m_hObj, 0.125f, true);
+  if (m_bComponents)
+  {
+    if (bAsleep)
+      m_PoolObjs.push_back(piece.m_hObj); // parked asleep once the module created the bodies, see ResolveComponentBodies
+    return piece;
+  }
   if (bAsleep)
     m_pBI->DeactivateBody(piece.m_Id);
   return piece;
+}
+
+ezGameObjectHandle QbGameState::AddComponentBody(ezGameObjectHandle hObj, int iKind, const ezVec3& vPos, const ezQuat& qRot, float fMass, bool bDynamic, const ezVec3& vSize)
+{
+  EZ_LOCK(m_pOwnedWorld->GetWriteMarker());
+
+  // the engine capsule component lies along the object Z axis (it rotates the Jolt Y capsule by 90 degrees about X); the benchmark capsule stands along Y
+  const ezQuat qCapsuleFix = ezQuat::MakeFromAxisAndAngle(ezVec3(1.0f, 0.0f, 0.0f), ezAngle::MakeFromDegree(-90.0f));
+  ezGameObject* pObj = nullptr;
+  if (hObj.IsInvalidated() || !m_pOwnedWorld->TryGetObject(hObj, pObj))
+  {
+    ezGameObjectDesc desc;
+    desc.m_LocalPosition = vPos;
+    desc.m_LocalRotation = (iKind == 2 && !bDynamic) ? qRot * qCapsuleFix : qRot;
+    desc.m_bDynamic = bDynamic;
+    hObj = m_pOwnedWorld->CreateObject(desc, pObj);
+  }
+
+  if (bDynamic)
+  {
+    ezJoltDynamicActorComponent* pActor = nullptr;
+    ezJoltDynamicActorComponent::CreateComponent(pObj, pActor);
+    pActor->m_uiWeightCategory = ezWeightCategoryConfig::CustomMassKey;
+    pActor->m_fWeightMass = fMass;
+    pActor->m_fLinearDamping = 0.1f;  // as the raw path (the component default is 0.1 / 0.05)
+    pActor->m_fAngularDamping = 0.1f;
+    pActor->m_bAllowSleeping = !m_bSleepingOff;
+    // friction 0.5 / restitution 0.1: no surface set, so the shapes use the default ezJoltMaterial changed in CreateWorldAndJolt
+  }
+  else
+  {
+    ezJoltStaticActorComponent* pActor = nullptr;
+    ezJoltStaticActorComponent::CreateComponent(pObj, pActor);
+  }
+
+  if (iKind == 2)
+  {
+    ezGameObject* pShapeObj = pObj;
+    if (bDynamic)
+    {
+      // the dynamic object carries the capsule mesh (Y axis): the shape sits on a child turned to the engine capsule axis
+      ezGameObjectDesc cd;
+      cd.m_hParent = hObj;
+      cd.m_bDynamic = true;
+      cd.m_LocalRotation = qCapsuleFix;
+      m_pOwnedWorld->CreateObject(cd, pShapeObj);
+    }
+    ezJoltShapeCapsuleComponent* pShape = nullptr;
+    ezJoltShapeCapsuleComponent::CreateComponent(pShapeObj, pShape);
+    pShape->SetRadius(0.15f);
+    pShape->SetHeight(0.2f); // cylinder part (total height 0.5)
+  }
+  else if (iKind == 1)
+  {
+    ezJoltShapeSphereComponent* pShape = nullptr;
+    ezJoltShapeSphereComponent::CreateComponent(pObj, pShape);
+    pShape->SetRadius(0.25f);
+  }
+  else
+  {
+    ezJoltShapeBoxComponent* pShape = nullptr;
+    ezJoltShapeBoxComponent::CreateComponent(pObj, pShape);
+    pShape->SetHalfExtents(iKind == 3 ? vSize * 0.5f : ezVec3(0.25f)); // kind 3 = static box of the pit; kind 0 = the 0.5 m box
+  }
+  return hObj;
+}
+
+JPH::BodyID QbGameState::BodyOf(ezGameObjectHandle h) const
+{
+  EZ_LOCK(m_pOwnedWorld->GetReadMarker());
+  const ezGameObject* pObj = nullptr;
+  const ezJoltDynamicActorComponent* pActor = nullptr;
+  if (m_pOwnedWorld->TryGetObject(h, pObj) && pObj->TryGetComponentOfBaseType(pActor) && pActor->GetJoltBodyID() != JPH::BodyID::cInvalidBodyID)
+    return JPH::BodyID(pActor->GetJoltBodyID());
+  return JPH::BodyID();
+}
+
+void QbGameState::ResolveComponentBodies()
+{
+  if (m_bBodiesResolved)
+    return;
+  std::vector<JPH::BodyID> dyn;
+  for (const ezGameObjectHandle& h : m_DynObjects)
+  {
+    const JPH::BodyID id = BodyOf(h);
+    if (id.IsInvalid())
+      return; // the module has not created all bodies yet: try again next frame
+    dyn.push_back(id);
+  }
+  std::vector<JPH::BodyID> pool;
+  for (const ezGameObjectHandle& h : m_PoolObjs)
+  {
+    const JPH::BodyID id = BodyOf(h);
+    if (id.IsInvalid())
+      return;
+    pool.push_back(id);
+  }
+  m_Dynamic = dyn;
+  m_ChainLinks.clear();
+  m_ImpulseLinks.clear();
+  for (const ezGameObjectHandle& h : m_ChainObjs)
+    m_ChainLinks.push_back(BodyOf(h));
+  for (const ezGameObjectHandle& h : m_ImpulseObjs)
+    m_ImpulseLinks.push_back(BodyOf(h));
+  // pooled debris: park the pieces (below the pit, velocities zero, asleep) like the raw path does when it creates them
+  for (size_t i = 0; i < pool.size(); i++)
+  {
+    m_pBI->SetLinearAndAngularVelocity(pool[i], JPH::Vec3::sZero(), JPH::Vec3::sZero());
+    m_pBI->SetPositionAndRotation(pool[i], JPH::RVec3((float)(i % 64), -1000.0f, (float)(i / 64)), JPH::Quat::sIdentity(), JPH::EActivation::DontActivate);
+    m_pBI->DeactivateBody(pool[i]);
+  }
+  m_bBodiesResolved = true;
+}
+
+bool QbGameState::KickNow(ezGameObjectHandle h, const ezVec3& vLin, const ezVec3& vAng)
+{
+  EZ_LOCK(m_pOwnedWorld->GetWriteMarker());
+  ezGameObject* pObj = nullptr;
+  ezJoltDynamicActorComponent* pActor = nullptr;
+  if (!m_pOwnedWorld->TryGetObject(h, pObj) || !pObj->TryGetComponentOfBaseType(pActor))
+    return true; // the object is gone: nothing to do
+  if (pActor->GetJoltBodyID() == JPH::BodyID::cInvalidBodyID)
+    return false; // the module has not created the body yet
+  pActor->AddLinearImpulse(vLin); // queued in the module, applied before its next step
+  if (vAng.x != 0.0f || vAng.y != 0.0f || vAng.z != 0.0f)
+    m_pBI->SetAngularVelocity(JPH::BodyID(pActor->GetJoltBodyID()), JPH::Vec3(vAng.x, vAng.y, vAng.z)); // between world updates no step is running, so the direct call is safe
+  return true;
+}
+
+void QbGameState::ApplyKicks()
+{
+  if (m_Kicks.empty())
+    return;
+  std::vector<QbKick> keep;
+  for (const QbKick& k : m_Kicks)
+  {
+    if (!KickNow(k.m_hObj, k.m_vLin, k.m_vAng))
+      keep.push_back(k);
+  }
+  m_Kicks.swap(keep);
+}
+
+void QbGameState::SetClockSteps(int iSteps)
+{
+  const double fS = (double)iSteps * QB_DT + (m_bUnpaced && !m_bCompSlice ? 0.0 : 1e-9);
+  m_pOwnedWorld->GetClock().SetFixedTimeStep(ezTime::MakeFromSeconds(iSteps == 0 ? 1e-9 : fS));
+}
+
+void QbGameState::FlushNewBodies()
+{
+  SetClockSteps(0);
+  const bool bPh = QbPh().m_bOn;
+  ezTime tU0;
+  if (bPh)
+  {
+    QbPh().BeginExtra(); // --phase-timing: this update happens inside before_world_update
+    tU0 = ezTime::Now();
+  }
+  {
+    EZ_LOCK(m_pOwnedWorld->GetWriteMarker());
+    m_pOwnedWorld->Update();
+  }
+  if (bPh)
+  {
+    QbPh().EndExtra();
+    QbPh().m_CurSub[QB_PS_BEFORE_EXTRA] += (ezTime::Now() - tU0).GetMilliseconds();
+  }
 }

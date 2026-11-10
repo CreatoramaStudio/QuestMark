@@ -1,26 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="780" height="386" viewBox="0 0 780 386" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="426" viewBox="0 0 820 426" font-family="Segoe UI, Helvetica, Arial, sans-serif">
 <style>.t{fill:#1f2328}.m{fill:#57606a}.ax{stroke:#8c959f}.bar{fill:#2f81f7}.best{fill:#1a7f37}@media (prefers-color-scheme:dark){.t{fill:#e6edf3}.m{fill:#9198a1}.ax{stroke:#6e7681}.best{fill:#3fb950}}</style>
 <text x="32" y="44" font-size="17" font-weight="600" class="t">Mixed scene (3000 bodies, 100 chains, 1000 rays per step): ms per step</text>
-<line x1="196" y1="72" x2="196" y2="354" class="ax" stroke-width="1.5"/>
-<text x="186" y="95" font-size="14" text-anchor="end" class="t">Stride JIT</text>
-<rect x="196" y="78" width="99.9" height="24" rx="3" class="best"/>
-<text x="303.9" y="95" font-size="14" class="t">1.25 ms<tspan class="m"> · 100%</tspan></text>
-<text x="186" y="135" font-size="14" text-anchor="end" class="t">Stride AOT</text>
-<rect x="196" y="118" width="106.3" height="24" rx="3" class="bar"/>
-<text x="310.3" y="135" font-size="14" class="t">1.33 ms<tspan class="m"> · 94%</tspan></text>
-<text x="186" y="175" font-size="14" text-anchor="end" class="t">ezEngine</text>
-<rect x="196" y="158" width="178.2" height="24" rx="3" class="bar"/>
-<text x="382.2" y="175" font-size="14" class="t">2.23 ms<tspan class="m"> · 56%</tspan></text>
-<text x="186" y="215" font-size="14" text-anchor="end" class="t">PhysX RID</text>
-<rect x="196" y="198" width="263.7" height="24" rx="3" class="bar"/>
-<text x="467.7" y="215" font-size="14" class="t">3.3 ms<tspan class="m"> · 38%</tspan></text>
-<text x="186" y="255" font-size="14" text-anchor="end" class="t">Jolt RID</text>
-<rect x="196" y="238" width="279.7" height="24" rx="3" class="bar"/>
-<text x="483.7" y="255" font-size="14" class="t">3.5 ms<tspan class="m"> · 36%</tspan></text>
-<text x="186" y="295" font-size="14" text-anchor="end" class="t">Godot PhysX</text>
-<rect x="196" y="278" width="307.7" height="24" rx="3" class="bar"/>
-<text x="511.7" y="295" font-size="14" class="t">3.85 ms<tspan class="m"> · 32%</tspan></text>
-<text x="186" y="335" font-size="14" text-anchor="end" class="t">Godot Jolt</text>
-<rect x="196" y="318" width="402.0" height="24" rx="3" class="bar"/>
-<text x="606.0" y="335" font-size="14" class="t">5.03 ms<tspan class="m"> · 25%</tspan></text>
+<line x1="236" y1="72" x2="236" y2="394" class="ax" stroke-width="1.5"/>
+<text x="226" y="95" font-size="14" text-anchor="end" class="t">Stride JIT</text>
+<rect x="236" y="78" width="99.9" height="24" rx="3" class="best"/>
+<text x="343.9" y="95" font-size="14" class="t">1.25 ms<tspan class="m"> · 100%</tspan></text>
+<text x="226" y="135" font-size="14" text-anchor="end" class="t">Stride AOT</text>
+<rect x="236" y="118" width="106.3" height="24" rx="3" class="bar"/>
+<text x="350.3" y="135" font-size="14" class="t">1.33 ms<tspan class="m"> · 94%</tspan></text>
+<text x="226" y="175" font-size="14" text-anchor="end" class="t">ezEngine direct Jolt</text>
+<rect x="236" y="158" width="197.4" height="24" rx="3" class="bar"/>
+<text x="441.4" y="175" font-size="14" class="t">2.47 ms<tspan class="m"> · 51%</tspan></text>
+<text x="226" y="215" font-size="14" text-anchor="end" class="t">ezEngine</text>
+<rect x="236" y="198" width="257.3" height="24" rx="3" class="bar"/>
+<text x="501.3" y="215" font-size="14" class="t">3.22 ms<tspan class="m"> · 39%</tspan></text>
+<text x="226" y="255" font-size="14" text-anchor="end" class="t">PhysX RID</text>
+<rect x="236" y="238" width="263.7" height="24" rx="3" class="bar"/>
+<text x="507.7" y="255" font-size="14" class="t">3.3 ms<tspan class="m"> · 38%</tspan></text>
+<text x="226" y="295" font-size="14" text-anchor="end" class="t">Jolt RID</text>
+<rect x="236" y="278" width="279.7" height="24" rx="3" class="bar"/>
+<text x="523.7" y="295" font-size="14" class="t">3.5 ms<tspan class="m"> · 36%</tspan></text>
+<text x="226" y="335" font-size="14" text-anchor="end" class="t">Godot PhysX</text>
+<rect x="236" y="318" width="307.7" height="24" rx="3" class="bar"/>
+<text x="551.7" y="335" font-size="14" class="t">3.85 ms<tspan class="m"> · 32%</tspan></text>
+<text x="226" y="375" font-size="14" text-anchor="end" class="t">Godot Jolt</text>
+<rect x="236" y="358" width="402.0" height="24" rx="3" class="bar"/>
+<text x="646.0" y="375" font-size="14" class="t">5.03 ms<tspan class="m"> · 25%</tspan></text>
 </svg>

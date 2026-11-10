@@ -4,6 +4,7 @@
 
 #include <Core/World/World.h>
 #include <Foundation/Math/Random.h> // ezRandom
+#include <Foundation/Threading/TaskSystem.h>
 #include <Foundation/Time/Time.h>
 #include <GameEngine/GameState/GameState.h>
 #include <JoltPlugin/System/JoltWorldModule.h>
@@ -11,9 +12,13 @@
 
 #include <Jolt/Physics/Body/Body.h>
 #include <Jolt/Physics/Body/BodyID.h>
+#include <Jolt/Physics/EPhysicsUpdateError.h>
+#include <Jolt/Physics/PhysicsStepListener.h>
+#include <atomic>
 #include <Jolt/Physics/Collision/Shape/Shape.h>
 
 #include <QbOptions.h>
+#include <QbPhase.h>
 #include <deque>
 #include <string>
 #include <vector>
@@ -25,6 +30,14 @@ constexpr int QB_PHYS_HZ = 200;
 constexpr double QB_DT = 0.005; ///< fixed physics step, 1 / QB_PHYS_HZ
 constexpr int QB_MAX_STEPS_PER_FRAME = 64;
 constexpr double QB_TAU = 6.283185307179586;
+
+/// Counts real Jolt collision steps: PhysicsSystem calls OnStep once per step, on a job thread (JobStepListeners), hence the atomic.
+class QbStepCounter : public JPH::PhysicsStepListener
+{
+public:
+  void OnStep(const JPH::PhysicsStepListenerContext&) override { m_uiSteps.fetch_add(1, std::memory_order_relaxed); }
+  std::atomic<unsigned long long> m_uiSteps{0};
+};
 
 inline JPH::RVec3 QbToJoltPos(const ezVec3& v)
 {
@@ -56,6 +69,8 @@ struct QbStatic
 {
   JPH::BodyID m_Id;
   ezGameObjectHandle m_hObj;
+  ezGameObjectHandle m_hPhys; ///< components path: the physics game object (the render object is m_hObj)
+  bool IsValid() const { return !m_Id.IsInvalid() || !m_hPhys.IsInvalidated(); }
 };
 
 /// A debris piece: the Jolt body, its game object (render mode only) and, for the pooled variant, its park position.
@@ -98,6 +113,7 @@ public:
   virtual void OnActivation(ezWorld* pWorld, ezStringView sStartPosition, const ezTransform& startPositionOffset) override;
   virtual void OnDeactivation() override;
   virtual void BeforeWorldUpdate() override;
+  virtual void AfterWorldUpdate() override; ///< components path only: times ezWorld::Update
   virtual void ConfigureMainCamera() override {} ///< the camera is set once by ComputeCamera, nothing may move it
 
 private:
@@ -118,6 +134,13 @@ private:
   void BuildPit(double fInterior, double fWallH = 6.0);
   JPH::BodyID AddDynamic(int iKind, const ezVec3& vPos, const ezQuat& qRot, ezUInt32 uiGroup, ezGameObjectHandle& out_hObj, float fMass = 1.0f, bool bAddNow = false);
   void FlushAdd();
+  /// components path: attaches an actor and a shape component. hObj = existing game object (render object, scale 1) or invalid, then a physics-only object is created.
+  /// Static box: vSize = full size (the shape carries it, the object scale stays 1). Dynamic: kind 0 box (half 0.25), 1 sphere (radius 0.25).
+  ezGameObjectHandle AddComponentBody(ezGameObjectHandle hObj, int iKind, const ezVec3& vPos, const ezQuat& qRot, float fMass, bool bDynamic, const ezVec3& vSize);
+  void ResolveComponentBodies(); ///< components path: reads the Jolt body ids from the actor components once the module created the bodies
+  JPH::BodyID BodyOf(ezGameObjectHandle h) const; ///< components path: Jolt body id of the dynamic actor on this object (invalid until the module created it)
+  void ApplyKicks();                             ///< components path: impulses of pieces created in an earlier frame (their bodies did not exist when the piece was spawned)
+  bool KickNow(ezGameObjectHandle h, const ezVec3& vLin, const ezVec3& vAng); ///< components path: queue an impulse on the dynamic actor; false when its body does not exist yet
   double Jit();
   void BuildPitBodies(bool bRing, int iCount = 2000);
   void BuildRayStatics();
@@ -140,6 +163,8 @@ private:
   void BeginRecordingIfDue(ezTime now);
   void RunPaced(ezTime now);
   void RunUnpaced(ezTime now);
+  void RunUnpacedComp(ezTime now); ///< components + unpaced (slice): back-to-back ezWorld::Update steps in slices, accounted like RunUnpaced
+  bool CheckBodiesNeverResolved(ezTime now); ///< components: ends the run with exit code 4 if the bodies are unresolved at warm-up + 30 s
   void FinishRun();
 
   // ---- QbReport.cpp ----
@@ -159,7 +184,20 @@ private:
   bool m_bSleepingOff = false;
   bool m_bShadows = true;
   bool m_bVsync = false;
-  bool m_bBadScenario = false;
+  bool m_bBadScenario = false; ///< the run is refused: unknown scenario or bad option value (the message is logged where it is found)
+  bool m_bComponents = false;       ///< --physics-path=components
+  bool m_bBodiesResolved = false;
+  bool m_bCompSlice = false;        ///< components + unpaced + --comp-unpaced=slice: RunUnpacedComp
+  ezTime m_tUpdateStart;            ///< components path: start of the frame's world update (end of BeforeWorldUpdate)
+  std::vector<ezGameObjectHandle> m_DynObjects; ///< components path: game objects that carry a dynamic actor
+  std::vector<ezGameObjectHandle> m_ChainObjs, m_ImpulseObjs, m_PoolObjs; ///< components path
+  struct QbKick
+  {
+    ezGameObjectHandle m_hObj;
+    ezVec3 m_vLin, m_vAng; // linear impulse, angular impulse
+  };
+  std::vector<QbKick> m_Kicks;
+  bool m_bTickScript = false; ///< components path: scenario has per-tick work (impulse, rays, debris)
   double m_fWarmup = 5.0;
   double m_fMeasure = 20.0;
   std::string m_sProfile = "game";
@@ -194,10 +232,23 @@ private:
   std::vector<JPH::BodyID> m_ImpulseLinks;
   std::vector<ezVec3> m_ImpulsePos0;
   bool m_bImpulseDone = false;
+  // chain peak metrics (both paths, sampled in TickWork once per physics step before the step; state after k steps since the kick is seen at m_iTickGlobal == m_iKickTick + k)
+  double ChainEndMaxMove() const; ///< max displacement of the end links from their positions at the kick
+  long long m_iKickTick = -1;
+  double m_fChainPeak = 0.0;
+  long long m_iChainPeakTick = -1; ///< steps after the kick at the peak
+  double m_fChainFixed = -1.0;     ///< end_links_max_move QB_CHAIN_FIXED_STEPS steps after the kick (-1 = not reached); always on: one integer compare per tick, one read of the end links once per run
+  long long m_iChainFixedAt = -1;  ///< m_iTickGlobal value at which that read happens (set at the kick: kick tick + QB_CHAIN_FIXED_STEPS; -1 = no kick yet)
+  static constexpr long long QB_CHAIN_FIXED_STEPS = 400;
+  // --raw-update-in-task
+  void RawUpdateBody();
+  ezSharedPtr<ezTask> m_pRawUpdateTask;
+  JPH::EPhysicsUpdateError m_RawUpdateErr = JPH::EPhysicsUpdateError::None;
   int m_iRayCount = 0;
   std::vector<ezVec3> m_RayFrom, m_RayDir;
   std::vector<JPH::BodyID> m_PendingAdd;
   ezUInt32 m_uiCeilingGroup = 0;
+  ezUInt32 m_uiRawGroupNext = 1000000; ///< --raw-group: next unique group id
   std::vector<JPH::BodyID> m_PrevActive; ///< bodies that were active at the previous render sync (they may have gone to sleep since)
   std::string m_sRenderEnv;              ///< render parity lines for env.txt (render mode)
 
@@ -208,12 +259,17 @@ private:
   std::deque<QbDebrisEvent> m_LiveEvents;
   std::vector<QbPiece> m_PoolFree;
   long long m_iPoolSize0 = 0, m_iPoolMisses = 0;
+  double m_fExtraUpdMs = 0.0; // components path: time of the extra world updates made in RunPaced for the steps of this frame
+  void SetClockSteps(int iSteps); // components path: world clock step of the next update (iSteps x 1/200 s; 0 = a 1 ns step that makes no module step)
+  void FlushNewBodies();          // components path: one world update without a module step, so that components created just now have their bodies
   long long m_iEventsTotal = 0, m_iEventsRec = 0, m_iRemovalsRec = 0, m_iEventsOnIntact = 0, m_iEventsOnUsed = 0;
   long long m_iNextEventK = 0;
   long long m_iLivePieces = 0;
   double m_fFrameEventMs = 0.0, m_fFrameDespawnMs = 0.0;
   bool m_bFrameEvent = false, m_bFrameDespawn = false;
   double m_fVelAfterSpawn = -1.0, m_fVelNextTick = -1.0;
+  double m_fAngAfterSpawn = -1.0, m_fAngNextTick = -1.0, m_fAngExpected = -1.0; // components path probe: angular velocity of the last piece of the first event
+  ezVec3 m_vProbeSpin = ezVec3::MakeZero();
   JPH::BodyID m_VelProbe;
   bool m_bHasProbe = false;
 
@@ -230,6 +286,11 @@ private:
   long long m_iHitsTotal = 0;
   double m_fCumMs = 0.0;
   long long m_iTicksRec = 0;
+  unsigned long long m_uiJoltCtrStart = 0, m_uiJoltCtrEnd = 0; ///< components path: ezJoltWorldModule::GetJoltUpdateCounter() (world updates that ran >= 1 step) at the start and at the end of the measure window
+  unsigned long long m_uiJoltStepsStart = 0, m_uiJoltStepsEnd = 0; ///< components path: collision steps counted by m_StepCounter at the start and at the end of the measure window
+  QbStepCounter m_StepCounter;                                  ///< components path: registered on the module's PhysicsSystem, removed in OnDeactivation
+  bool m_bStepCounterOn = false;
+  std::string m_sFatalError;                                  ///< non-empty: the run ended on an error (summary line, exit code 4)
   long long m_iAppFrames = 0;
   double m_fSyncMsTotal = 0.0;
   double m_fUnpacedOverheadMs = 0.0;

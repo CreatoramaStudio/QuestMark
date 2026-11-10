@@ -3,3 +3,5 @@
 *.pl text eol=lf
 # Batch files need CRLF: cmd.exe mis-parses LF-only files that use labels or multi-line blocks.
 *.bat text eol=crlf
+# Markdown keeps LF too (the repo stores LF; without this rule core.autocrlf=true converts the working copies to CRLF on checkout).
+*.md text eol=lf

@@ -63,6 +63,22 @@ void QbParseOptions(QbOptions& out_opt)
       out_opt.m_fRate = atof(v.c_str());
     else if (k == "unpaced")
       out_opt.m_bUnpaced = (v == "1" || v == "true");
+    else if (k == "raw-group")
+      out_opt.m_bRawGroup = (v == "1" || v == "true");
+    else if (k == "raw-compound")
+      out_opt.m_bRawCompound = (v == "1" || v == "true");
+    else if (k == "raw-update-in-task")
+      out_opt.m_bRawUpdateInTask = (v == "1" || v == "true");
+    else if (k == "phase-timing")
+      out_opt.m_bPhaseTiming = (v == "1" || v == "true");
+    else if (k == "count-jolt-steps")
+      out_opt.m_bCountJoltSteps = (v == "1" || v == "true");
+    else if (k == "chain-sample")
+      out_opt.m_bChainSample = (v == "1" || v == "true");
+    else if (k == "physics-path")
+      out_opt.m_sPhysicsPath = v;
+    else if (k == "profile-dump")
+      out_opt.m_bProfileDump = (v == "1" || v == "true");
     else if (k == "ray-api")
       out_opt.m_sRayApi = v;
     else if (k == "mt-render")
@@ -77,6 +93,12 @@ void QbParseOptions(QbOptions& out_opt)
       out_opt.m_sBackground = v;
     else if (k == "slice-ms")
       out_opt.m_fSliceMs = atof(v.c_str());
+    else if (k == "comp-unpaced")
+    {
+      if (v != "slice" && v != "frame")
+        out_opt.m_bBadOption = true; // fatal in ResolveScenario
+      out_opt.m_sCompUnpaced = v;
+    }
     else if (k == "project")
       out_opt.m_sProjectOverride = v;
   }

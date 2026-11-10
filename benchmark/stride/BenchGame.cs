@@ -1054,6 +1054,7 @@ namespace StrideBench
 
             var env = new StringBuilder();
             env.AppendLine("engine=Stride " + typeof(Game).Assembly.GetName().Version);
+            env.AppendLine("bench_source: QuestMark " + QmBuildInfo.Tag + " (commit of this repo at build time; -dirty = uncommitted changes then)");
             env.AppendLine("backend=Stride.BepuPhysics " + typeof(BepuSimulation).Assembly.GetName().Version);
             env.AppendLine("runtime=" + RuntimeInformation.FrameworkDescription);
             env.AppendLine("os=" + RuntimeInformation.OSDescription);

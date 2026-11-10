@@ -34,6 +34,13 @@
 #                      --max-bodies, see ezengine/NOTES.md). The script passes --project=<abs path of benchmark/ezengine/Project> (computed at run time),
 #                      and aborts when env.txt physics_space_state_class is not ezJoltWorldModule. BENCH_FLAVOUR is accepted (file prefix
 #                      ezengine-jolt[-flavour]-). No headless mode: physics runs also open the window.
+#   EZ_PHYSICS_PATH    components (default, results label "ezEngine": the engine's Jolt actor components) | raw (results label "ezEngine direct
+#                      Jolt": bodies through the Jolt BodyInterface). Passed to every cell as --physics-path=<value> (also correct with an exe
+#                      built before the exe default changed to components on 2026-11-09). raw without BENCH_FLAVOUR sets BENCH_FLAVOUR=direct,
+#                      so the files are ezengine-jolt-direct-...; ezengine-jolt-... (no flavour) files written from 2026-11-09 on are components.
+#                      Older result sets: ezengine-jolt-... (no flavour) = raw, ezengine-jolt-components-... = components; env.txt
+#                      physics_path proves it. The script aborts when EXTRA_EXE_ARGS holds --physics-path, and after any run whose
+#                      env.txt physics_path does not match EZ_PHYSICS_PATH.
 #   EXTRA_EXE_ARGS    optional extra exe arguments appended to every cell command line of this run (all engines), for example
 #                      "--background=cornflower --sun-intensity=5.8". Use a separate OUT_DIR so result sets cannot mix.
 #   OUT_DIR            output directory (default: benchmark/results). Relative paths in OUT_DIR and the *_BENCH_EXE variables are taken
@@ -105,6 +112,10 @@ case "$engine" in
     flavor="${STRIDE_FLAVOR:-bepu}"; prefix="stride-$flavor"; exe="$(abs "${STRIDE_BENCH_EXE:-}")"
     LAG_N="${LAG_N:-16000}"; SIM_PASS20="${SIM_PASS20:-2000}"; SIM_PASS33="${SIM_PASS33:-4000}" ;;
   ezengine)
+    EZ_PHYSICS_PATH="${EZ_PHYSICS_PATH:-components}"
+    case "$EZ_PHYSICS_PATH" in components|raw) ;; *) echo "EZ_PHYSICS_PATH must be components or raw: $EZ_PHYSICS_PATH" >&2; exit 2 ;; esac
+    case " ${EXTRA_EXE_ARGS:-} " in *--physics-path*) echo "set the ezEngine physics path with EZ_PHYSICS_PATH=components|raw, not in EXTRA_EXE_ARGS" >&2; exit 2 ;; esac
+    [ "$EZ_PHYSICS_PATH" = raw ] && [ -z "${BENCH_FLAVOUR:-}" ] && BENCH_FLAVOUR=direct
     export BENCH_FLAVOUR="${BENCH_FLAVOUR:-}"; flavor="jolt${BENCH_FLAVOUR:+-$BENCH_FLAVOUR}"; prefix="ezengine-$flavor"; exe="$(abs "${EZENGINE_BENCH_EXE:-}")"
     LAG_N="${LAG_N:-4000}"; SIM_PASS20="${SIM_PASS20:-2000}"; SIM_PASS33="${SIM_PASS33:-4000}" ;;
 esac
@@ -183,7 +194,6 @@ launch() { # exe scenario mode run warm measure extra headless(0|1) outdir
     [ -n "${BENCH_FLAVOUR:-}" ] && extra="$extra --flavour=$BENCH_FLAVOUR"
     [ -n "${BODY_API:-}" ] && extra="$extra --body-api=$BODY_API"
   fi
-  [ "$engine" = ezengine ] && [ -n "${BENCH_FLAVOUR:-}" ] && extra="$extra --flavour=$BENCH_FLAVOUR"
   if [ -n "${CPU_AFFINITY:-}" ]; then
     # Stride: cap the Bepu and render dispatcher threads like the Godot worker pool above (the .NET pool sizing under a mask is unverified)
     [ "$engine" = stride ] && extra="$extra --bepu-threads=$AFF_N --render-threads=$AFF_N"
@@ -263,6 +273,12 @@ verify_engine() {
       say "ABORT: the run recorded physics_space_state_class=${cls:-<none>}, expected ezJoltWorldModule. Files kept in $stage."
       exit 3
     fi
+    # the physics path in use (env.txt physics_path: components (...) | raw (...)) must be the requested one
+    local pp; pp="$(sed -n 's/^physics_path:[[:space:]]*\([a-z]*\).*/\1/p' "$ez" | head -1)"
+    if [ "$pp" != "$EZ_PHYSICS_PATH" ]; then
+      say "ABORT: the run recorded physics_path=${pp:-<none>}, expected $EZ_PHYSICS_PATH (EZ_PHYSICS_PATH). Files kept in $stage."
+      exit 3
+    fi
     return 0
   fi
   [ "$engine" = godot ] || return 0
@@ -291,6 +307,8 @@ run_cell() {
   local base="$OUT_DIR/$prefix$PROF_TOK-$token-$mode-$run" attempt t0 rc prob f
   extra="$extra --profile=$PROF"
   [ -n "${EXTRA_EXE_ARGS:-}" ] && extra="$extra $EXTRA_EXE_ARGS"
+  # ezEngine: physics path and flavour are added here (not in launch, which runs in a fresh bash -c), so --dry-run prints them too
+  [ "$engine" = ezengine ] && extra="$extra --physics-path=$EZ_PHYSICS_PATH${BENCH_FLAVOUR:+ --flavour=$BENCH_FLAVOUR}"
   [ "$engine" = ezengine ] && extra="$extra -renderer ${EZENGINE_RENDERER:-DX11} --project=$(if command -v cygpath >/dev/null 2>&1; then cygpath -m "$root/benchmark/ezengine/Project"; else echo "$root/benchmark/ezengine/Project"; fi)"
   [ "$engine" = godot ] && [ "$BENCH_ENGINE" = jolt ] && extra="$extra --jolt-limits=$(limits_for "$sc")"
   extra="${extra# }"
@@ -360,7 +378,8 @@ run_e() {
 P20=0; P2=0; STAGE_CRASH=0
 sim_pass() { # value pass20max pass33max
   if [ "${SIM_ALL:-0}" = 1 ]; then P20=1; P2=1; return; fi
-  case "$1" in *.*) ;; *) P20=$(( $1 <= $2 ? 1 : 0 )); P2=$(( $1 <= $3 ? 1 : 0 )); return ;; esac
+  # integer arithmetic only when value and both limits are integers (SIM_G_PASS20=3.5 with stage 1 was a syntax error before 2026-11-10)
+  case "$1$2$3" in *.*) ;; *) P20=$(( $1 <= $2 ? 1 : 0 )); P2=$(( $1 <= $3 ? 1 : 0 )); return ;; esac
   P20=$(awk -v v="$1" -v m="$2" 'BEGIN { print (v <= m) ? 1 : 0 }'); P2=$(awk -v v="$1" -v m="$3" 'BEGIN { print (v <= m) ? 1 : 0 }')
 }
 eval_cell() { # csv lim2 simvalue sim20 sim33 -> sets P20 P2 STAGE_CRASH
@@ -399,6 +418,10 @@ ladder() {
     if ! echo " $TESTED " | grep -q " $m "; then
       stage_once "$fam" "$mode" "$m" 1; TESTED="$TESTED $m"
       if [ "$P2" = 1 ]; then L2="$m"; else F2="$m"; fi
+      # the limit2 midpoint also informs the 20 ms rule when it lies between L20 and F20 (before 2026-11-10 a pass there was dropped)
+      if num_gt "$m" "$L20" && { [ "$F20" = 0 ] || num_lt "$m" "$F20"; }; then
+        if [ "$P20" = 1 ]; then L20="$m"; else F20="$m"; fi
+      fi
     fi
   fi
   # 3 runs of the last passing and the first failing stage (20 ms rule); run 1 exists already
@@ -490,6 +513,9 @@ if [ "$DRY" = 1 ]; then
   echo "ESTIMATE $prefix stages=$STAGES: range over all possible ladder stops: $(fmt_time "$lo_s") ($lo_n runs) to $(fmt_time "$hi_s") ($hi_n runs)"
   exit 0
 fi
+# a shell error inside the dry-run block aborts the block without its exit 0; never fall through to the real run
+# (2026-11-10: that made the estimate line below call itself without end)
+[ "$DRY" = 1 ] && { echo "run-all.sh: dry run aborted by a shell error (see above)" >&2; exit 1; }
 
 # real run: print the plan estimate first (same code path as --dry-run)
 est="$("$0" "$engine" --dry-run --stages="$STAGES" 2>/dev/null | grep "^ESTIMATE" | tee -a "$log")"

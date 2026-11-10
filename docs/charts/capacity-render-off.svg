@@ -1,26 +1,29 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="780" height="386" viewBox="0 0 780 386" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="426" viewBox="0 0 820 426" font-family="Segoe UI, Helvetica, Arial, sans-serif">
 <style>.t{fill:#1f2328}.m{fill:#57606a}.ax{stroke:#8c959f}.bar{fill:#2f81f7}.best{fill:#1a7f37}@media (prefers-color-scheme:dark){.t{fill:#e6edf3}.m{fill:#9198a1}.ax{stroke:#6e7681}.best{fill:#3fb950}}</style>
 <text x="32" y="44" font-size="17" font-weight="600" class="t">Most bodies with p99 frame at or below 20 ms, rendering off</text>
-<line x1="196" y1="72" x2="196" y2="354" class="ax" stroke-width="1.5"/>
-<text x="186" y="95" font-size="14" text-anchor="end" class="t">Stride AOT</text>
-<rect x="196" y="78" width="402.0" height="24" rx="3" class="best"/>
-<text x="606.0" y="95" font-size="14" class="t">10000 bodies<tspan class="m"> · 100%</tspan></text>
-<text x="186" y="135" font-size="14" text-anchor="end" class="t">Stride JIT</text>
-<rect x="196" y="118" width="321.6" height="24" rx="3" class="bar"/>
-<text x="525.6" y="135" font-size="14" class="t">8000 bodies<tspan class="m"> · 80%</tspan></text>
-<text x="186" y="175" font-size="14" text-anchor="end" class="t">ezEngine</text>
-<rect x="196" y="158" width="140.7" height="24" rx="3" class="bar"/>
-<text x="344.7" y="175" font-size="14" class="t">3500 bodies<tspan class="m"> · 35%</tspan></text>
-<text x="186" y="215" font-size="14" text-anchor="end" class="t">PhysX RID</text>
-<rect x="196" y="198" width="120.6" height="24" rx="3" class="bar"/>
-<text x="324.6" y="215" font-size="14" class="t">3000 bodies<tspan class="m"> · 30%</tspan></text>
-<text x="186" y="255" font-size="14" text-anchor="end" class="t">Jolt RID</text>
-<rect x="196" y="238" width="120.6" height="24" rx="3" class="bar"/>
-<text x="324.6" y="255" font-size="14" class="t">3000 bodies<tspan class="m"> · 30%</tspan></text>
-<text x="186" y="295" font-size="14" text-anchor="end" class="t">Godot PhysX</text>
-<rect x="196" y="278" width="100.5" height="24" rx="3" class="bar"/>
-<text x="304.5" y="295" font-size="14" class="t">2500 bodies<tspan class="m"> · 25%</tspan></text>
-<text x="186" y="335" font-size="14" text-anchor="end" class="t">Godot Jolt</text>
-<rect x="196" y="318" width="80.4" height="24" rx="3" class="bar"/>
-<text x="284.4" y="335" font-size="14" class="t">2000 bodies<tspan class="m"> · 20%</tspan></text>
+<line x1="236" y1="72" x2="236" y2="394" class="ax" stroke-width="1.5"/>
+<text x="226" y="95" font-size="14" text-anchor="end" class="t">Stride AOT</text>
+<rect x="236" y="78" width="402.0" height="24" rx="3" class="best"/>
+<text x="646.0" y="95" font-size="14" class="t">10000 bodies<tspan class="m"> · 100%</tspan></text>
+<text x="226" y="135" font-size="14" text-anchor="end" class="t">Stride JIT</text>
+<rect x="236" y="118" width="321.6" height="24" rx="3" class="bar"/>
+<text x="565.6" y="135" font-size="14" class="t">8000 bodies<tspan class="m"> · 80%</tspan></text>
+<text x="226" y="175" font-size="14" text-anchor="end" class="t">ezEngine direct Jolt</text>
+<rect x="236" y="158" width="140.7" height="24" rx="3" class="bar"/>
+<text x="384.7" y="175" font-size="14" class="t">3500 bodies<tspan class="m"> · 35%</tspan></text>
+<text x="226" y="215" font-size="14" text-anchor="end" class="t">PhysX RID</text>
+<rect x="236" y="198" width="140.7" height="24" rx="3" class="bar"/>
+<text x="384.7" y="215" font-size="14" class="t">3500 bodies<tspan class="m"> · 35%</tspan></text>
+<text x="226" y="255" font-size="14" text-anchor="end" class="t">Jolt RID</text>
+<rect x="236" y="238" width="120.6" height="24" rx="3" class="bar"/>
+<text x="364.6" y="255" font-size="14" class="t">3000 bodies<tspan class="m"> · 30%</tspan></text>
+<text x="226" y="295" font-size="14" text-anchor="end" class="t">ezEngine</text>
+<rect x="236" y="278" width="120.6" height="24" rx="3" class="bar"/>
+<text x="364.6" y="295" font-size="14" class="t">3000 bodies<tspan class="m"> · 30%</tspan></text>
+<text x="226" y="335" font-size="14" text-anchor="end" class="t">Godot PhysX</text>
+<rect x="236" y="318" width="100.5" height="24" rx="3" class="bar"/>
+<text x="344.5" y="335" font-size="14" class="t">2500 bodies<tspan class="m"> · 25%</tspan></text>
+<text x="226" y="375" font-size="14" text-anchor="end" class="t">Godot Jolt</text>
+<rect x="236" y="358" width="80.4" height="24" rx="3" class="bar"/>
+<text x="324.4" y="375" font-size="14" class="t">2000 bodies<tspan class="m"> · 20%</tspan></text>
 </svg>

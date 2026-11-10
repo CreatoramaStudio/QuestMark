@@ -15,6 +15,20 @@ add_subdirectory("${GODOTCPP_DIR}" "${CMAKE_BINARY_DIR}/godot-cpp")
 
 add_library(questbench SHARED src/register_types.cpp src/register_types.h src/quest_bench.cpp src/quest_bench.h)
 target_link_libraries(questbench PRIVATE godot-cpp)
+
+# QuestMark commit recorded in env.txt (bench_source): this repo (two levels above this folder). Read at every configure; build-godot-ext.sh
+# re-runs cmake configure before each build, so the value is refreshed on every build. "-dirty" when git status is not empty.
+get_filename_component(QB_QM_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../.." ABSOLUTE)
+execute_process(COMMAND git -C "${QB_QM_ROOT}" rev-parse --short HEAD OUTPUT_VARIABLE QB_QM_TAG OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+if(NOT QB_QM_TAG)
+  set(QB_QM_TAG "unknown")
+else()
+  execute_process(COMMAND git -C "${QB_QM_ROOT}" status --porcelain OUTPUT_VARIABLE QB_QM_STATUS OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+  if(QB_QM_STATUS)
+    set(QB_QM_TAG "${QB_QM_TAG}-dirty")
+  endif()
+endif()
+target_compile_definitions(questbench PRIVATE QB_QM_TAG="${QB_QM_TAG}")
 get_target_property(GODOTCPP_SUFFIX godot-cpp GODOTCPP_SUFFIX)
 set_target_properties(questbench PROPERTIES
   CXX_STANDARD 17
