@@ -1,82 +1,94 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="900" height="679" viewBox="0 0 900 679" font-family="Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
-<title id="t">Share of cases within the harness flag levels, per test family and setting</title><desc id="d">Horizontal bars of the share of cases that stay within the flag levels for each family, backend and solver setting.</desc>
-<style>.t{fill:#1f2328}.m{fill:#57606a}.ax{stroke:#8c959f}.g{stroke:#d0d7de}.f{stroke:#57606a;stroke-dasharray:4 3}.ring{fill:none;stroke:#1f2328;stroke-width:2}.s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}@media (prefers-color-scheme:dark){.t{fill:#e6edf3}.m{fill:#9198a1}.ax{stroke:#6e7681}.g{stroke:#30363d}.f{stroke:#9198a1}.ring{stroke:#e6edf3}.s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}}</style>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="733" viewBox="0 0 900 733" font-family="Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+<title id="t">Share of cases within the harness flag levels, per test family and setting</title><desc id="d">Horizontal bars of the share of cases that stay within the flag levels for each family, backend and solver setting. Higher is better (share of cases within the flag levels). Green = highest share in its comparison group; rows that run alone stay blue. Best result in each comparison group drawn green.</desc>
+<style>.t{fill:#1f2328}.m{fill:#57606a}.ax{stroke:#8c959f}.g{stroke:#d0d7de}.f{stroke:#57606a;stroke-dasharray:4 3}.ring{fill:none;stroke:#1f2328;stroke-width:2}.s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}.best{fill:#1a7f37}@media (prefers-color-scheme:dark){.t{fill:#e6edf3}.m{fill:#9198a1}.ax{stroke:#6e7681}.g{stroke:#30363d}.f{stroke:#9198a1}.ring{stroke:#e6edf3}.s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}.best{fill:#3fb950}}</style>
 <defs><pattern id="hs1" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" class="s1" fill-opacity=".35"/><rect width="3" height="6" class="s1"/></pattern></defs>
 <text x="24" y="28" font-size="17" font-weight="600" class="t">Share of cases within the harness flag levels, per test family and setting</text>
 <text x="24" y="47" font-size="12.5" class="m">Summary of the five families; one harness rule for all rows</text>
-<rect x="24" y="64" width="14" height="10" rx="2" class="s1"/>
-<text x="44" y="73" font-size="12" class="t">Jolt</text>
-<rect x="87.6" y="64" width="14" height="10" rx="2" fill="url(#hs1)" class="h"/>
-<text x="107.6" y="73" font-size="12" class="t">Jolt six-DOF</text>
-<rect x="202.4" y="64" width="14" height="10" rx="2" class="s2"/>
-<text x="222.4" y="73" font-size="12" class="t">PhysX articulation</text>
-<rect x="355.6" y="64" width="14" height="10" rx="2" class="s3"/>
-<text x="375.6" y="73" font-size="12" class="t">PhysX maximal / D6 (control)</text>
-<g transform="translate(0,89)">
+<text x="24" y="64" font-size="12.5" font-weight="600" class="t">Higher is better (share of cases within the flag levels). Green = highest share in its comparison group; rows that run</text>
+<text x="24" y="81" font-size="12.5" font-weight="600" class="t">alone stay blue.</text>
+<rect x="24" y="98" width="14" height="10" rx="2" class="s1"/>
+<text x="44" y="107" font-size="12" class="t">Jolt</text>
+<rect x="87.6" y="98" width="14" height="10" rx="2" fill="url(#hs1)" class="h"/>
+<text x="107.6" y="107" font-size="12" class="t">Jolt six-DOF</text>
+<rect x="202.4" y="98" width="14" height="10" rx="2" class="s2"/>
+<text x="222.4" y="107" font-size="12" class="t">PhysX articulation</text>
+<rect x="355.6" y="98" width="14" height="10" rx="2" class="s3"/>
+<text x="375.6" y="107" font-size="12" class="t">PhysX maximal / D6 (control)</text>
+<rect x="24" y="118" width="5" height="10" class="s1"/><rect x="32" y="118" width="14" height="10" rx="2" class="best"/>
+<text x="58" y="127" font-size="12" class="t">green = best in its group (ties all green); marker left of the axis = series colour</text>
+<g transform="translate(0,143)">
 <line x1="374.0" y1="0" x2="374.0" y2="422" class="g" stroke-width="1"/>
 <text x="374.0" y="435" font-size="11" text-anchor="middle" class="m">0</text>
-<line x1="474.0" y1="0" x2="474.0" y2="422" class="g" stroke-width="1"/>
-<text x="474.0" y="435" font-size="11" text-anchor="middle" class="m">25</text>
-<line x1="574.0" y1="0" x2="574.0" y2="422" class="g" stroke-width="1"/>
-<text x="574.0" y="435" font-size="11" text-anchor="middle" class="m">50</text>
-<line x1="674.0" y1="0" x2="674.0" y2="422" class="g" stroke-width="1"/>
-<text x="674.0" y="435" font-size="11" text-anchor="middle" class="m">75</text>
-<line x1="774.0" y1="0" x2="774.0" y2="422" class="g" stroke-width="1"/>
-<text x="774.0" y="435" font-size="11" text-anchor="middle" class="m">100</text>
+<line x1="459.0" y1="0" x2="459.0" y2="422" class="g" stroke-width="1"/>
+<text x="459.0" y="435" font-size="11" text-anchor="middle" class="m">25</text>
+<line x1="544.0" y1="0" x2="544.0" y2="422" class="g" stroke-width="1"/>
+<text x="544.0" y="435" font-size="11" text-anchor="middle" class="m">50</text>
+<line x1="629.0" y1="0" x2="629.0" y2="422" class="g" stroke-width="1"/>
+<text x="629.0" y="435" font-size="11" text-anchor="middle" class="m">75</text>
+<line x1="714.0" y1="0" x2="714.0" y2="422" class="g" stroke-width="1"/>
+<text x="714.0" y="435" font-size="11" text-anchor="middle" class="m">100</text>
 <line x1="374.0" y1="0" x2="374.0" y2="422" class="ax" stroke-width="1.5"/>
-<text x="366" y="17.0" font-size="12" text-anchor="end" class="t">chain matrix (12 cases)</text>
-<rect x="374.0" y="2.0" width="133.3" height="11" rx="2" class="s1"/>
-<text x="512.3" y="11.0" font-size="11" class="t">33 %  4/12</text>
-<rect x="374.0" y="14.0" width="400.0" height="11" rx="2" class="s2"/>
-<text x="779.0" y="23.0" font-size="11" class="t">100 %  12/12</text>
-<text x="366" y="59.0" font-size="12" text-anchor="end" class="t">limb matrix (96 cases)</text>
-<rect x="374.0" y="44.0" width="375.0" height="11" rx="2" class="s1"/>
-<text x="754.0" y="53.0" font-size="11" class="t">94 %  90/96</text>
-<rect x="374.0" y="56.0" width="400.0" height="11" rx="2" class="s2"/>
-<text x="779.0" y="65.0" font-size="11" class="t">100 %  96/96</text>
-<text x="366" y="107.0" font-size="12" text-anchor="end" class="t">standing, default iterations (40 cases)</text>
-<rect x="374.0" y="86.0" width="350.0" height="11" rx="2" class="s1"/>
-<text x="729.0" y="95.0" font-size="11" class="t">88 %  35/40</text>
-<rect x="374.0" y="98.0" width="400.0" height="11" rx="2" class="s2"/>
-<text x="779.0" y="107.0" font-size="11" class="t">100 %  40/40</text>
-<rect x="374.0" y="110.0" width="170.0" height="11" rx="2" class="s3"/>
-<text x="549.0" y="119.0" font-size="11" class="t">42 %  17/40</text>
-<text x="366" y="149.0" font-size="12" text-anchor="end" class="t">standing, 100/30 iterations (40 cases)</text>
-<rect x="374.0" y="128.0" width="400.0" height="11" rx="2" class="s1"/>
-<text x="779.0" y="137.0" font-size="11" class="t">100 %  40/40</text>
-<rect x="374.0" y="140.0" width="400.0" height="11" rx="2" class="s2"/>
-<text x="779.0" y="149.0" font-size="11" class="t">100 %  40/40</text>
-<rect x="374.0" y="152.0" width="400.0" height="11" rx="2" class="s3"/>
-<text x="779.0" y="161.0" font-size="11" class="t">100 %  40/40</text>
-<text x="366" y="179.0" font-size="12" text-anchor="end" class="t">hip-twist, Jolt swing-twist (80 cases)</text>
-<rect x="374.0" y="170.0" width="375.0" height="11" rx="2" class="s1"/>
-<text x="754.0" y="179.0" font-size="11" class="t">94 %  75/80</text>
-<text x="366" y="221.0" font-size="12" text-anchor="end" class="t">hip-twist, Jolt six-DOF (80)</text>
-<rect x="374.0" y="212.0" width="375.0" height="11" rx="2" fill="url(#hs1)" class="h"/>
-<text x="754.0" y="221.0" font-size="11" class="t">94 %  75/80</text>
-<text x="366" y="269.0" font-size="12" text-anchor="end" class="t">hip-twist, PhysX articulation / D6 (80 each)</text>
-<rect x="374.0" y="254.0" width="400.0" height="11" rx="2" class="s2"/>
-<text x="779.0" y="263.0" font-size="11" class="t">100 %  80/80</text>
-<rect x="374.0" y="266.0" width="265.0" height="11" rx="2" class="s3"/>
-<text x="644.0" y="275.0" font-size="11" class="t">66 %  53/80</text>
-<text x="366" y="311.0" font-size="12" text-anchor="end" class="t">full body, default iterations (48 cases)</text>
-<rect x="374.0" y="296.0" width="158.3" height="11" rx="2" class="s1"/>
-<text x="537.3" y="305.0" font-size="11" class="t">40 %  19/48</text>
-<rect x="374.0" y="308.0" width="400.0" height="11" rx="2" class="s2"/>
-<text x="779.0" y="317.0" font-size="11" class="t">100 %  48/48</text>
-<text x="366" y="347.0" font-size="12" text-anchor="end" class="t">full body, Jolt 480 Hz (8; stand, step+debris)</text>
-<rect x="374.0" y="338.0" width="400.0" height="11" rx="2" class="s1"/>
-<text x="779.0" y="347.0" font-size="11" class="t">100 %  8/8</text>
-<text x="366" y="389.0" font-size="12" text-anchor="end" class="t">full body, Jolt 100/30 its (16; stand, step+debris)</text>
-<rect x="374.0" y="380.0" width="400.0" height="11" rx="2" class="s1"/>
-<text x="779.0" y="389.0" font-size="11" class="t">100 %  16/16</text>
-<text x="574.0" y="449" font-size="11" text-anchor="middle" class="m">share of cases within the flag levels (higher is better)</text>
+<text x="360" y="17.0" font-size="12" text-anchor="end" class="t">chain matrix (12 cases)</text>
+<rect x="374.0" y="2.0" width="113.3" height="11" rx="2" class="s1"/>
+<text x="492.3" y="11.0" font-size="11" class="t">33 %  4/12<tspan class="m"></tspan></text>
+<rect x="365.0" y="14.0" width="5" height="11" class="s2"/>
+<rect x="374.0" y="14.0" width="340.0" height="11" rx="2" class="best"/>
+<text x="719.0" y="23.0" font-size="11" class="t">100 %  12/12<tspan class="m"> · PhysX art.</tspan></text>
+<text x="360" y="59.0" font-size="12" text-anchor="end" class="t">limb matrix (96 cases)</text>
+<rect x="374.0" y="44.0" width="318.8" height="11" rx="2" class="s1"/>
+<text x="697.8" y="53.0" font-size="11" class="t">94 %  90/96<tspan class="m"></tspan></text>
+<rect x="365.0" y="56.0" width="5" height="11" class="s2"/>
+<rect x="374.0" y="56.0" width="340.0" height="11" rx="2" class="best"/>
+<text x="719.0" y="65.0" font-size="11" class="t">100 %  96/96<tspan class="m"> · PhysX art.</tspan></text>
+<text x="360" y="107.0" font-size="12" text-anchor="end" class="t">standing, default iterations (40 cases)</text>
+<rect x="374.0" y="86.0" width="297.5" height="11" rx="2" class="s1"/>
+<text x="676.5" y="95.0" font-size="11" class="t">88 %  35/40<tspan class="m"></tspan></text>
+<rect x="365.0" y="98.0" width="5" height="11" class="s2"/>
+<rect x="374.0" y="98.0" width="340.0" height="11" rx="2" class="best"/>
+<text x="719.0" y="107.0" font-size="11" class="t">100 %  40/40<tspan class="m"> · PhysX art.</tspan></text>
+<rect x="374.0" y="110.0" width="144.5" height="11" rx="2" class="s3"/>
+<text x="523.5" y="119.0" font-size="11" class="t">42 %  17/40<tspan class="m"></tspan></text>
+<text x="360" y="149.0" font-size="12" text-anchor="end" class="t">standing, 100/30 iterations (40 cases)</text>
+<rect x="365.0" y="128.0" width="5" height="11" class="s1"/>
+<rect x="374.0" y="128.0" width="340.0" height="11" rx="2" class="best"/>
+<text x="719.0" y="137.0" font-size="11" class="t">100 %  40/40<tspan class="m"> · Jolt</tspan></text>
+<rect x="365.0" y="140.0" width="5" height="11" class="s2"/>
+<rect x="374.0" y="140.0" width="340.0" height="11" rx="2" class="best"/>
+<text x="719.0" y="149.0" font-size="11" class="t">100 %  40/40<tspan class="m"> · PhysX art.</tspan></text>
+<rect x="365.0" y="152.0" width="5" height="11" class="s3"/>
+<rect x="374.0" y="152.0" width="340.0" height="11" rx="2" class="best"/>
+<text x="719.0" y="161.0" font-size="11" class="t">100 %  40/40<tspan class="m"> · PhysX D6</tspan></text>
+<text x="360" y="179.0" font-size="12" text-anchor="end" class="t">hip-twist, Jolt swing-twist (80 cases)</text>
+<rect x="374.0" y="170.0" width="318.8" height="11" rx="2" class="s1"/>
+<text x="697.8" y="179.0" font-size="11" class="t">94 %  75/80<tspan class="m"></tspan></text>
+<text x="360" y="221.0" font-size="12" text-anchor="end" class="t">hip-twist, Jolt six-DOF (80)</text>
+<rect x="374.0" y="212.0" width="318.8" height="11" rx="2" fill="url(#hs1)" class="h"/>
+<text x="697.8" y="221.0" font-size="11" class="t">94 %  75/80<tspan class="m"></tspan></text>
+<text x="360" y="269.0" font-size="12" text-anchor="end" class="t">hip-twist, PhysX articulation / D6 (80 each)</text>
+<rect x="365.0" y="254.0" width="5" height="11" class="s2"/>
+<rect x="374.0" y="254.0" width="340.0" height="11" rx="2" class="best"/>
+<text x="719.0" y="263.0" font-size="11" class="t">100 %  80/80<tspan class="m"> · PhysX art.</tspan></text>
+<rect x="374.0" y="266.0" width="225.2" height="11" rx="2" class="s3"/>
+<text x="604.2" y="275.0" font-size="11" class="t">66 %  53/80<tspan class="m"></tspan></text>
+<text x="360" y="311.0" font-size="12" text-anchor="end" class="t">full body, default iterations (48 cases)</text>
+<rect x="374.0" y="296.0" width="134.6" height="11" rx="2" class="s1"/>
+<text x="513.6" y="305.0" font-size="11" class="t">40 %  19/48<tspan class="m"></tspan></text>
+<rect x="365.0" y="308.0" width="5" height="11" class="s2"/>
+<rect x="374.0" y="308.0" width="340.0" height="11" rx="2" class="best"/>
+<text x="719.0" y="317.0" font-size="11" class="t">100 %  48/48<tspan class="m"> · PhysX art.</tspan></text>
+<text x="360" y="347.0" font-size="12" text-anchor="end" class="t">full body, Jolt 480 Hz (8; stand, step+debris)</text>
+<rect x="374.0" y="338.0" width="340.0" height="11" rx="2" class="s1"/>
+<text x="719.0" y="347.0" font-size="11" class="t">100 %  8/8<tspan class="m"></tspan></text>
+<text x="360" y="389.0" font-size="12" text-anchor="end" class="t">full body, Jolt 100/30 its (16; stand, step+debris)</text>
+<rect x="374.0" y="380.0" width="340.0" height="11" rx="2" class="s1"/>
+<text x="719.0" y="389.0" font-size="11" class="t">100 %  16/16<tspan class="m"></tspan></text>
+<text x="544.0" y="449" font-size="11" text-anchor="middle" class="m">share of cases within the flag levels (higher is better)</text>
 </g>
-<text x="24" y="557" font-size="11.5" class="m">A case passes when no run of it has a non-finite state, anchor error above 0.1 m or axis error above 0.1 rad (the README flag levels);</text>
-<text x="24" y="573" font-size="11.5" class="m">each family uses its own scenes, so rows are not comparable with each other.</text>
-<text x="24" y="589" font-size="11.5" class="m">Case = one result file and backend (worst of its runs); the hip-twist rows and the full-body Jolt remedy rows cover only the cases they</text>
-<text x="24" y="605" font-size="11.5" class="m">ran; chain rows include the alternating-mass chain.</text>
-<text x="24" y="621" font-size="11.5" class="m">Tunnelling, determinism and limit-excess checks are not part of this pass rule. No machine-load dependence. Thresholds (0.01 m, 0.1 m,</text>
-<text x="24" y="637" font-size="11.5" class="m">0.1 rad) are harness choices, not standards.</text>
-<text x="24" y="653" font-size="11.5" class="m">One skeleton, boxes only, float32, CPU, one machine; Jolt 5.7.0 tag v5.7.0; PhysX 5.13.0 built from a branch head, not a tag.</text>
+<text x="24" y="611" font-size="11.5" class="m">A case passes when no run of it has a non-finite state, anchor error above 0.1 m or axis error above 0.1 rad (the README flag levels);</text>
+<text x="24" y="627" font-size="11.5" class="m">each family uses its own scenes, so rows are not comparable with each other.</text>
+<text x="24" y="643" font-size="11.5" class="m">Case = one result file and backend (worst of its runs); the hip-twist rows and the full-body Jolt remedy rows cover only the cases they</text>
+<text x="24" y="659" font-size="11.5" class="m">ran; chain rows include the alternating-mass chain.</text>
+<text x="24" y="675" font-size="11.5" class="m">Tunnelling, determinism and limit-excess checks are not part of this pass rule. No machine-load dependence. Thresholds (0.01 m, 0.1 m,</text>
+<text x="24" y="691" font-size="11.5" class="m">0.1 rad) are harness choices, not standards.</text>
+<text x="24" y="707" font-size="11.5" class="m">One skeleton, boxes only, float32, CPU, one machine; Jolt 5.7.0 tag v5.7.0; PhysX 5.13.0 built from a branch head, not a tag.</text>
 </svg>
