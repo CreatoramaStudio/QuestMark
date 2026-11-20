@@ -160,6 +160,28 @@ The ezEngine column is the components path, measured 2026-11-09 (3 runs, median;
 
 With sleeping on (`game` profile), the 2000-body pile falls asleep in Bepu (0.09 ms per step) and in PhysX (0.23 ms per step). With default settings it stays awake under Jolt in both Godot and ezEngine. The benchmark reports sleeping as engine behaviour and does not force it equal. Changing the Jolt sleep threshold changes these results: in an ezEngine test (pit-2000, game profile) 0.03 m/s (default) left 1920 of 2000 bodies awake, while 0.3 m/s put all of them to sleep (details in docs/engine-choice.md section 12.2). All published numbers use the defaults.
 
+### Articulated bodies: Jolt and PhysX (jointed limbs and a full humanoid)
+
+Separate test set in [benchmark/physics-articulated](benchmark/physics-articulated/README.md): limb chains, standing foot, 3-DOF ball joint and a whole humanoid at four body sizes, Jolt (maximal coordinates) against PhysX (articulation and joint-based variants). The charts show joint closure errors, counts and onset steps, which do not depend on machine load; only the last-but-one chart uses timings (idle machine). One skeleton with box shapes, float32, CPU, one machine; thresholds are harness choices. Plotted values: [charts/DATA.md](benchmark/physics-articulated/charts/DATA.md).
+
+![Limb chains: worst joint anchor error per backend, log axis](benchmark/physics-articulated/charts/limb-anchor-error.svg)
+
+![Alternating-mass chain: step of the first non-finite state](benchmark/physics-articulated/charts/alternating-chain-onset.svg)
+
+![Standing: stance and flag counts per backend and solver setting](benchmark/physics-articulated/charts/standing-foot.svg)
+
+![3-DOF ball joint: runs with anchor error above 0.1 m](benchmark/physics-articulated/charts/hip-twist-anchor.svg)
+
+![Whole humanoid: worst joint anchor error](benchmark/physics-articulated/charts/full-body-anchor.svg)
+
+![Whole humanoid: worst hinge axis error](benchmark/physics-articulated/charts/full-body-axis.svg)
+
+![Whole humanoid: largest torso tilt](benchmark/physics-articulated/charts/full-body-tilt.svg)
+
+![Idle-machine physics step time](benchmark/physics-articulated/charts/idle-step-time.svg)
+
+![Share of cases within the flag levels per test family and setting](benchmark/physics-articulated/charts/pass-fraction.svg)
+
 ### Limits
 
 - **Verdict scope (2026-11-10):** the capacity (F) and debris (G) ladders of ezEngine (components path) were run on 2026-11-10 (`run-all.sh ezengine --stages=FG`, 3 runs at the last pass and first fail, other stages 1 run, idle machine, 0 failed cells). The ladder values in the table are uncertain by about one stage. The verdict is still provisional (desktop only, no Steam Deck). The in-play numbers use 3 runs per variant, 15 s analysed per run, and engines from different sessions.
