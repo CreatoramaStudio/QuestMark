@@ -1,0 +1,19 @@
+{
+  "test": "chain-limb", "device_class": "desktop", "tag": "physx-artic-y-200hz", "timing_note": "NOT VALID FOR TIMING: machine was busy (onset experiment, no timing claim)",
+  "scenario": {"links": 12, "profile": "alternating", "mass_min_kg": 50, "mass_max_kg": 50000, "tip_speed_mps": 0.1, "step_hz": 200, "ccd": true, "threads": 1,
+    "hinge_axis": "y", "gravity": 9.81, "joint_limit_rad": 2, "light_half_thick_m": -1, "jolt_prio": false, "jolt_heavy_body1": false, "jolt_inertia_mult": 1, "jolt_max_angvel": -1, "physx_tgs": false,
+    "episode_sec": 2, "warmup_steps": 0, "measured_steps": 800, "runs": 1, "masses_kg": [5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50]},
+  "results": [
+   {"backend_key": "physx", "deterministic_all_runs_equal": true, "runs": [
+    {"backend": "physx-5.13.0 cpu float32 reduced-coordinate-articulation fixed-base solver-iters pos=4 vel=1 ccd=sweep(eENABLE_CCD) threads=1", "episode_steps": 400, "in_play_samples": 800, "window_samples": 106,
+      "physics_step_in_play": {"mean_ms": 0.0191, "p50_ms": 0.0192, "p99_ms": 0.0255, "max_ms": 0.1826},
+      "physics_step_impact_window": {"mean_ms": 0.0171, "p50_ms": 0.0168, "p99_ms": 0.0222, "max_ms": 0.0247},
+      "bench_step_incl_episode_rebuild": {"mean_ms": 0.0226, "p50_ms": 0.0223, "p99_ms": 0.0300, "max_ms": 0.3846},
+      "joint_pos_err_max_m": 2.3577e-06, "joint_pos_err_mean_m": 4.48958e-07, "joint_axis_err_max_rad": 0.000794266, "joint_limit_excess_max_rad": 0,
+      "max_penetration_m": 0, "episodes": 2, "episodes_tunnelled": 0, "episodes_nan": 0,
+      "max_link_speed_mps": 37.8107, "max_link_ang_speed_radps": 9.11277, "energy_gain_max_over_ke0": 1309.34, "energy_end_over_e0_last_episode": 1310.34,
+      "onset_err_gt_0p01m": {"episode": 0, "step": 0}, "onset_err_gt_1m": {"episode": 0, "step": 0}, "onset_nonfinite": {"episode": 0, "step": 0},
+      "nan": false, "explosion": false, "trajectory_hash": "d6908f82542057a5", "final_state_hash": "89a931ae08aacaa9"}
+   ]}
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "test": "chain-limb", "device_class": "desktop", "tag": "physx-maximal-tip30-z-200hz", "timing_note": "NOT VALID FOR TIMING: machine was busy (onset experiment, no timing claim)",
+  "scenario": {"links": 12, "profile": "alternating", "mass_min_kg": 50, "mass_max_kg": 50000, "tip_speed_mps": 30, "step_hz": 200, "ccd": true, "threads": 1,
+    "hinge_axis": "z", "gravity": 9.81, "joint_limit_rad": 2, "light_half_thick_m": -1, "jolt_prio": false, "jolt_heavy_body1": false, "jolt_inertia_mult": 1, "jolt_max_angvel": -1, "physx_tgs": false,
+    "episode_sec": 2, "warmup_steps": 0, "measured_steps": 800, "runs": 1, "masses_kg": [5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50]},
+  "results": [
+   {"backend_key": "physx-maximal", "deterministic_all_runs_equal": true, "runs": [
+    {"backend": "physx-5.13.0 cpu float32 maximal-coordinate rigid-dynamics+PxRevoluteJoint solver=PGS iters pos=4 vel=1 ccd=sweep(eENABLE_CCD) threads=1 axis=z light-half-thick=-1", "episode_steps": 400, "in_play_samples": 800, "window_samples": 106,
+      "physics_step_in_play": {"mean_ms": 0.0229, "p50_ms": 0.0215, "p99_ms": 0.0417, "max_ms": 0.2558},
+      "physics_step_impact_window": {"mean_ms": 0.0254, "p50_ms": 0.0222, "p99_ms": 0.1422, "max_ms": 0.1480},
+      "bench_step_incl_episode_rebuild": {"mean_ms": 0.0269, "p50_ms": 0.0246, "p99_ms": 0.0466, "max_ms": 0.6231},
+      "joint_pos_err_max_m": 5.34964, "joint_pos_err_mean_m": 0.252839, "joint_axis_err_max_rad": 3.13903, "joint_limit_excess_max_rad": 1.13895,
+      "max_penetration_m": 1.34038, "episodes": 2, "episodes_tunnelled": 2, "episodes_nan": 0,
+      "max_link_speed_mps": 400.567, "max_link_ang_speed_radps": 936.06, "energy_gain_max_over_ke0": 3.30391, "energy_end_over_e0_last_episode": 3.60928,
+      "onset_err_gt_0p01m": {"episode": 1, "step": 10}, "onset_err_gt_1m": {"episode": 1, "step": 269}, "onset_nonfinite": {"episode": 0, "step": 0},
+      "nan": false, "explosion": true, "trajectory_hash": "67c860f980f8cac9", "final_state_hash": "c9beafaa1a0e7148"}
+   ]}
+  ]
+}

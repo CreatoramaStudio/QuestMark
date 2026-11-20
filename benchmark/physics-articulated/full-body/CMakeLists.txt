@@ -1,0 +1,17 @@
+# Full-body test: whole articulated humanoid plus debris at 1000:1, Jolt vs PhysX. Library set-up is in ../CMakeLists.txt.
+set(body_libs "")
+if(JOLT_DIR)
+  add_library(body_jolt STATIC backend_jolt.cpp)
+  target_link_libraries(body_jolt PUBLIC artic_jolt_dep)
+  list(APPEND body_libs body_jolt)
+endif()
+if(PHYSX_DIR)
+  add_library(body_physx STATIC backend_physx.cpp)
+  target_link_libraries(body_physx PUBLIC artic_physx_dep)
+  list(APPEND body_libs body_physx)
+endif()
+
+add_executable(full_body main.cpp humanoid.cpp)
+target_link_libraries(full_body PRIVATE artic_ufbx ${body_libs})
+target_compile_definitions(full_body PRIVATE _CRT_SECURE_NO_WARNINGS)
+artic_target_defaults(full_body)

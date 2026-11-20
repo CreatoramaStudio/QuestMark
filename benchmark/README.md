@@ -7,6 +7,7 @@ Purpose: measure Godot (Jolt, optionally a PhysX fork) and Stride (Bepu) and ezE
 - `stride/`: Stride 4.4.1 + Bepu solution (C#, .NET 10, scenes in code). Notes: [stride/NOTES.md](stride/NOTES.md). `render-smoke.ps1` is the render check.
 - `ezengine/`: ezEngine (Jolt plugin) C++ application and project, built from an ezEngine checkout (`.tmp/ezengine`). Status: timed in the 2026-11-07/08 runs (raw path, "direct Jolt") and in a full A to G run through the engine components (flavour `components` at that time, now the default path, docs/engine-choice.md 12.6). Notes and open items: [ezengine/NOTES.md](ezengine/NOTES.md).
 - `tools/`: `build-godot-ext.sh`, `export-godot-fork.sh`, `build-ezengine.sh`, `run-all.sh`, `merge-results.pl`, `parity_check.pl`, `build-progress.sh` (scons fork builds), `ext-build-progress.sh` (extension build), `bench-progress.sh` (benchmark run). Paths given to the tools may be relative to the project root.
+- `physics-articulated/`: separate from the engine benchmark above: Jolt 5.7.0 vs PhysX 5.13.0 articulated-body physics tests (12-link chain and limbs, standing foot, 3-DOF hip, full body; C++ with its own CMake build, results as JSON). Start with [physics-articulated/README.md](physics-articulated/README.md).
 - `results/`: output (CSV, `.summary.txt`, `.env.txt`, `SUMMARY.md`); `results/gdscript-old/` is the old GDScript run. Not ignored by git yet (see SPEC "Layout").
 - Scratch files go in `.tmp/` at the project root only.
 

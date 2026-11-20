@@ -1,0 +1,19 @@
+{
+  "test": "chain-limb", "device_class": "desktop", "tag": "jolt-tip30-z-120hz", "timing_note": "NOT VALID FOR TIMING: machine was busy (onset experiment, no timing claim)",
+  "scenario": {"links": 12, "profile": "alternating", "mass_min_kg": 50, "mass_max_kg": 50000, "tip_speed_mps": 30, "step_hz": 120, "ccd": true, "threads": 1,
+    "hinge_axis": "z", "gravity": 9.81, "joint_limit_rad": 2, "light_half_thick_m": -1, "jolt_prio": false, "jolt_heavy_body1": false, "jolt_inertia_mult": 1, "jolt_max_angvel": -1, "physx_tgs": false,
+    "episode_sec": 2, "warmup_steps": 0, "measured_steps": 480, "runs": 1, "masses_kg": [5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50]},
+  "results": [
+   {"backend_key": "jolt", "deterministic_all_runs_equal": true, "runs": [
+    {"backend": "jolt-5.7.0 cpu float32 hinge-constraints solver-iters vel=10 pos=2 ccd=LinearCast threads=1 axis=z prio=0 heavy-body1=0 inertia-mult-light=1 max-angvel=-1 light-half-thick=-1", "episode_steps": 240, "in_play_samples": 480, "window_samples": 64,
+      "physics_step_in_play": {"mean_ms": 0.0238, "p50_ms": 0.0234, "p99_ms": 0.0320, "max_ms": 0.0863},
+      "physics_step_impact_window": {"mean_ms": 0.0270, "p50_ms": 0.0266, "p99_ms": 0.0863, "max_ms": 0.0863},
+      "bench_step_incl_episode_rebuild": {"mean_ms": 0.0275, "p50_ms": 0.0269, "p99_ms": 0.0381, "max_ms": 0.1334},
+      "joint_pos_err_max_m": 34.6676, "joint_pos_err_mean_m": 2.25839, "joint_axis_err_max_rad": 3.12139, "joint_limit_excess_max_rad": 1.13381,
+      "max_penetration_m": 9.78328, "episodes": 2, "episodes_tunnelled": 2, "episodes_nan": 2,
+      "max_link_speed_mps": 500, "max_link_ang_speed_radps": 47.1239, "energy_gain_max_over_ke0": 953.029, "energy_end_over_e0_last_episode": null,
+      "onset_err_gt_0p01m": {"episode": 1, "step": 7}, "onset_err_gt_1m": {"episode": 1, "step": 157}, "onset_nonfinite": {"episode": 1, "step": 211},
+      "nan": true, "explosion": true, "trajectory_hash": "9b48d0dcc0aaa581", "final_state_hash": "d5ca6e13e82e939a"}
+   ]}
+  ]
+}

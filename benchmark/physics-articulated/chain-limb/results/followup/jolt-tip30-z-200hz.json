@@ -1,0 +1,19 @@
+{
+  "test": "chain-limb", "device_class": "desktop", "tag": "jolt-tip30-z-200hz", "timing_note": "NOT VALID FOR TIMING: machine was busy (onset experiment, no timing claim)",
+  "scenario": {"links": 12, "profile": "alternating", "mass_min_kg": 50, "mass_max_kg": 50000, "tip_speed_mps": 30, "step_hz": 200, "ccd": true, "threads": 1,
+    "hinge_axis": "z", "gravity": 9.81, "joint_limit_rad": 2, "light_half_thick_m": -1, "jolt_prio": false, "jolt_heavy_body1": false, "jolt_inertia_mult": 1, "jolt_max_angvel": -1, "physx_tgs": false,
+    "episode_sec": 2, "warmup_steps": 0, "measured_steps": 800, "runs": 1, "masses_kg": [5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50]},
+  "results": [
+   {"backend_key": "jolt", "deterministic_all_runs_equal": true, "runs": [
+    {"backend": "jolt-5.7.0 cpu float32 hinge-constraints solver-iters vel=10 pos=2 ccd=LinearCast threads=1 axis=z prio=0 heavy-body1=0 inertia-mult-light=1 max-angvel=-1 light-half-thick=-1", "episode_steps": 400, "in_play_samples": 800, "window_samples": 106,
+      "physics_step_in_play": {"mean_ms": 0.0206, "p50_ms": 0.0177, "p99_ms": 0.0331, "max_ms": 0.0737},
+      "physics_step_impact_window": {"mean_ms": 0.0252, "p50_ms": 0.0251, "p99_ms": 0.0400, "max_ms": 0.0595},
+      "bench_step_incl_episode_rebuild": {"mean_ms": 0.0235, "p50_ms": 0.0197, "p99_ms": 0.0372, "max_ms": 0.1441},
+      "joint_pos_err_max_m": 29.1134, "joint_pos_err_mean_m": 1.53642, "joint_axis_err_max_rad": 3.03436, "joint_limit_excess_max_rad": 1.14037,
+      "max_penetration_m": 14.1384, "episodes": 2, "episodes_tunnelled": 2, "episodes_nan": 2,
+      "max_link_speed_mps": 500, "max_link_ang_speed_radps": 47.1239, "energy_gain_max_over_ke0": 953.14, "energy_end_over_e0_last_episode": null,
+      "onset_err_gt_0p01m": {"episode": 1, "step": 12}, "onset_err_gt_1m": {"episode": 1, "step": 149}, "onset_nonfinite": {"episode": 1, "step": 184},
+      "nan": true, "explosion": true, "trajectory_hash": "e040608e30cb131d", "final_state_hash": "aff39b165c35cc2a"}
+   ]}
+  ]
+}

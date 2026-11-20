@@ -1,0 +1,19 @@
+{
+  "test": "chain-limb", "device_class": "desktop", "tag": "jolt-imult100-z-120hz", "timing_note": "NOT VALID FOR TIMING: machine was busy (onset experiment, no timing claim)",
+  "scenario": {"links": 12, "profile": "alternating", "mass_min_kg": 50, "mass_max_kg": 50000, "tip_speed_mps": 0.1, "step_hz": 120, "ccd": true, "threads": 1,
+    "hinge_axis": "z", "gravity": 9.81, "joint_limit_rad": 2, "light_half_thick_m": -1, "jolt_prio": false, "jolt_heavy_body1": false, "jolt_inertia_mult": 100, "jolt_max_angvel": -1, "physx_tgs": false,
+    "episode_sec": 2, "warmup_steps": 0, "measured_steps": 480, "runs": 1, "masses_kg": [5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50]},
+  "results": [
+   {"backend_key": "jolt", "deterministic_all_runs_equal": true, "runs": [
+    {"backend": "jolt-5.7.0 cpu float32 hinge-constraints solver-iters vel=10 pos=2 ccd=LinearCast threads=1 axis=z prio=0 heavy-body1=0 inertia-mult-light=100 max-angvel=-1 light-half-thick=-1", "episode_steps": 240, "in_play_samples": 480, "window_samples": 64,
+      "physics_step_in_play": {"mean_ms": 0.0209, "p50_ms": 0.0194, "p99_ms": 0.0392, "max_ms": 0.0651},
+      "physics_step_impact_window": {"mean_ms": 0.0190, "p50_ms": 0.0190, "p99_ms": 0.0267, "max_ms": 0.0267},
+      "bench_step_incl_episode_rebuild": {"mean_ms": 0.0246, "p50_ms": 0.0228, "p99_ms": 0.0446, "max_ms": 0.1564},
+      "joint_pos_err_max_m": 61.89, "joint_pos_err_mean_m": 12.4654, "joint_axis_err_max_rad": 2.99808, "joint_limit_excess_max_rad": 1.12546,
+      "max_penetration_m": 50.8186, "episodes": 2, "episodes_tunnelled": 2, "episodes_nan": 0,
+      "max_link_speed_mps": 500, "max_link_ang_speed_radps": 47.1239, "energy_gain_max_over_ke0": 8.59179e+07, "energy_end_over_e0_last_episode": -8045.46,
+      "onset_err_gt_0p01m": {"episode": 1, "step": 8}, "onset_err_gt_1m": {"episode": 1, "step": 93}, "onset_nonfinite": {"episode": 0, "step": 0},
+      "nan": false, "explosion": true, "trajectory_hash": "ff619eeaa101f419", "final_state_hash": "58c08c25c8a0ff2d"}
+   ]}
+  ]
+}

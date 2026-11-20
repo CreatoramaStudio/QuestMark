@@ -1,0 +1,19 @@
+{
+  "test": "chain-limb", "device_class": "desktop", "tag": "physx-maximal-it10-4-z-200hz", "timing_note": "NOT VALID FOR TIMING: machine was busy (onset experiment, no timing claim)",
+  "scenario": {"links": 12, "profile": "alternating", "mass_min_kg": 50, "mass_max_kg": 50000, "tip_speed_mps": 0.1, "step_hz": 200, "ccd": true, "threads": 1,
+    "hinge_axis": "z", "gravity": 9.81, "joint_limit_rad": 2, "light_half_thick_m": -1, "jolt_prio": false, "jolt_heavy_body1": false, "jolt_inertia_mult": 1, "jolt_max_angvel": -1, "physx_tgs": false,
+    "episode_sec": 2, "warmup_steps": 0, "measured_steps": 800, "runs": 1, "masses_kg": [5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50]},
+  "results": [
+   {"backend_key": "physx-maximal", "deterministic_all_runs_equal": true, "runs": [
+    {"backend": "physx-5.13.0 cpu float32 maximal-coordinate rigid-dynamics+PxRevoluteJoint solver=PGS iters pos=4 vel=10 ccd=sweep(eENABLE_CCD) threads=1 axis=z light-half-thick=-1", "episode_steps": 400, "in_play_samples": 800, "window_samples": 106,
+      "physics_step_in_play": {"mean_ms": 0.0218, "p50_ms": 0.0214, "p99_ms": 0.0292, "max_ms": 0.2383},
+      "physics_step_impact_window": {"mean_ms": 0.0199, "p50_ms": 0.0195, "p99_ms": 0.0269, "max_ms": 0.0274},
+      "bench_step_incl_episode_rebuild": {"mean_ms": 0.0254, "p50_ms": 0.0245, "p99_ms": 0.0328, "max_ms": 0.5300},
+      "joint_pos_err_max_m": 1.21908, "joint_pos_err_mean_m": 0.122272, "joint_axis_err_max_rad": 1.0435, "joint_limit_excess_max_rad": 0,
+      "max_penetration_m": 0, "episodes": 2, "episodes_tunnelled": 0, "episodes_nan": 0,
+      "max_link_speed_mps": 29.9526, "max_link_ang_speed_radps": 3.25816, "energy_gain_max_over_ke0": 0, "energy_end_over_e0_last_episode": -18050.9,
+      "onset_err_gt_0p01m": {"episode": 1, "step": 21}, "onset_err_gt_1m": {"episode": 1, "step": 343}, "onset_nonfinite": {"episode": 0, "step": 0},
+      "nan": false, "explosion": true, "trajectory_hash": "16151f85af21d3ad", "final_state_hash": "1c05dd679cfc237e"}
+   ]}
+  ]
+}

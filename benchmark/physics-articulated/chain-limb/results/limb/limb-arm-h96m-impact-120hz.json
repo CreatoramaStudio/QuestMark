@@ -1,0 +1,52 @@
+{
+  "test": "chain-limb", "device_class": "desktop", "tag": "limb-arm-h96m-impact-120hz", "timing_note": "idle machine, other applications closed, 1 session",
+  "scenario": {"links": 4, "kind": "limb", "limb_label": "arm hang size_label=h96m scale=16.139 case=impact", "profile": "geometric", "mass_min_kg": 50, "mass_max_kg": 50000, "tip_speed_mps": 30, "step_hz": 120, "ccd": true, "threads": 1,
+    "hinge_axis": "z", "gravity": 9.81, "joint_limit_rad": 0, "light_half_thick_m": -1, "jolt_prio": false, "jolt_heavy_body1": false, "jolt_inertia_mult": 1, "jolt_max_angvel": -1, "physx_tgs": false,
+    "episode_sec": 2, "warmup_steps": 0, "measured_steps": 240, "runs": 2, "masses_kg": [2.13e+04, 2.13e+05, 1.084e+05, 2.772e+05]},
+  "results": [
+   {"backend_key": "jolt", "deterministic_all_runs_equal": true, "runs": [
+    {"backend": "jolt-5.7.0 cpu float32 hinge-constraints solver-iters vel=10 pos=2 ccd=LinearCast threads=1 axis=limb prio=0 heavy-body1=0 inertia-mult-light=1 max-angvel=-1 light-half-thick=-1", "episode_steps": 240, "in_play_samples": 240, "window_samples": 32,
+      "physics_step_in_play": {"mean_ms": 0.0084, "p50_ms": 0.0079, "p99_ms": 0.0265, "max_ms": 0.0445},
+      "physics_step_impact_window": {"mean_ms": 0.0099, "p50_ms": 0.0081, "p99_ms": 0.0337, "max_ms": 0.0337},
+      "bench_step_incl_episode_rebuild": {"mean_ms": 0.0113, "p50_ms": 0.0107, "p99_ms": 0.0296, "max_ms": 0.0587},
+      "joint_pos_err_max_m": 0.00139357, "joint_pos_err_mean_m": 0.000227133, "joint_axis_err_max_rad": 0.00150928, "joint_limit_excess_max_rad": 0,
+      "max_penetration_m": 0, "episodes": 1, "episodes_tunnelled": 0, "episodes_nan": 0,
+      "max_link_speed_mps": 1.54338, "max_link_ang_speed_radps": 0.0809816, "energy_gain_max_over_ke0": 0, "energy_end_over_e0_last_episode": 0,
+      "onset_err_gt_0p01m": {"episode": 0, "step": 0}, "onset_err_gt_1m": {"episode": 0, "step": 0}, "onset_nonfinite": {"episode": 0, "step": 0},
+      "limb_drive_angle_err_max_rad": 0.0102904, "limb_drive_angle_err_final_rad": 0.00848864, "impact_body_min_speed_mps": 0.834323, "impact_body_start_speed_mps": 30,
+      "nan": false, "explosion": false, "trajectory_hash": "5c2c5da6dbb5e795", "final_state_hash": "129957b6ef01e06b"},
+    {"backend": "jolt-5.7.0 cpu float32 hinge-constraints solver-iters vel=10 pos=2 ccd=LinearCast threads=1 axis=limb prio=0 heavy-body1=0 inertia-mult-light=1 max-angvel=-1 light-half-thick=-1", "episode_steps": 240, "in_play_samples": 240, "window_samples": 32,
+      "physics_step_in_play": {"mean_ms": 0.0081, "p50_ms": 0.0079, "p99_ms": 0.0134, "max_ms": 0.0281},
+      "physics_step_impact_window": {"mean_ms": 0.0085, "p50_ms": 0.0080, "p99_ms": 0.0136, "max_ms": 0.0136},
+      "bench_step_incl_episode_rebuild": {"mean_ms": 0.0110, "p50_ms": 0.0108, "p99_ms": 0.0165, "max_ms": 0.0313},
+      "joint_pos_err_max_m": 0.00139357, "joint_pos_err_mean_m": 0.000227133, "joint_axis_err_max_rad": 0.00150928, "joint_limit_excess_max_rad": 0,
+      "max_penetration_m": 0, "episodes": 1, "episodes_tunnelled": 0, "episodes_nan": 0,
+      "max_link_speed_mps": 1.54338, "max_link_ang_speed_radps": 0.0809816, "energy_gain_max_over_ke0": 0, "energy_end_over_e0_last_episode": 0,
+      "onset_err_gt_0p01m": {"episode": 0, "step": 0}, "onset_err_gt_1m": {"episode": 0, "step": 0}, "onset_nonfinite": {"episode": 0, "step": 0},
+      "limb_drive_angle_err_max_rad": 0.0102904, "limb_drive_angle_err_final_rad": 0.00848864, "impact_body_min_speed_mps": 0.834323, "impact_body_start_speed_mps": 30,
+      "nan": false, "explosion": false, "trajectory_hash": "5c2c5da6dbb5e795", "final_state_hash": "129957b6ef01e06b"}
+   ]},
+   {"backend_key": "physx", "deterministic_all_runs_equal": true, "runs": [
+    {"backend": "physx-5.13.0 cpu float32 reduced-coordinate-articulation fixed-base solver-iters pos=4 vel=1 ccd=sweep(eENABLE_CCD) threads=1", "episode_steps": 240, "in_play_samples": 240, "window_samples": 32,
+      "physics_step_in_play": {"mean_ms": 0.0135, "p50_ms": 0.0110, "p99_ms": 0.1459, "max_ms": 0.1933},
+      "physics_step_impact_window": {"mean_ms": 0.0211, "p50_ms": 0.0138, "p99_ms": 0.1933, "max_ms": 0.1933},
+      "bench_step_incl_episode_rebuild": {"mean_ms": 0.0162, "p50_ms": 0.0135, "p99_ms": 0.1489, "max_ms": 0.1966},
+      "joint_pos_err_max_m": 9.94097e-06, "joint_pos_err_mean_m": 3.50444e-06, "joint_axis_err_max_rad": 0.000801475, "joint_limit_excess_max_rad": 0,
+      "max_penetration_m": 0, "episodes": 1, "episodes_tunnelled": 0, "episodes_nan": 0,
+      "max_link_speed_mps": 0.230575, "max_link_ang_speed_radps": 0.0153555, "energy_gain_max_over_ke0": 0, "energy_end_over_e0_last_episode": 0,
+      "onset_err_gt_0p01m": {"episode": 0, "step": 0}, "onset_err_gt_1m": {"episode": 0, "step": 0}, "onset_nonfinite": {"episode": 0, "step": 0},
+      "limb_drive_angle_err_max_rad": 0.00126329, "limb_drive_angle_err_final_rad": 0.000926778, "impact_body_min_speed_mps": 1.06881, "impact_body_start_speed_mps": 30,
+      "nan": false, "explosion": false, "trajectory_hash": "d065f3fcb72404ca", "final_state_hash": "488bd01514064f88"},
+    {"backend": "physx-5.13.0 cpu float32 reduced-coordinate-articulation fixed-base solver-iters pos=4 vel=1 ccd=sweep(eENABLE_CCD) threads=1", "episode_steps": 240, "in_play_samples": 240, "window_samples": 32,
+      "physics_step_in_play": {"mean_ms": 0.0126, "p50_ms": 0.0111, "p99_ms": 0.0493, "max_ms": 0.1861},
+      "physics_step_impact_window": {"mean_ms": 0.0199, "p50_ms": 0.0136, "p99_ms": 0.1861, "max_ms": 0.1861},
+      "bench_step_incl_episode_rebuild": {"mean_ms": 0.0151, "p50_ms": 0.0136, "p99_ms": 0.0534, "max_ms": 0.1892},
+      "joint_pos_err_max_m": 9.94097e-06, "joint_pos_err_mean_m": 3.50444e-06, "joint_axis_err_max_rad": 0.000801475, "joint_limit_excess_max_rad": 0,
+      "max_penetration_m": 0, "episodes": 1, "episodes_tunnelled": 0, "episodes_nan": 0,
+      "max_link_speed_mps": 0.230575, "max_link_ang_speed_radps": 0.0153555, "energy_gain_max_over_ke0": 0, "energy_end_over_e0_last_episode": 0,
+      "onset_err_gt_0p01m": {"episode": 0, "step": 0}, "onset_err_gt_1m": {"episode": 0, "step": 0}, "onset_nonfinite": {"episode": 0, "step": 0},
+      "limb_drive_angle_err_max_rad": 0.00126329, "limb_drive_angle_err_final_rad": 0.000926778, "impact_body_min_speed_mps": 1.06881, "impact_body_start_speed_mps": 30,
+      "nan": false, "explosion": false, "trajectory_hash": "d065f3fcb72404ca", "final_state_hash": "488bd01514064f88"}
+   ]}
+  ]
+}

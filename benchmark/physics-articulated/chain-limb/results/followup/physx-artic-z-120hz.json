@@ -1,0 +1,19 @@
+{
+  "test": "chain-limb", "device_class": "desktop", "tag": "physx-artic-z-120hz", "timing_note": "NOT VALID FOR TIMING: machine was busy (onset experiment, no timing claim)",
+  "scenario": {"links": 12, "profile": "alternating", "mass_min_kg": 50, "mass_max_kg": 50000, "tip_speed_mps": 0.1, "step_hz": 120, "ccd": true, "threads": 1,
+    "hinge_axis": "z", "gravity": 9.81, "joint_limit_rad": 2, "light_half_thick_m": -1, "jolt_prio": false, "jolt_heavy_body1": false, "jolt_inertia_mult": 1, "jolt_max_angvel": -1, "physx_tgs": false,
+    "episode_sec": 2, "warmup_steps": 0, "measured_steps": 480, "runs": 1, "masses_kg": [5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50]},
+  "results": [
+   {"backend_key": "physx", "deterministic_all_runs_equal": true, "runs": [
+    {"backend": "physx-5.13.0 cpu float32 reduced-coordinate-articulation fixed-base solver-iters pos=4 vel=1 ccd=sweep(eENABLE_CCD) threads=1", "episode_steps": 240, "in_play_samples": 480, "window_samples": 64,
+      "physics_step_in_play": {"mean_ms": 0.0175, "p50_ms": 0.0166, "p99_ms": 0.0239, "max_ms": 0.2438},
+      "physics_step_impact_window": {"mean_ms": 0.0169, "p50_ms": 0.0167, "p99_ms": 0.0239, "max_ms": 0.0239},
+      "bench_step_incl_episode_rebuild": {"mean_ms": 0.0209, "p50_ms": 0.0195, "p99_ms": 0.0270, "max_ms": 0.3503},
+      "joint_pos_err_max_m": 1.37009e-06, "joint_pos_err_mean_m": 3.89662e-07, "joint_axis_err_max_rad": 0.000597584, "joint_limit_excess_max_rad": 0,
+      "max_penetration_m": 0, "episodes": 2, "episodes_tunnelled": 0, "episodes_nan": 0,
+      "max_link_speed_mps": 0.0958334, "max_link_ang_speed_radps": 0.00416667, "energy_gain_max_over_ke0": 6.10498e-07, "energy_end_over_e0_last_episode": 0.999998,
+      "onset_err_gt_0p01m": {"episode": 0, "step": 0}, "onset_err_gt_1m": {"episode": 0, "step": 0}, "onset_nonfinite": {"episode": 0, "step": 0},
+      "nan": false, "explosion": false, "trajectory_hash": "0b32c0f42eba9b99", "final_state_hash": "7f797149198449a9"}
+   ]}
+  ]
+}

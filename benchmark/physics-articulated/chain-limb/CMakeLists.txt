@@ -1,0 +1,17 @@
+# Chain-limb test: 12-link chain and limb scenarios, Jolt vs PhysX. Library set-up is in ../CMakeLists.txt.
+set(chain_libs "")
+if(JOLT_DIR)
+  add_library(chain_jolt STATIC backend_jolt.cpp)
+  target_link_libraries(chain_jolt PUBLIC artic_jolt_dep)
+  list(APPEND chain_libs chain_jolt)
+endif()
+if(PHYSX_DIR)
+  add_library(chain_physx STATIC backend_physx.cpp)
+  target_link_libraries(chain_physx PUBLIC artic_physx_dep)
+  list(APPEND chain_libs chain_physx)
+endif()
+
+add_executable(chain_limb main.cpp skeleton.cpp limb.cpp)
+target_link_libraries(chain_limb PRIVATE artic_bench artic_ufbx ${chain_libs})
+target_compile_definitions(chain_limb PRIVATE _CRT_SECURE_NO_WARNINGS)
+artic_target_defaults(chain_limb)

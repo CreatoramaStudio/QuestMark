@@ -1,0 +1,19 @@
+{
+  "test": "chain-limb", "device_class": "desktop", "tag": "jolt-maxw1000-z-120hz", "timing_note": "NOT VALID FOR TIMING: machine was busy (onset experiment, no timing claim)",
+  "scenario": {"links": 12, "profile": "alternating", "mass_min_kg": 50, "mass_max_kg": 50000, "tip_speed_mps": 0.1, "step_hz": 120, "ccd": true, "threads": 1,
+    "hinge_axis": "z", "gravity": 9.81, "joint_limit_rad": 2, "light_half_thick_m": -1, "jolt_prio": false, "jolt_heavy_body1": false, "jolt_inertia_mult": 1, "jolt_max_angvel": 1000, "physx_tgs": false,
+    "episode_sec": 2, "warmup_steps": 0, "measured_steps": 480, "runs": 1, "masses_kg": [5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50]},
+  "results": [
+   {"backend_key": "jolt", "deterministic_all_runs_equal": true, "runs": [
+    {"backend": "jolt-5.7.0 cpu float32 hinge-constraints solver-iters vel=10 pos=2 ccd=LinearCast threads=1 axis=z prio=0 heavy-body1=0 inertia-mult-light=1 max-angvel=1000 light-half-thick=-1", "episode_steps": 240, "in_play_samples": 480, "window_samples": 64,
+      "physics_step_in_play": {"mean_ms": 0.0201, "p50_ms": 0.0189, "p99_ms": 0.0394, "max_ms": 0.0680},
+      "physics_step_impact_window": {"mean_ms": 0.0187, "p50_ms": 0.0185, "p99_ms": 0.0260, "max_ms": 0.0260},
+      "bench_step_incl_episode_rebuild": {"mean_ms": 0.0235, "p50_ms": 0.0225, "p99_ms": 0.0447, "max_ms": 0.1350},
+      "joint_pos_err_max_m": 40.9209, "joint_pos_err_mean_m": 2.1039, "joint_axis_err_max_rad": 3.05616, "joint_limit_excess_max_rad": 1.11731,
+      "max_penetration_m": 6.78423, "episodes": 2, "episodes_tunnelled": 2, "episodes_nan": 2,
+      "max_link_speed_mps": 500, "max_link_ang_speed_radps": 1000, "energy_gain_max_over_ke0": 2.07554e+08, "energy_end_over_e0_last_episode": null,
+      "onset_err_gt_0p01m": {"episode": 1, "step": 10}, "onset_err_gt_1m": {"episode": 1, "step": 123}, "onset_nonfinite": {"episode": 1, "step": 158},
+      "nan": true, "explosion": true, "trajectory_hash": "774b78d48c259069", "final_state_hash": "a71f95914134a64d"}
+   ]}
+  ]
+}

@@ -1,0 +1,72 @@
+files 80
+case | variant | Hz | runs | det(files) | nonfinite runs | anchor max m | hinge axis max rad | twist excess | swing excess (ell) | ori err steady | twist err steady | jitter rms | pen m | tunnelled runs | proj min v
+hold | jolt-swingtwist | 120 | 16 | 8/8 | 0 | 0.000246 | 1.49e-05 | 0 | 0 | 0.000174 | 8.63e-05 | 4e-07 | 0 | 0 | 0
+hold | jolt-swingtwist | 200 | 16 | 8/8 | 0 | 0.000251 | 1.65e-05 | 0 | 0 | 0.000169 | 8.33e-05 | 1.19e-07 | 0 | 0 | 0
+hold | jolt-sixdof | 120 | 16 | 8/8 | 0 | 0.000246 | 1.5e-05 | 0 | 0 | 0.00019 | 8.57e-05 | 3.64e-07 | 0 | 0 | 0
+hold | jolt-sixdof | 200 | 16 | 8/8 | 0 | 0.000251 | 1.6e-05 | 0 | 0 | 0.000188 | 8.46e-05 | 2.09e-07 | 0 | 0 | 0
+hold | physx-art-spherical | 120 | 16 | 8/8 | 0 | 2.08e-05 | 3.24e-07 | 0 | 0 | 0.000244 | 7.75e-05 | 9.81e-10 | 0 | 0 | 0
+hold | physx-art-spherical | 200 | 16 | 8/8 | 0 | 1.62e-05 | 3.3e-07 | 0 | 0 | 0.0002 | 7.66e-05 | 2.79e-10 | 0 | 0 | 0
+hold | physx-d6 | 120 | 16 | 8/8 | 0 | 0.00061 | 1.26e-05 | 0 | 0 | 0.000258 | 8.77e-05 | 0 | 0 | 0 | 0
+hold | physx-d6 | 200 | 16 | 8/8 | 0 | 0.000221 | 4.71e-06 | 0 | 0 | 0.000225 | 8.77e-05 | 0 | 0 | 0 | 0
+swing | jolt-swingtwist | 120 | 16 | 8/8 | 0 | 0.00266 | 5.4e-05 | 0 | 0 | 1.85 | 0.0937 | 0.00204 | 0 | 0 | 0
+swing | jolt-swingtwist | 200 | 16 | 8/8 | 0 | 0.00104 | 2.64e-05 | 0 | 0 | 1.85 | 0.0938 | 0.00122 | 0 | 0 | 0
+swing | jolt-sixdof | 120 | 16 | 8/8 | 0 | 0.00266 | 5.41e-05 | 0 | 0 | 1.85 | 0.0943 | 0.00204 | 0 | 0 | 0
+swing | jolt-sixdof | 200 | 16 | 8/8 | 0 | 0.00104 | 2.63e-05 | 0 | 0 | 1.85 | 0.0943 | 0.00122 | 0 | 0 | 0
+swing | physx-art-spherical | 120 | 16 | 8/8 | 0 | 2.48e-05 | 3.21e-07 | 0 | 0 | 1.85 | 0.0783 | 0.00203 | 0 | 0 | 0
+swing | physx-art-spherical | 200 | 16 | 8/8 | 0 | 2.48e-05 | 3.19e-07 | 0 | 0 | 1.85 | 0.0782 | 0.00122 | 0 | 0 | 0
+swing | physx-d6 | 120 | 16 | 8/8 | 0 | 0.00102 | 4.09e-05 | 0 | 0 | 1.86 | 0.0699 | 0.00203 | 0 | 0 | 0
+swing | physx-d6 | 200 | 16 | 8/8 | 0 | 0.000375 | 1.49e-05 | 0 | 0 | 1.86 | 0.0699 | 0.00122 | 0 | 0 | 0
+wall | jolt-swingtwist | 120 | 16 | 8/8 | 0 | 0.333 | 0.0771 | 0.0281 | 0.0104 | 1.21 | 0.436 | 0.192 | 0.514 | 0 | 0
+wall | jolt-swingtwist | 200 | 16 | 8/8 | 0 | 0.35 | 0.0782 | 0.0243 | 0.00367 | 1.22 | 0.436 | 0.148 | 0.648 | 0 | 0
+wall | jolt-sixdof | 120 | 16 | 8/8 | 0 | 0.382 | 0.0867 | 0.0305 | 0.00915 | 1.22 | 0.435 | 0.19 | 0.524 | 0 | 0
+wall | jolt-sixdof | 200 | 16 | 8/8 | 0 | 0.384 | 0.083 | 0.0255 | 0.00298 | 1.23 | 0.436 | 0.143 | 0.658 | 0 | 0
+wall | physx-art-spherical | 120 | 16 | 8/8 | 0 | 2.55e-05 | 3.06e-07 | 0.148 | 0.626 | 0.975 | 0.397 | 0.337 | 0.201 | 0 | 0
+wall | physx-art-spherical | 200 | 16 | 8/8 | 0 | 2.34e-05 | 3.41e-07 | 0.157 | 0.625 | 1.48 | 1.16 | 0.68 | 0.268 | 0 | 0
+wall | physx-d6 | 120 | 16 | 8/8 | 0 | 0.361 | 0.0355 | 0.0157 | 0.00156 | 1.26 | 0.431 | 0.487 | 0.907 | 0 | 0
+wall | physx-d6 | 200 | 16 | 8/8 | 0 | 0.175 | 0.0181 | 0.00941 | 0.000773 | 1.26 | 0.44 | 0.331 | 0.359 | 0 | 0
+impact | jolt-swingtwist | 120 | 16 | 8/8 | 0 | 0.00191 | 1.46e-05 | 0 | 0 | 0.000154 | 7.26e-05 | 6.35e-05 | 0 | 0 | 13
+impact | jolt-swingtwist | 200 | 16 | 8/8 | 0 | 0.000835 | 1.6e-05 | 0 | 0 | 0.000161 | 7.68e-05 | 4.6e-05 | 0 | 0 | 13
+impact | jolt-sixdof | 120 | 16 | 8/8 | 0 | 0.00191 | 1.28e-05 | 0 | 0 | 0.00017 | 7.37e-05 | 6.35e-05 | 0 | 0 | 13
+impact | jolt-sixdof | 200 | 16 | 8/8 | 0 | 0.000835 | 1.36e-05 | 0 | 0 | 0.000178 | 7.78e-05 | 4.6e-05 | 0 | 0 | 13
+impact | physx-art-spherical | 120 | 16 | 8/8 | 0 | 1.99e-05 | 3.4e-07 | 0 | 0 | 0.000264 | 8.63e-05 | 5.88e-05 | 0 | 0 | 13.3
+impact | physx-art-spherical | 200 | 16 | 8/8 | 0 | 2.07e-05 | 3.26e-07 | 0 | 0 | 0.000205 | 7.88e-05 | 4.1e-05 | 0 | 0 | 13
+impact | physx-d6 | 120 | 16 | 8/8 | 0 | 0.000952 | 2.48e-05 | 0 | 0 | 0.000243 | 7.95e-05 | 5.26e-05 | 0 | 0 | 13.2
+impact | physx-d6 | 200 | 16 | 8/8 | 0 | 0.00056 | 3.36e-05 | 0 | 0 | 0.000178 | 6.01e-05 | 1.42e-05 | 0 | 0 | 13.1
+limits | jolt-swingtwist | 120 | 16 | 8/8 | 0 | 0.149 | 0.0114 | 0.00649 | 0.00282 | 0.845 | 0.6 | 0.00943 | 0 | 0 | 0
+limits | jolt-swingtwist | 200 | 16 | 8/8 | 0 | 0.124 | 0.0103 | 0.00557 | 0.00137 | 0.845 | 0.601 | 0.00942 | 0 | 0 | 0
+limits | jolt-sixdof | 120 | 16 | 8/8 | 0 | 0.136 | 0.0108 | 0.00638 | 0.00249 | 0.845 | 0.6 | 0.0111 | 0 | 0 | 0
+limits | jolt-sixdof | 200 | 16 | 8/8 | 0 | 0.104 | 0.00907 | 0.00557 | 0.0021 | 0.845 | 0.601 | 0.0109 | 0 | 0 | 0
+limits | physx-art-spherical | 120 | 16 | 8/8 | 0 | 2.38e-05 | 4.44e-07 | 0.235 | 0.524 | 0.598 | 0.404 | 0.149 | 0 | 0 | 0
+limits | physx-art-spherical | 200 | 16 | 8/8 | 0 | 2.43e-05 | 4.37e-07 | 0.22 | 0.538 | 0.681 | 0.521 | 0.384 | 0 | 0 | 0
+limits | physx-d6 | 120 | 16 | 8/8 | 0 | 1.77 | 0.0831 | 0.0231 | 0.000907 | 0.756 | 0.6 | 0.0053 | 0 | 0 | 0
+limits | physx-d6 | 200 | 16 | 8/8 | 0 | 0.959 | 0.0434 | 0.0135 | 0.000692 | 0.76 | 0.6 | 0.00226 | 0 | 0 | 0
+
+worst configs (anchor, axis) per case/variant
+hold jolt-swingtwist anchor 0.000251 leg-h182m-hold-200hz | axis 1.65e-05 arm-h182m-hold-200hz
+hold jolt-sixdof anchor 0.000251 leg-h182m-hold-200hz | axis 1.6e-05 arm-h182m-hold-200hz
+hold physx-art-spherical anchor 2.08e-05 arm-h182m-hold-120hz | axis 3.3e-07 arm-h85m-hold-200hz
+hold physx-d6 anchor 0.00061 arm-h85m-hold-120hz | axis 1.26e-05 arm-h76m-hold-120hz
+swing jolt-swingtwist anchor 0.00266 arm-h182m-swing-120hz | axis 5.4e-05 arm-h76m-swing-120hz
+swing jolt-sixdof anchor 0.00266 arm-h182m-swing-120hz | axis 5.41e-05 arm-h76m-swing-120hz
+swing physx-art-spherical anchor 2.48e-05 arm-h182m-swing-200hz | axis 3.21e-07 leg-h85m-swing-120hz
+swing physx-d6 anchor 0.00102 arm-h182m-swing-120hz | axis 4.09e-05 arm-h76m-swing-120hz
+wall jolt-swingtwist anchor 0.35 arm-h182m-wall-200hz | axis 0.0782 arm-h182m-wall-200hz
+wall jolt-sixdof anchor 0.384 arm-h182m-wall-200hz | axis 0.0867 arm-h182m-wall-120hz
+wall physx-art-spherical anchor 2.55e-05 arm-h182m-wall-120hz | axis 3.41e-07 arm-h182m-wall-200hz
+wall physx-d6 anchor 0.361 arm-h76m-wall-120hz | axis 0.0355 arm-h182m-wall-120hz
+impact jolt-swingtwist anchor 0.00191 leg-h85m-impact-120hz | axis 1.6e-05 arm-h76m-impact-200hz
+impact jolt-sixdof anchor 0.00191 leg-h85m-impact-120hz | axis 1.36e-05 arm-h76m-impact-200hz
+impact physx-art-spherical anchor 2.07e-05 arm-h182m-impact-200hz | axis 3.4e-07 arm-h96m-impact-120hz
+impact physx-d6 anchor 0.000952 leg-h76m-impact-120hz | axis 3.36e-05 leg-h76m-impact-200hz
+limits jolt-swingtwist anchor 0.149 arm-h182m-limits-120hz | axis 0.0114 arm-h96m-limits-120hz
+limits jolt-sixdof anchor 0.136 arm-h182m-limits-120hz | axis 0.0108 arm-h76m-limits-120hz
+limits physx-art-spherical anchor 2.43e-05 arm-h182m-limits-200hz | axis 4.44e-07 arm-h76m-limits-120hz
+limits physx-d6 anchor 1.77 arm-h182m-limits-120hz | axis 0.0831 arm-h96m-limits-120hz
+
+TRIGGER ('limits', 'jolt-sixdof', 'anchor>0.1') 6
+TRIGGER ('limits', 'jolt-swingtwist', 'anchor>0.1') 6
+TRIGGER ('limits', 'physx-d6', 'anchor>0.1') 32
+TRIGGER ('limits', 'physx-d6', 'anchor>1') 2
+TRIGGER ('wall', 'jolt-sixdof', 'anchor>0.1') 4
+TRIGGER ('wall', 'jolt-swingtwist', 'anchor>0.1') 4
+TRIGGER ('wall', 'physx-d6', 'anchor>0.1') 22

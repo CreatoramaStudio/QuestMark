@@ -1,0 +1,20 @@
+# Standing-foot test: two-leg stance on the ground, Jolt vs PhysX. Library set-up is in ../CMakeLists.txt.
+# The limb builder (limb.cpp, skeleton.cpp) is compiled from ../chain-limb.
+set(CHAIN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../chain-limb)
+set(foot_libs "")
+if(JOLT_DIR)
+  add_library(foot_jolt STATIC backend_jolt.cpp)
+  target_link_libraries(foot_jolt PUBLIC artic_jolt_dep)
+  list(APPEND foot_libs foot_jolt)
+endif()
+if(PHYSX_DIR)
+  add_library(foot_physx STATIC backend_physx.cpp)
+  target_link_libraries(foot_physx PUBLIC artic_physx_dep)
+  list(APPEND foot_libs foot_physx)
+endif()
+
+add_executable(standing_foot main.cpp ${CHAIN_DIR}/limb.cpp ${CHAIN_DIR}/skeleton.cpp)
+target_include_directories(standing_foot PRIVATE ${CHAIN_DIR})
+target_link_libraries(standing_foot PRIVATE artic_ufbx ${foot_libs})
+target_compile_definitions(standing_foot PRIVATE _CRT_SECURE_NO_WARNINGS)
+artic_target_defaults(standing_foot)

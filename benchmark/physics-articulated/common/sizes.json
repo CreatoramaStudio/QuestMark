@@ -1,0 +1,9 @@
+{
+  "note": "Input rows for the four body sizes. height_m and weight_tons are inputs taken from public fan-wiki figures (height in feet x 0.3048); the weight unit is assumed to be metric tons (the harness reads weight_tons x 1000 kg unless --ton-kg is given). 'verified': true only means the number was read on a public web page, not that the page is an authoritative source. The h182m row (height and weight) is marked as an estimate by its own source.",
+  "sizes": [
+  {"name": "h76m",  "height_ft": 250, "height_m": 76.20,  "weight_tons": 1722, "verified": true},
+  {"name": "h85m",  "height_ft": 280, "height_m": 85.34,  "weight_tons": 2412, "verified": true},
+  {"name": "h96m",  "height_ft": 315, "height_m": 96.01,  "weight_tons": 2700, "verified": true},
+  {"name": "h182m", "height_ft": 596, "height_m": 181.66, "weight_tons": 6750, "verified": true, "estimate": true}
+  ]
+}

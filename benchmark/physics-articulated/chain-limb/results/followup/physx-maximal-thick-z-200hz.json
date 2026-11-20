@@ -1,0 +1,19 @@
+{
+  "test": "chain-limb", "device_class": "desktop", "tag": "physx-maximal-thick-z-200hz", "timing_note": "NOT VALID FOR TIMING: machine was busy (onset experiment, no timing claim)",
+  "scenario": {"links": 12, "profile": "alternating", "mass_min_kg": 50, "mass_max_kg": 50000, "tip_speed_mps": 0.1, "step_hz": 200, "ccd": true, "threads": 1,
+    "hinge_axis": "z", "gravity": 9.81, "joint_limit_rad": 2, "light_half_thick_m": 0.5, "jolt_prio": false, "jolt_heavy_body1": false, "jolt_inertia_mult": 1, "jolt_max_angvel": -1, "physx_tgs": false,
+    "episode_sec": 2, "warmup_steps": 0, "measured_steps": 800, "runs": 1, "masses_kg": [5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50, 5e+04, 50]},
+  "results": [
+   {"backend_key": "physx-maximal", "deterministic_all_runs_equal": true, "runs": [
+    {"backend": "physx-5.13.0 cpu float32 maximal-coordinate rigid-dynamics+PxRevoluteJoint solver=PGS iters pos=4 vel=1 ccd=sweep(eENABLE_CCD) threads=1 axis=z light-half-thick=0.5", "episode_steps": 400, "in_play_samples": 800, "window_samples": 106,
+      "physics_step_in_play": {"mean_ms": 0.0168, "p50_ms": 0.0153, "p99_ms": 0.0343, "max_ms": 0.2271},
+      "physics_step_impact_window": {"mean_ms": 0.0157, "p50_ms": 0.0153, "p99_ms": 0.0208, "max_ms": 0.0280},
+      "bench_step_incl_episode_rebuild": {"mean_ms": 0.0206, "p50_ms": 0.0184, "p99_ms": 0.0382, "max_ms": 0.5548},
+      "joint_pos_err_max_m": 1.16222, "joint_pos_err_mean_m": 0.117626, "joint_axis_err_max_rad": 0.975133, "joint_limit_excess_max_rad": 0,
+      "max_penetration_m": 0, "episodes": 2, "episodes_tunnelled": 0, "episodes_nan": 0,
+      "max_link_speed_mps": 28.6765, "max_link_ang_speed_radps": 3.00324, "energy_gain_max_over_ke0": 0, "energy_end_over_e0_last_episode": -19055.3,
+      "onset_err_gt_0p01m": {"episode": 1, "step": 22}, "onset_err_gt_1m": {"episode": 1, "step": 359}, "onset_nonfinite": {"episode": 0, "step": 0},
+      "nan": false, "explosion": true, "trajectory_hash": "737dce2b090a6c91", "final_state_hash": "0b0d5331024c36e7"}
+   ]}
+  ]
+}
