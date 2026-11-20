@@ -142,6 +142,46 @@ No non-finite state, no tunnelling and no hinge-axis error above 0.1 rad (larges
 
 (The 100:1 debris case is in `full-body/results/summary.md`.) No non-finite state in any of the 258 runs of the family. With library-default iterations Jolt collapsed in the standing, step and step-into-debris cases at 120 Hz; with 100 / 30 iterations at 120 Hz or default iterations at 480 Hz the standing humanoid held (worst anchor error 0.0060 m, 0.0053 m); only the stand and step-with-debris cases were run at those settings. The scripted step has no balance controller, so the PhysX torso tilts 0.31 to 0.46 rad at its end (a property of the open-loop script).
 
+## Charts
+
+Nine charts, generated from the published result files by `tools/gen-charts.py` (`python -I benchmark/physics-articulated/tools/gen-charts.py` from the repository root; it only reads the JSON files and writes `charts/*.svg` and `charts/DATA.md`). The plotted values of every chart are listed in [charts/DATA.md](charts/DATA.md). The SVG files have a transparent background and switch text, axis and series colours with the light/dark setting of the page (the colours were checked against a light and a dark surface, not against the exact page colours); series colours are blue = Jolt, orange = PhysX articulation, aqua = PhysX maximal / D6 control. Caveats for all charts: one skeleton (boxes only), float32, CPU, one machine, Jolt tag `v5.7.0`, PhysX built from a branch head and not from a tag, harness thresholds (0.01 m, 0.1 m, 0.1 rad) are choices and not standards. Only chart 8 uses timings (idle-machine files only); all other charts use pose-based values, counts and onset steps, which do not depend on machine load.
+
+![Limb chains: worst joint anchor error per backend, log axis](charts/limb-anchor-error.svg)
+
+Chart 1: in the limb scenes the worst joint anchor error is 0.0066 to 0.038 m for Jolt and 5.8e-06 to 2e-05 m for the PhysX articulation. Sample: 80 limb files, 2 runs each, each bar the worst over 5 scenes (the 16 short-ton files are not plotted).
+
+![Alternating-mass chain: step of the first non-finite state](charts/alternating-chain-onset.svg)
+
+Chart 2: with the hinge axis parallel to gravity Jolt reaches a non-finite state in 10 of its 16 cases (steps 157 to 268); in 4 of the 6 Jolt cases without one the anchor error still exceeds 1 m; the PhysX articulation reaches none, and the PhysX maximal control loses closure (above 1 m) without a non-finite state. Sample: 1 run per case, 2 episodes of 2 s, onset steps within episode 1, busy machine (onset steps only, no timing).
+
+![Standing: stance and flag counts per backend and solver setting](charts/standing-foot.svg)
+
+Chart 3: Jolt stays upright in 12 of 40 cases with default iterations and in 40 of 40 with 100/30; the PhysX articulation in 40 of 40 in both settings; the PhysX maximal + D6 control in 0 and 22 of 40. The Jolt ladder shows 2, 8, 12, 16 and 16 of 16 runs upright for default, 20/4, 30/10, 50/15 and 100/30 iterations. Sample: 240 cases, worst of 2 runs; the 2 t impact is a very small disturbance for these masses, so this chart cannot show which library resists a real shove.
+
+![3-DOF ball joint: runs with anchor error above 0.1 m](charts/hip-twist-anchor.svg)
+
+Chart 4: runs above 0.1 m occur in the wall and limits scenes (Jolt 10 of 160 runs per variant, PhysX D6 54, PhysX articulation 0); the libraries do not enforce the same swing limit, so the variants do not run the same limit. Sample: 32 runs per scene and variant, 160 per variant.
+
+![Whole humanoid: worst joint anchor error](charts/full-body-anchor.svg)
+
+Chart 5: in the whole-body scenes with library-default iterations Jolt's worst anchor error exceeds 0.1 m in 19 of 48 cells and reaches 0.273 m; the PhysX articulation stays at 1.3e-05 to 4.7e-05 m. Sample: 48 files, run 1 of 2, one panel per body size; the Jolt runs with 100/30 iterations or 480 Hz (stand and step-with-debris scenes only) are in chart 9.
+
+![Whole humanoid: worst hinge axis error](charts/full-body-axis.svg)
+
+Chart 6: the worst hinge axis error is above 0.1 rad in 29 of 48 Jolt cells (up to 1.23 rad) and 0.00098 to 0.0013 rad for the PhysX articulation. Sample as chart 5.
+
+![Whole humanoid: largest torso tilt](charts/full-body-tilt.svg)
+
+Chart 7: the largest torso tilt for Jolt is 1.32 to 2.01 rad in the step scenes and 1.5 rad in the stand scene at 120 Hz (0.593 at 200 Hz); for the PhysX articulation it is 0.453 to 0.46 rad in the step scenes and at most 0.0102 rad in the stand scene. The scripted step has no balance controller, so the PhysX tilt in the step scenes is a property of the open-loop script. Sample: worst of the 4 sizes, run 1.
+
+![Idle-machine physics step time](charts/idle-step-time.svg)
+
+Chart 8: on the idle machine the median step of the 13-body chain and limb scenes is 0.0078 to 0.0247 ms for both libraries on one thread, and larger for both with 4 threads (chain matrix). Sample: 12 chain-matrix cases and 96 limb files, run 1 per backend; one machine, one session; this is not a performance ranking, and the step times of the other families (busy machine) are not charted.
+
+![Share of cases within the flag levels per test family and setting](charts/pass-fraction.svg)
+
+Chart 9: the share of cases within the flag levels (no non-finite state, anchor error at most 0.1 m, axis error at most 0.1 rad) differs by family, backend and setting; the numbers are in `charts/DATA.md`. Rows are not comparable with each other (different scenes and case counts); the hip-twist and the Jolt full-body remedy rows cover only the cases they ran; tunnelling, determinism and limit excess are not part of the rule.
+
 ## Known limits
 
 - One machine, one session, desktop CPU class; timings valid only where stated above. Nothing was run on any other hardware, no multithreaded runs except the 4-thread cases of the chain matrix, no double-precision Jolt, no PhysX GPU path.

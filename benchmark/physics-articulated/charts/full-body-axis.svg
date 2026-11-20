@@ -1,0 +1,259 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="912" height="909" viewBox="0 0 912 909" font-family="Segoe UI, Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+<title id="t">Whole humanoid: worst hinge axis error</title><desc id="d">Four small-multiple panels, one per body size, of worst hinge axis error in radians for Jolt and PhysX articulation over six scenes at 120 and 200 Hz. PhysX values are 0.00098 to 0.0013 rad; Jolt reaches 1.23 rad.</desc>
+<style>.t{fill:#1f2328}.m{fill:#57606a}.ax{stroke:#8c959f}.g{stroke:#d0d7de}.f{stroke:#57606a;stroke-dasharray:4 3}.ring{fill:none;stroke:#1f2328;stroke-width:2}.s1{fill:#2a78d6}.s2{fill:#eb6834}.s3{fill:#1baf7a}@media (prefers-color-scheme:dark){.t{fill:#e6edf3}.m{fill:#9198a1}.ax{stroke:#6e7681}.g{stroke:#30363d}.f{stroke:#9198a1}.ring{stroke:#e6edf3}.s1{fill:#3987e5}.s2{fill:#d95926}.s3{fill:#199e70}}</style>
+<defs><pattern id="hs1" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" class="s1" fill-opacity=".35"/><rect width="3" height="6" class="s1"/></pattern></defs>
+<text x="24" y="28" font-size="17" font-weight="600" class="t">Whole humanoid: worst hinge axis error</text>
+<text x="24" y="47" font-size="12.5" class="m">Per body size, scene and step rate; log axis, lower is better</text>
+<rect x="24" y="64" width="14" height="10" rx="2" class="s1"/>
+<text x="44" y="73" font-size="12" class="t">Jolt (bodies and hinge constraints)</text>
+<rect x="286" y="64" width="14" height="10" rx="2" class="s2"/>
+<text x="306" y="73" font-size="12" class="t">PhysX articulation</text>
+<g transform="translate(0,89)">
+<text x="24" y="12" font-size="13" font-weight="600" class="t">h76m</text>
+<line x1="194.0" y1="30" x2="194.0" y2="320" class="g" stroke-width="1"/>
+<text x="194.0" y="333" font-size="11" text-anchor="middle" class="m">1e-4</text>
+<line x1="237.2" y1="30" x2="237.2" y2="320" class="g" stroke-width="1"/>
+<text x="237.2" y="333" font-size="11" text-anchor="middle" class="m">0.001</text>
+<line x1="280.4" y1="30" x2="280.4" y2="320" class="g" stroke-width="1"/>
+<text x="280.4" y="333" font-size="11" text-anchor="middle" class="m">0.01</text>
+<line x1="323.6" y1="30" x2="323.6" y2="320" class="g" stroke-width="1"/>
+<text x="323.6" y="333" font-size="11" text-anchor="middle" class="m">0.1</text>
+<line x1="366.8" y1="30" x2="366.8" y2="320" class="g" stroke-width="1"/>
+<text x="366.8" y="333" font-size="11" text-anchor="middle" class="m">1</text>
+<line x1="410.0" y1="30" x2="410.0" y2="320" class="g" stroke-width="1"/>
+<text x="410.0" y="333" font-size="11" text-anchor="middle" class="m">10</text>
+<line x1="194.0" y1="30" x2="194.0" y2="320" class="ax" stroke-width="1.5"/>
+<line x1="323.6" y1="29" x2="323.6" y2="320" class="f" stroke-width="1.2"/>
+<text x="323.6" y="26" font-size="10.5" text-anchor="middle" class="m">0.1 rad flag</text>
+<text x="186" y="44.0" font-size="12" text-anchor="end" class="t">stand 120 Hz</text>
+<rect x="194.0" y="32.0" width="164.5" height="8" rx="2" class="s1"/>
+<text x="363.5" y="38.0" font-size="11" class="t">0.64</text>
+<rect x="194.0" y="41.0" width="44.0" height="8" rx="2" class="s2"/>
+<text x="186" y="68.0" font-size="12" text-anchor="end" class="t">stand 200 Hz</text>
+<rect x="194.0" y="56.0" width="154.4" height="8" rx="2" class="s1"/>
+<text x="353.4" y="62.0" font-size="11" class="t">0.38</text>
+<rect x="194.0" y="65.0" width="44.6" height="8" rx="2" class="s2"/>
+<text x="186" y="92.0" font-size="12" text-anchor="end" class="t">step 120 Hz</text>
+<rect x="194.0" y="80.0" width="170.2" height="8" rx="2" class="s1"/>
+<text x="369.2" y="86.0" font-size="11" class="t">0.87</text>
+<rect x="194.0" y="89.0" width="46.0" height="8" rx="2" class="s2"/>
+<text x="186" y="116.0" font-size="12" text-anchor="end" class="t">step 200 Hz</text>
+<rect x="194.0" y="104.0" width="166.0" height="8" rx="2" class="s1"/>
+<text x="365.0" y="110.0" font-size="11" class="t">0.69</text>
+<rect x="194.0" y="113.0" width="46.9" height="8" rx="2" class="s2"/>
+<text x="186" y="140.0" font-size="12" text-anchor="end" class="t">step+debris 100:1 120 Hz</text>
+<rect x="194.0" y="128.0" width="166.0" height="8" rx="2" class="s1"/>
+<text x="365.0" y="134.0" font-size="11" class="t">0.69</text>
+<rect x="194.0" y="137.0" width="46.5" height="8" rx="2" class="s2"/>
+<text x="186" y="164.0" font-size="12" text-anchor="end" class="t">step+debris 100:1 200 Hz</text>
+<rect x="194.0" y="152.0" width="159.5" height="8" rx="2" class="s1"/>
+<text x="358.5" y="158.0" font-size="11" class="t">0.49</text>
+<rect x="194.0" y="161.0" width="46.3" height="8" rx="2" class="s2"/>
+<text x="186" y="188.0" font-size="12" text-anchor="end" class="t">step+debris 1000:1 120 Hz</text>
+<rect x="194.0" y="176.0" width="167.4" height="8" rx="2" class="s1"/>
+<text x="366.4" y="182.0" font-size="11" class="t">0.75</text>
+<rect x="194.0" y="185.0" width="46.8" height="8" rx="2" class="s2"/>
+<text x="186" y="212.0" font-size="12" text-anchor="end" class="t">step+debris 1000:1 200 Hz</text>
+<rect x="194.0" y="200.0" width="159.6" height="8" rx="2" class="s1"/>
+<text x="358.6" y="206.0" font-size="11" class="t">0.49</text>
+<rect x="194.0" y="209.0" width="46.3" height="8" rx="2" class="s2"/>
+<text x="186" y="236.0" font-size="12" text-anchor="end" class="t">impact (2 t) 120 Hz</text>
+<rect x="194.0" y="224.0" width="117.2" height="8" rx="2" class="s1"/>
+<rect x="194.0" y="233.0" width="43.6" height="8" rx="2" class="s2"/>
+<text x="186" y="260.0" font-size="12" text-anchor="end" class="t">impact (2 t) 200 Hz</text>
+<rect x="194.0" y="248.0" width="110.6" height="8" rx="2" class="s1"/>
+<rect x="194.0" y="257.0" width="44.6" height="8" rx="2" class="s2"/>
+<text x="186" y="284.0" font-size="12" text-anchor="end" class="t">wall (arm 30 m/s) 120 Hz</text>
+<rect x="194.0" y="272.0" width="106.3" height="8" rx="2" class="s1"/>
+<rect x="194.0" y="281.0" width="44.7" height="8" rx="2" class="s2"/>
+<text x="186" y="308.0" font-size="12" text-anchor="end" class="t">wall (arm 30 m/s) 200 Hz</text>
+<rect x="194.0" y="296.0" width="106.5" height="8" rx="2" class="s1"/>
+<rect x="194.0" y="305.0" width="45.6" height="8" rx="2" class="s2"/>
+<text x="302.0" y="347" font-size="11" text-anchor="middle" class="m">worst hinge axis error (rad, log axis)</text>
+<text x="464" y="12" font-size="13" font-weight="600" class="t">h85m</text>
+<line x1="634.0" y1="30" x2="634.0" y2="320" class="g" stroke-width="1"/>
+<text x="634.0" y="333" font-size="11" text-anchor="middle" class="m">1e-4</text>
+<line x1="677.2" y1="30" x2="677.2" y2="320" class="g" stroke-width="1"/>
+<text x="677.2" y="333" font-size="11" text-anchor="middle" class="m">0.001</text>
+<line x1="720.4" y1="30" x2="720.4" y2="320" class="g" stroke-width="1"/>
+<text x="720.4" y="333" font-size="11" text-anchor="middle" class="m">0.01</text>
+<line x1="763.6" y1="30" x2="763.6" y2="320" class="g" stroke-width="1"/>
+<text x="763.6" y="333" font-size="11" text-anchor="middle" class="m">0.1</text>
+<line x1="806.8" y1="30" x2="806.8" y2="320" class="g" stroke-width="1"/>
+<text x="806.8" y="333" font-size="11" text-anchor="middle" class="m">1</text>
+<line x1="850.0" y1="30" x2="850.0" y2="320" class="g" stroke-width="1"/>
+<text x="850.0" y="333" font-size="11" text-anchor="middle" class="m">10</text>
+<line x1="634.0" y1="30" x2="634.0" y2="320" class="ax" stroke-width="1.5"/>
+<line x1="763.6" y1="29" x2="763.6" y2="320" class="f" stroke-width="1.2"/>
+<text x="763.6" y="26" font-size="10.5" text-anchor="middle" class="m">0.1 rad flag</text>
+<text x="626" y="44.0" font-size="12" text-anchor="end" class="t">stand 120 Hz</text>
+<rect x="634.0" y="32.0" width="162.3" height="8" rx="2" class="s1"/>
+<text x="801.3" y="38.0" font-size="11" class="t">0.57</text>
+<rect x="634.0" y="41.0" width="44.2" height="8" rx="2" class="s2"/>
+<text x="626" y="68.0" font-size="12" text-anchor="end" class="t">stand 200 Hz</text>
+<rect x="634.0" y="56.0" width="128.5" height="8" rx="2" class="s1"/>
+<rect x="634.0" y="65.0" width="44.6" height="8" rx="2" class="s2"/>
+<text x="626" y="92.0" font-size="12" text-anchor="end" class="t">step 120 Hz</text>
+<rect x="634.0" y="80.0" width="176.6" height="8" rx="2" class="s1"/>
+<text x="815.6" y="86.0" font-size="11" class="t">1.2</text>
+<rect x="634.0" y="89.0" width="46.8" height="8" rx="2" class="s2"/>
+<text x="626" y="116.0" font-size="12" text-anchor="end" class="t">step 200 Hz</text>
+<rect x="634.0" y="104.0" width="156.1" height="8" rx="2" class="s1"/>
+<text x="795.1" y="110.0" font-size="11" class="t">0.41</text>
+<rect x="634.0" y="113.0" width="46.8" height="8" rx="2" class="s2"/>
+<text x="626" y="140.0" font-size="12" text-anchor="end" class="t">step+debris 100:1 120 Hz</text>
+<rect x="634.0" y="128.0" width="171.2" height="8" rx="2" class="s1"/>
+<text x="810.2" y="134.0" font-size="11" class="t">0.92</text>
+<rect x="634.0" y="137.0" width="47.0" height="8" rx="2" class="s2"/>
+<text x="626" y="164.0" font-size="12" text-anchor="end" class="t">step+debris 100:1 200 Hz</text>
+<rect x="634.0" y="152.0" width="156.3" height="8" rx="2" class="s1"/>
+<text x="795.3" y="158.0" font-size="11" class="t">0.42</text>
+<rect x="634.0" y="161.0" width="47.1" height="8" rx="2" class="s2"/>
+<text x="626" y="188.0" font-size="12" text-anchor="end" class="t">step+debris 1000:1 120 Hz</text>
+<rect x="634.0" y="176.0" width="167.3" height="8" rx="2" class="s1"/>
+<text x="806.3" y="182.0" font-size="11" class="t">0.75</text>
+<rect x="634.0" y="185.0" width="46.2" height="8" rx="2" class="s2"/>
+<text x="626" y="212.0" font-size="12" text-anchor="end" class="t">step+debris 1000:1 200 Hz</text>
+<rect x="634.0" y="200.0" width="156.1" height="8" rx="2" class="s1"/>
+<text x="795.1" y="206.0" font-size="11" class="t">0.41</text>
+<rect x="634.0" y="209.0" width="46.8" height="8" rx="2" class="s2"/>
+<text x="626" y="236.0" font-size="12" text-anchor="end" class="t">impact (2 t) 120 Hz</text>
+<rect x="634.0" y="224.0" width="114.1" height="8" rx="2" class="s1"/>
+<rect x="634.0" y="233.0" width="44.1" height="8" rx="2" class="s2"/>
+<text x="626" y="260.0" font-size="12" text-anchor="end" class="t">impact (2 t) 200 Hz</text>
+<rect x="634.0" y="248.0" width="107.7" height="8" rx="2" class="s1"/>
+<rect x="634.0" y="257.0" width="44.6" height="8" rx="2" class="s2"/>
+<text x="626" y="284.0" font-size="12" text-anchor="end" class="t">wall (arm 30 m/s) 120 Hz</text>
+<rect x="634.0" y="272.0" width="104.2" height="8" rx="2" class="s1"/>
+<rect x="634.0" y="281.0" width="42.8" height="8" rx="2" class="s2"/>
+<text x="626" y="308.0" font-size="12" text-anchor="end" class="t">wall (arm 30 m/s) 200 Hz</text>
+<rect x="634.0" y="296.0" width="106.2" height="8" rx="2" class="s1"/>
+<rect x="634.0" y="305.0" width="45.1" height="8" rx="2" class="s2"/>
+<text x="742.0" y="347" font-size="11" text-anchor="middle" class="m">worst hinge axis error (rad, log axis)</text>
+<text x="24" y="376" font-size="13" font-weight="600" class="t">h96m</text>
+<line x1="194.0" y1="394" x2="194.0" y2="684" class="g" stroke-width="1"/>
+<text x="194.0" y="697" font-size="11" text-anchor="middle" class="m">1e-4</text>
+<line x1="237.2" y1="394" x2="237.2" y2="684" class="g" stroke-width="1"/>
+<text x="237.2" y="697" font-size="11" text-anchor="middle" class="m">0.001</text>
+<line x1="280.4" y1="394" x2="280.4" y2="684" class="g" stroke-width="1"/>
+<text x="280.4" y="697" font-size="11" text-anchor="middle" class="m">0.01</text>
+<line x1="323.6" y1="394" x2="323.6" y2="684" class="g" stroke-width="1"/>
+<text x="323.6" y="697" font-size="11" text-anchor="middle" class="m">0.1</text>
+<line x1="366.8" y1="394" x2="366.8" y2="684" class="g" stroke-width="1"/>
+<text x="366.8" y="697" font-size="11" text-anchor="middle" class="m">1</text>
+<line x1="410.0" y1="394" x2="410.0" y2="684" class="g" stroke-width="1"/>
+<text x="410.0" y="697" font-size="11" text-anchor="middle" class="m">10</text>
+<line x1="194.0" y1="394" x2="194.0" y2="684" class="ax" stroke-width="1.5"/>
+<line x1="323.6" y1="393" x2="323.6" y2="684" class="f" stroke-width="1.2"/>
+<text x="323.6" y="390" font-size="10.5" text-anchor="middle" class="m">0.1 rad flag</text>
+<text x="186" y="408.0" font-size="12" text-anchor="end" class="t">stand 120 Hz</text>
+<rect x="194.0" y="396.0" width="173.9" height="8" rx="2" class="s1"/>
+<text x="372.9" y="402.0" font-size="11" class="t">1.1</text>
+<rect x="194.0" y="405.0" width="44.5" height="8" rx="2" class="s2"/>
+<text x="186" y="432.0" font-size="12" text-anchor="end" class="t">stand 200 Hz</text>
+<rect x="194.0" y="420.0" width="122.5" height="8" rx="2" class="s1"/>
+<rect x="194.0" y="429.0" width="44.7" height="8" rx="2" class="s2"/>
+<text x="186" y="456.0" font-size="12" text-anchor="end" class="t">step 120 Hz</text>
+<rect x="194.0" y="444.0" width="166.3" height="8" rx="2" class="s1"/>
+<text x="365.3" y="450.0" font-size="11" class="t">0.71</text>
+<rect x="194.0" y="453.0" width="45.8" height="8" rx="2" class="s2"/>
+<text x="186" y="480.0" font-size="12" text-anchor="end" class="t">step 200 Hz</text>
+<rect x="194.0" y="468.0" width="156.0" height="8" rx="2" class="s1"/>
+<text x="355.0" y="474.0" font-size="11" class="t">0.41</text>
+<rect x="194.0" y="477.0" width="46.6" height="8" rx="2" class="s2"/>
+<text x="186" y="504.0" font-size="12" text-anchor="end" class="t">step+debris 100:1 120 Hz</text>
+<rect x="194.0" y="492.0" width="166.7" height="8" rx="2" class="s1"/>
+<text x="365.7" y="498.0" font-size="11" class="t">0.72</text>
+<rect x="194.0" y="501.0" width="46.1" height="8" rx="2" class="s2"/>
+<text x="186" y="528.0" font-size="12" text-anchor="end" class="t">step+debris 100:1 200 Hz</text>
+<rect x="194.0" y="516.0" width="149.4" height="8" rx="2" class="s1"/>
+<text x="348.4" y="522.0" font-size="11" class="t">0.29</text>
+<rect x="194.0" y="525.0" width="45.9" height="8" rx="2" class="s2"/>
+<text x="186" y="552.0" font-size="12" text-anchor="end" class="t">step+debris 1000:1 120 Hz</text>
+<rect x="194.0" y="540.0" width="165.6" height="8" rx="2" class="s1"/>
+<text x="364.6" y="546.0" font-size="11" class="t">0.68</text>
+<rect x="194.0" y="549.0" width="46.9" height="8" rx="2" class="s2"/>
+<text x="186" y="576.0" font-size="12" text-anchor="end" class="t">step+debris 1000:1 200 Hz</text>
+<rect x="194.0" y="564.0" width="156.1" height="8" rx="2" class="s1"/>
+<text x="355.1" y="570.0" font-size="11" class="t">0.41</text>
+<rect x="194.0" y="573.0" width="46.4" height="8" rx="2" class="s2"/>
+<text x="186" y="600.0" font-size="12" text-anchor="end" class="t">impact (2 t) 120 Hz</text>
+<rect x="194.0" y="588.0" width="111.1" height="8" rx="2" class="s1"/>
+<rect x="194.0" y="597.0" width="44.4" height="8" rx="2" class="s2"/>
+<text x="186" y="624.0" font-size="12" text-anchor="end" class="t">impact (2 t) 200 Hz</text>
+<rect x="194.0" y="612.0" width="101.6" height="8" rx="2" class="s1"/>
+<rect x="194.0" y="621.0" width="44.7" height="8" rx="2" class="s2"/>
+<text x="186" y="648.0" font-size="12" text-anchor="end" class="t">wall (arm 30 m/s) 120 Hz</text>
+<rect x="194.0" y="636.0" width="101.8" height="8" rx="2" class="s1"/>
+<rect x="194.0" y="645.0" width="44.2" height="8" rx="2" class="s2"/>
+<text x="186" y="672.0" font-size="12" text-anchor="end" class="t">wall (arm 30 m/s) 200 Hz</text>
+<rect x="194.0" y="660.0" width="101.2" height="8" rx="2" class="s1"/>
+<rect x="194.0" y="669.0" width="44.8" height="8" rx="2" class="s2"/>
+<text x="302.0" y="711" font-size="11" text-anchor="middle" class="m">worst hinge axis error (rad, log axis)</text>
+<text x="464" y="376" font-size="13" font-weight="600" class="t">h182m</text>
+<line x1="634.0" y1="394" x2="634.0" y2="684" class="g" stroke-width="1"/>
+<text x="634.0" y="697" font-size="11" text-anchor="middle" class="m">1e-4</text>
+<line x1="677.2" y1="394" x2="677.2" y2="684" class="g" stroke-width="1"/>
+<text x="677.2" y="697" font-size="11" text-anchor="middle" class="m">0.001</text>
+<line x1="720.4" y1="394" x2="720.4" y2="684" class="g" stroke-width="1"/>
+<text x="720.4" y="697" font-size="11" text-anchor="middle" class="m">0.01</text>
+<line x1="763.6" y1="394" x2="763.6" y2="684" class="g" stroke-width="1"/>
+<text x="763.6" y="697" font-size="11" text-anchor="middle" class="m">0.1</text>
+<line x1="806.8" y1="394" x2="806.8" y2="684" class="g" stroke-width="1"/>
+<text x="806.8" y="697" font-size="11" text-anchor="middle" class="m">1</text>
+<line x1="850.0" y1="394" x2="850.0" y2="684" class="g" stroke-width="1"/>
+<text x="850.0" y="697" font-size="11" text-anchor="middle" class="m">10</text>
+<line x1="634.0" y1="394" x2="634.0" y2="684" class="ax" stroke-width="1.5"/>
+<line x1="763.6" y1="393" x2="763.6" y2="684" class="f" stroke-width="1.2"/>
+<text x="763.6" y="390" font-size="10.5" text-anchor="middle" class="m">0.1 rad flag</text>
+<text x="626" y="408.0" font-size="12" text-anchor="end" class="t">stand 120 Hz</text>
+<rect x="634.0" y="396.0" width="132.6" height="8" rx="2" class="s1"/>
+<text x="771.6" y="402.0" font-size="11" class="t">0.12</text>
+<rect x="634.0" y="405.0" width="44.7" height="8" rx="2" class="s2"/>
+<text x="626" y="432.0" font-size="12" text-anchor="end" class="t">stand 200 Hz</text>
+<rect x="634.0" y="420.0" width="115.1" height="8" rx="2" class="s1"/>
+<rect x="634.0" y="429.0" width="44.8" height="8" rx="2" class="s2"/>
+<text x="626" y="456.0" font-size="12" text-anchor="end" class="t">step 120 Hz</text>
+<rect x="634.0" y="444.0" width="169.8" height="8" rx="2" class="s1"/>
+<text x="808.8" y="450.0" font-size="11" class="t">0.85</text>
+<rect x="634.0" y="453.0" width="47.4" height="8" rx="2" class="s2"/>
+<text x="626" y="480.0" font-size="12" text-anchor="end" class="t">step 200 Hz</text>
+<rect x="634.0" y="468.0" width="144.9" height="8" rx="2" class="s1"/>
+<text x="783.9" y="474.0" font-size="11" class="t">0.23</text>
+<rect x="634.0" y="477.0" width="47.0" height="8" rx="2" class="s2"/>
+<text x="626" y="504.0" font-size="12" text-anchor="end" class="t">step+debris 100:1 120 Hz</text>
+<rect x="634.0" y="492.0" width="169.3" height="8" rx="2" class="s1"/>
+<text x="808.3" y="498.0" font-size="11" class="t">0.83</text>
+<rect x="634.0" y="501.0" width="46.2" height="8" rx="2" class="s2"/>
+<text x="626" y="528.0" font-size="12" text-anchor="end" class="t">step+debris 100:1 200 Hz</text>
+<rect x="634.0" y="516.0" width="145.4" height="8" rx="2" class="s1"/>
+<text x="784.4" y="522.0" font-size="11" class="t">0.23</text>
+<rect x="634.0" y="525.0" width="47.4" height="8" rx="2" class="s2"/>
+<text x="626" y="552.0" font-size="12" text-anchor="end" class="t">step+debris 1000:1 120 Hz</text>
+<rect x="634.0" y="540.0" width="169.8" height="8" rx="2" class="s1"/>
+<text x="808.8" y="546.0" font-size="11" class="t">0.85</text>
+<rect x="634.0" y="549.0" width="46.9" height="8" rx="2" class="s2"/>
+<text x="626" y="576.0" font-size="12" text-anchor="end" class="t">step+debris 1000:1 200 Hz</text>
+<rect x="634.0" y="564.0" width="145.0" height="8" rx="2" class="s1"/>
+<text x="784.0" y="570.0" font-size="11" class="t">0.23</text>
+<rect x="634.0" y="573.0" width="46.9" height="8" rx="2" class="s2"/>
+<text x="626" y="600.0" font-size="12" text-anchor="end" class="t">impact (2 t) 120 Hz</text>
+<rect x="634.0" y="588.0" width="98.6" height="8" rx="2" class="s1"/>
+<rect x="634.0" y="597.0" width="44.2" height="8" rx="2" class="s2"/>
+<text x="626" y="624.0" font-size="12" text-anchor="end" class="t">impact (2 t) 200 Hz</text>
+<rect x="634.0" y="612.0" width="80.8" height="8" rx="2" class="s1"/>
+<rect x="634.0" y="621.0" width="44.7" height="8" rx="2" class="s2"/>
+<text x="626" y="648.0" font-size="12" text-anchor="end" class="t">wall (arm 30 m/s) 120 Hz</text>
+<rect x="634.0" y="636.0" width="122.1" height="8" rx="2" class="s1"/>
+<rect x="634.0" y="645.0" width="45.0" height="8" rx="2" class="s2"/>
+<text x="626" y="672.0" font-size="12" text-anchor="end" class="t">wall (arm 30 m/s) 200 Hz</text>
+<rect x="634.0" y="660.0" width="111.9" height="8" rx="2" class="s1"/>
+<rect x="634.0" y="669.0" width="45.9" height="8" rx="2" class="s2"/>
+<text x="742.0" y="711" font-size="11" text-anchor="middle" class="m">worst hinge axis error (rad, log axis)</text>
+</g>
+<text x="24" y="819" font-size="11.5" class="m">48 files (6 scenes x 4 sizes x 2 rates), run 1 of 2 per backend; labelled values are above the flag level (0.1). Of 48 Jolt cells 29 are</text>
+<text x="24" y="835" font-size="11.5" class="m">above it, of 48 PhysX cells 0.</text>
+<text x="24" y="851" font-size="11.5" class="m">PhysX range 0.00098 to 0.0013; Jolt range 0.0074 to 1.2. The scenes use library-default solver iterations; no machine-load dependence</text>
+<text x="24" y="867" font-size="11.5" class="m">(timings unused). Thresholds (0.01 m, 0.1 m, 0.1 rad) are harness choices, not standards.</text>
+<text x="24" y="883" font-size="11.5" class="m">One skeleton, boxes only, float32, CPU, one machine; Jolt 5.7.0 tag v5.7.0; PhysX 5.13.0 built from a branch head, not a tag.</text>
+</svg>
